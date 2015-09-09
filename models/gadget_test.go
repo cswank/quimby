@@ -1,7 +1,10 @@
 package models_test
 
 import (
+	"fmt"
 	"io/ioutil"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path"
 
@@ -14,16 +17,54 @@ import (
 
 var _ = Describe("Gadgets", func() {
 	var (
-		g    *Gadget
-		dir  string
-		pth  string
-		db   *bolt.DB
-		host string
+		g   *Gadget
+		dir string
+		pth string
+		db  *bolt.DB
+		ts  *httptest.Server
 	)
 
 	BeforeEach(func() {
+
+		ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			fmt.Fprintln(
+				w,
+				`{
+  "back garden": {
+    "sprinklers": {
+      "value": false,
+      "io": false
+    }
+  },
+  "back yard": {
+    "sprinklers": {
+      "value": false,
+      "io": false
+    }
+  },
+  "front garden": {
+    "sprinklers": {
+      "value": true,
+      "io": true
+    }
+  },
+  "front yard": {
+    "sprinklers": {
+      "value": false,
+      "io": false
+    }
+  },
+  "sidewalk": {
+    "sprinklers": {
+      "value": false,
+      "io": false
+    }
+  }
+}`,
+			)
+		}))
+
 		var err error
-		host = "111.222.333.444"
 		dir, err = ioutil.TempDir("", "")
 		pth = path.Join(dir, "db")
 		Expect(err).To(BeNil())
@@ -33,7 +74,7 @@ var _ = Describe("Gadgets", func() {
 
 		g = &Gadget{
 			Name: "lights",
-			Host: host,
+			Host: ts.URL,
 			DB:   db,
 		}
 		err = g.Save()
@@ -43,6 +84,7 @@ var _ = Describe("Gadgets", func() {
 	AfterEach(func() {
 		db.Close()
 		os.RemoveAll(dir)
+		ts.Close()
 	})
 
 	It("can save", func() {
@@ -52,7 +94,7 @@ var _ = Describe("Gadgets", func() {
 		}
 		err := g2.Fetch()
 		Expect(err).To(BeNil())
-		Expect(g2.Host).To(Equal(host))
+		Expect(g2.Host).To(Equal(ts.URL))
 	})
 
 	It("can delete", func() {
@@ -73,6 +115,14 @@ var _ = Describe("Gadgets", func() {
 		Expect(err).To(BeNil())
 		Expect(len(gadgets.Gadgets)).To(Equal(1))
 		g2 := gadgets.Gadgets[0]
-		Expect(g2.Host).To(Equal(host))
+		Expect(g2.Host).To(Equal(ts.URL))
+	})
+
+	It("gets the status of the gadget", func() {
+		status, err := g.Status()
+		Expect(err).To(BeNil())
+		Expect(len(status)).To(Equal(5))
+		v := status["back yard"]["sprinklers"]
+		Expect(v.Value).To(BeFalse())
 	})
 })

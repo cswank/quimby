@@ -2,8 +2,11 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
+	"net/http"
 
 	"github.com/boltdb/bolt"
+	"github.com/cswank/gogadgets"
 )
 
 type GadgetHosts struct {
@@ -56,4 +59,15 @@ func (g *Gadget) Delete() error {
 		b := tx.Bucket([]byte("gadgets"))
 		return b.Delete([]byte(g.Name))
 	})
+}
+
+func (g *Gadget) Status() (map[string]map[string]gogadgets.Value, error) {
+	m := map[string]map[string]gogadgets.Value{}
+	r, err := http.Get(fmt.Sprintf("%s/gadgets", g.Host))
+	if err != nil {
+		return m, err
+	}
+	defer r.Body.Close()
+	dec := json.NewDecoder(r.Body)
+	return m, dec.Decode(&m)
 }
