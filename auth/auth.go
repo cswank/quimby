@@ -1,1 +1,4 @@
 package auth
+
+func CheckAuth() {
+}
