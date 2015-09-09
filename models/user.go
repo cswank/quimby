@@ -17,14 +17,6 @@ type User struct {
 	DB             *bolt.DB
 }
 
-var (
-	getUsersQuery    = "SELECT username FROM users"
-	getPasswordQuery = "SELECT password FROM users WHERE username = ?"
-	deleteUserQuery  = "DELETE FROM users WHERE username = ?"
-	getUserQuery     = "SELECT username, permission FROM users WHERE username = ?"
-	saveUserQuery    = "INSERT INTO users (username, password, permission) VALUES (?, ?, ?)"
-)
-
 func GetUsers(db *bolt.DB) ([]User, error) {
 	users := []User{}
 
