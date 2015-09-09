@@ -1,6 +1,7 @@
 package models
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -59,6 +60,29 @@ func (g *Gadget) Delete() error {
 		b := tx.Bucket([]byte("gadgets"))
 		return b.Delete([]byte(g.Name))
 	})
+}
+
+func (g *Gadget) Update(cmd string) error {
+	m := gogadgets.Message{
+		UUID:   gogadgets.GetUUID(),
+		Sender: "quimby",
+		Type:   gogadgets.COMMAND,
+		Body:   cmd,
+	}
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(m); err != nil {
+		return err
+	}
+	r, err := http.Post(fmt.Sprintf("%s/gadgets", g.Host), "application/json", &buf)
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	if r.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response from %s: %d", g.Host, r.StatusCode)
+	}
+	return nil
 }
 
 func (g *Gadget) Status() (map[string]map[string]gogadgets.Value, error) {

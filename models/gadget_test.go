@@ -1,6 +1,7 @@
 package models_test
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"path"
 
 	"github.com/boltdb/bolt"
+	"github.com/cswank/gogadgets"
 	. "github.com/cswank/quimby/models"
 
 	. "github.com/onsi/ginkgo"
@@ -17,19 +19,22 @@ import (
 
 var _ = Describe("Gadgets", func() {
 	var (
-		g   *Gadget
-		dir string
-		pth string
-		db  *bolt.DB
-		ts  *httptest.Server
+		g    *Gadget
+		dir  string
+		pth  string
+		db   *bolt.DB
+		ts   *httptest.Server
+		msgs []gogadgets.Message
 	)
 
 	BeforeEach(func() {
+		msgs = []gogadgets.Message{}
 
 		ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			fmt.Fprintln(
-				w,
-				`{
+			if r.Method == "GET" {
+				fmt.Fprintln(
+					w,
+					`{
   "back garden": {
     "sprinklers": {
       "value": false,
@@ -61,7 +66,14 @@ var _ = Describe("Gadgets", func() {
     }
   }
 }`,
-			)
+				)
+			} else if r.Method == "POST" {
+				var m gogadgets.Message
+				dec := json.NewDecoder(r.Body)
+				err := dec.Decode(&m)
+				Expect(err).To(BeNil())
+				msgs = append(msgs, m)
+			}
 		}))
 
 		var err error
@@ -124,5 +136,13 @@ var _ = Describe("Gadgets", func() {
 		Expect(len(status)).To(Equal(5))
 		v := status["back yard"]["sprinklers"]
 		Expect(v.Value).To(BeFalse())
+	})
+
+	It("updates the status of the gadget", func() {
+		err := g.Update("turn on back yard sprinklers")
+		Expect(err).To(BeNil())
+		Expect(len(msgs)).To(Equal(1))
+		m := msgs[0]
+		Expect(m.Body).To(Equal("turn on back yard sprinklers"))
 	})
 })
