@@ -19,16 +19,18 @@ import (
 
 var _ = Describe("Gadgets", func() {
 	var (
-		g    *Gadget
-		dir  string
-		pth  string
-		db   *bolt.DB
-		ts   *httptest.Server
-		msgs []gogadgets.Message
+		g       *Gadget
+		dir     string
+		pth     string
+		db      *bolt.DB
+		ts      *httptest.Server
+		msgs    []gogadgets.Message
+		clients []map[string]string
 	)
 
 	BeforeEach(func() {
 		msgs = []gogadgets.Message{}
+		clients = []map[string]string{}
 
 		ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" {
@@ -68,11 +70,19 @@ var _ = Describe("Gadgets", func() {
 }`,
 				)
 			} else if r.Method == "POST" {
-				var m gogadgets.Message
-				dec := json.NewDecoder(r.Body)
-				err := dec.Decode(&m)
-				Expect(err).To(BeNil())
-				msgs = append(msgs, m)
+				if r.URL.Path == "/gadgets" {
+					var m gogadgets.Message
+					dec := json.NewDecoder(r.Body)
+					err := dec.Decode(&m)
+					Expect(err).To(BeNil())
+					msgs = append(msgs, m)
+				} else if r.URL.Path == "/clients" {
+					var m map[string]string
+					dec := json.NewDecoder(r.Body)
+					err := dec.Decode(&m)
+					Expect(err).To(BeNil())
+					clients = append(clients, m)
+				}
 			}
 		}))
 
@@ -144,5 +154,13 @@ var _ = Describe("Gadgets", func() {
 		Expect(len(msgs)).To(Equal(1))
 		m := msgs[0]
 		Expect(m.Body).To(Equal("turn on back yard sprinklers"))
+	})
+
+	It("registers with a gogadgets instance", func() {
+		err := g.Register(ts.URL)
+		Expect(err).To(BeNil())
+		Expect(len(clients)).To(Equal(1))
+		c := clients[0]
+		Expect(c["address"]).To(Equal(ts.URL))
 	})
 })

@@ -6,7 +6,10 @@ import (
 	"net/http"
 	"os"
 
+	"github.com/cswank/gadgetsweb/controllers"
+	"github.com/cswank/quimby/auth"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/securecookie"
 )
 
 var (
@@ -32,6 +35,8 @@ func main() {
 	r.HandleFunc("/api/login", auth.Login).Methods("POST")
 	r.HandleFunc("/api/logout", auth.Logout).Methods("POST")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
+	//r.HandleFunc("/api/gadgets/{name}", GetGadget).Methods("GET")
+	//r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir(static)))
 

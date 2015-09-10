@@ -10,18 +10,14 @@ import (
 	"github.com/cswank/gogadgets"
 )
 
-type GadgetHosts struct {
-	Gadgets []Gadget `json:"gadgets"`
-}
-
 type Gadget struct {
 	Name string `json:"name"`
 	Host string `json:"host"`
 	DB   *bolt.DB
 }
 
-func GetGadgets(db *bolt.DB) (*GadgetHosts, error) {
-	gadgets := &GadgetHosts{}
+func GetGadgets(db *bolt.DB) ([]Gadget, error) {
+	gadgets := []Gadget{}
 
 	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("gadgets"))
@@ -32,7 +28,7 @@ func GetGadgets(db *bolt.DB) (*GadgetHosts, error) {
 			if err := json.Unmarshal(v, &g); err != nil {
 				return err
 			}
-			gadgets.Gadgets = append(gadgets.Gadgets, g)
+			gadgets = append(gadgets, g)
 		}
 		return nil
 	})
@@ -94,4 +90,20 @@ func (g *Gadget) Status() (map[string]map[string]gogadgets.Value, error) {
 	defer r.Body.Close()
 	dec := json.NewDecoder(r.Body)
 	return m, dec.Decode(&m)
+}
+
+func (g *Gadget) Register(addr string) error {
+	a := map[string]string{"address": addr}
+	buf := &bytes.Buffer{}
+	enc := json.NewEncoder(buf)
+	enc.Encode(&a)
+	r, err := http.Post(fmt.Sprintf("%s/clients", g.Host), "application/json", buf)
+	if err != nil {
+		return err
+	}
+	r.Body.Close()
+	if r.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response from %s: %d", g.Host, r.StatusCode)
+	}
+	return nil
 }
