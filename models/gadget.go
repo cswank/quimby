@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 
 	"github.com/boltdb/bolt"
@@ -11,9 +12,9 @@ import (
 )
 
 type Gadget struct {
-	Name string `json:"name"`
-	Host string `json:"host"`
-	DB   *bolt.DB
+	Name string   `json:"name"`
+	Host string   `json:"host"`
+	DB   *bolt.DB `json:"-"`
 }
 
 func GetGadgets(db *bolt.DB) ([]Gadget, error) {
@@ -81,15 +82,14 @@ func (g *Gadget) Update(cmd string) error {
 	return nil
 }
 
-func (g *Gadget) Status() (map[string]map[string]gogadgets.Value, error) {
-	m := map[string]map[string]gogadgets.Value{}
+func (g *Gadget) Status(w io.Writer) error {
 	r, err := http.Get(fmt.Sprintf("%s/gadgets", g.Host))
 	if err != nil {
-		return m, err
+		return err
 	}
 	defer r.Body.Close()
-	dec := json.NewDecoder(r.Body)
-	return m, dec.Decode(&m)
+	_, err = io.Copy(w, r.Body)
+	return err
 }
 
 func (g *Gadget) Register(addr string) error {

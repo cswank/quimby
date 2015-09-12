@@ -135,8 +135,8 @@ var _ = Describe("Gadgets", func() {
 	It("gets all gadgets", func() {
 		gadgets, err := GetGadgets(db)
 		Expect(err).To(BeNil())
-		Expect(len(gadgets.Gadgets)).To(Equal(1))
-		g2 := gadgets.Gadgets[0]
+		Expect(len(gadgets)).To(Equal(1))
+		g2 := gadgets[0]
 		Expect(g2.Host).To(Equal(ts.URL))
 	})
 

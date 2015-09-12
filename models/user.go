@@ -10,11 +10,11 @@ import (
 )
 
 type User struct {
-	Username       string `json:"username"`
-	Password       string `json:"password,omitempty"`
-	HashedPassword []byte `json:"hashed_password"`
-	Permission     string `json:"permission"`
-	DB             *bolt.DB
+	Username       string   `json:"username"`
+	Password       string   `json:"password,omitempty"`
+	HashedPassword []byte   `json:"hashed_password"`
+	Permission     string   `json:"permission"`
+	DB             *bolt.DB `json:"-"`
 }
 
 func GetUsers(db *bolt.DB) ([]User, error) {

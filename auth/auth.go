@@ -2,55 +2,77 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
 
-	"github.com/cswank/gadgetsweb/models"
+	"github.com/boltdb/bolt"
+	"github.com/cswank/quimby/controllers"
+	"github.com/cswank/quimby/models"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/securecookie"
 )
 
-type controller func(w http.ResponseWriter, r *http.Request, u *models.User, vars map[string]string) error
+type controller func(args *controllers.Args) error
 
 var (
-	hashKey      = []byte(os.Getenv("GADGETS_HASH_KEY"))
-	blockKey     = []byte(os.Getenv("GADGETS_BLOCK_KEY"))
+	DB           *bolt.DB
+	hashKey      = []byte(os.Getenv("QUIMBY_HASH_KEY"))
+	blockKey     = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
 	SecureCookie = securecookie.New(hashKey, blockKey)
 )
 
-func CheckAuth(w http.ResponseWriter, r *http.Request, ctrl controller, permission string) {
+func CheckAuth(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
 	user, err := getUserFromCookie(r)
-	if err == nil && user.IsAuthorized(permission) {
-		vars := mux.Vars(r)
-		err = ctrl(w, r, user, vars)
-		if err != nil {
-			log.Println(err)
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-	} else {
-		log.Println(err)
+	if err != nil {
 		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		return
+	}
+	vars := mux.Vars(r)
+	args := &controllers.Args{
+		W:    w,
+		R:    r,
+		User: user,
+		Vars: vars,
+		DB:   DB,
+	}
+	if !acl(args) {
+		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+		return
+	}
+
+	g := &models.Gadget{
+		DB:   DB,
+		Name: vars["name"],
+	}
+
+	args.Gadget = g
+
+	err = ctrl(args)
+	if err != nil {
+		log.Println(err)
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
 func getUserFromCookie(r *http.Request) (*models.User, error) {
-	user := &models.User{}
-	cookie, err := r.Cookie("gadgets")
+	user := &models.User{
+		DB: DB,
+	}
+	cookie, err := r.Cookie("quimby")
 	if err == nil {
-		m := map[string]string{}
-		err = SecureCookie.Decode("gadgets", cookie.Value, &m)
+		var m map[string]string
+		err = SecureCookie.Decode("quimby", cookie.Value, &m)
 		if err == nil {
 			user.Username = m["user"]
 		}
 	}
-	return user, err
+	return user, user.Fetch()
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
 	cookie := &http.Cookie{
-		Name:   "gadgets",
+		Name:   "quimby",
 		Value:  "",
 		Path:   "/",
 		MaxAge: -1,
@@ -59,7 +81,9 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	user := &models.User{}
+	user := &models.User{
+		DB: DB,
+	}
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(user)
 	if err != nil {
@@ -75,13 +99,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"user": user.Username,
 	}
 
-	encoded, err := SecureCookie.Encode("gadgets", value)
+	encoded, _ := SecureCookie.Encode("quimby", value)
 	cookie := &http.Cookie{
-		Name:     "gadgets",
+		Name:     "quimby",
 		Value:    encoded,
 		Path:     "/",
 		HttpOnly: false,
 	}
-	fmt.Println("cookie", cookie, encoded)
 	http.SetCookie(w, cookie)
 }
