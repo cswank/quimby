@@ -60,13 +60,15 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 		DB: DB,
 	}
 	cookie, err := r.Cookie("quimby")
-	if err == nil {
-		var m map[string]string
-		err = SecureCookie.Decode("quimby", cookie.Value, &m)
-		if err == nil {
-			user.Username = m["user"]
-		}
+	if err != nil {
+		return nil, err
 	}
+	var m map[string]string
+	err = SecureCookie.Decode("quimby", cookie.Value, &m)
+	if err != nil {
+		return nil, err
+	}
+	user.Username = m["user"]
 	return user, user.Fetch()
 }
 

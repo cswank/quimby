@@ -45,11 +45,13 @@ func start(db *bolt.DB, port, root string) {
 
 	r.HandleFunc("/api/login", auth.Login).Methods("POST")
 	r.HandleFunc("/api/logout", auth.Logout).Methods("POST")
+
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
+	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
 	r.HandleFunc("/api/gadgets/{name}", GetGadget).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{name}", DeleteGadget).Methods("DELETE")
-	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
+	r.HandleFunc("/api/gadgets/{name}/updates", Connect).Methods("GET")
 
 	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 
@@ -84,4 +86,8 @@ func DeleteGadget(w http.ResponseWriter, r *http.Request) {
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {
 	auth.CheckAuth(w, r, controllers.GetStatus, auth.Read)
+}
+
+func Connect(w http.ResponseWriter, r *http.Request) {
+	auth.CheckAuth(w, r, controllers.Connect, auth.Write)
 }

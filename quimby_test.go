@@ -10,11 +10,13 @@ import (
 	"net/http/httptest"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
+	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
@@ -33,6 +35,12 @@ func RandString(n int) string {
 	return string(b)
 }
 
+var cstDialer = websocket.Dialer{
+	Subprotocols:    []string{"p1", "p2"},
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
 var _ = Describe("Quimby", func() {
 	var (
 		port        string
@@ -49,10 +57,12 @@ var _ = Describe("Quimby", func() {
 		sprinklers  *models.Gadget
 		ts          *httptest.Server
 		msgs        []gogadgets.Message
+		clients     []map[string]string
 	)
 
 	BeforeEach(func() {
 		msgs = []gogadgets.Message{}
+		clients = []map[string]string{}
 		ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" {
 				fmt.Fprintln(
@@ -73,17 +83,26 @@ var _ = Describe("Quimby", func() {
 }`,
 				)
 			} else if r.Method == "POST" {
-				var m gogadgets.Message
-				dec := json.NewDecoder(r.Body)
-				err := dec.Decode(&m)
-				Expect(err).To(BeNil())
-				msgs = append(msgs, m)
+				if r.URL.Path == "/gadgets" {
+					var m gogadgets.Message
+					dec := json.NewDecoder(r.Body)
+					err := dec.Decode(&m)
+					Expect(err).To(BeNil())
+					msgs = append(msgs, m)
+				} else if r.URL.Path == "/clients" {
+					var m map[string]string
+					dec := json.NewDecoder(r.Body)
+					err := dec.Decode(&m)
+					Expect(err).To(BeNil())
+					clients = append(clients, m)
+				}
 			}
-
 		}))
 		port = fmt.Sprintf("%d", 1024+rand.Intn(65535-1024))
+
 		root = fmt.Sprintf("%s", RandString(10))
 
+		os.Setenv("QUIMBY_HOST", fmt.Sprintf("http://localhost:%s", port))
 		addr = fmt.Sprintf("http://localhost:%s/api/%%s", port)
 
 		dir, _ = ioutil.TempDir("", "")
@@ -329,6 +348,32 @@ var _ = Describe("Quimby", func() {
 
 			Expect(len(msgs)).To(Equal(1))
 			msg := msgs[0]
+			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
+		})
+
+		It("allows the sending of messages with a websocket", func() {
+			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/updates"), "http", "ws", -1)
+			c := cookies[0]
+			h := http.Header{"Origin": {u}, "Cookie": {c.String()}}
+			ws, _, err := cstDialer.Dial(u, h)
+			Expect(err).To(BeNil())
+			defer ws.Close()
+
+			msg := gogadgets.Message{
+				Type:   gogadgets.COMMAND,
+				Body:   "turn on back yard sprinklers",
+				UUID:   gogadgets.GetUUID(),
+				Sender: "cli",
+			}
+			d, _ := json.Marshal(msg)
+			err = ws.WriteMessage(websocket.TextMessage, d)
+			Expect(err).To(BeNil())
+
+			Eventually(func() int {
+				return len(msgs)
+			}).Should(Equal(1))
+
+			msg = msgs[0]
 			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
 		})
 	})

@@ -66,6 +66,10 @@ func (g *Gadget) Update(cmd string) error {
 		Type:   gogadgets.COMMAND,
 		Body:   cmd,
 	}
+	return g.UpdateMessage(m)
+}
+
+func (g *Gadget) UpdateMessage(m gogadgets.Message) error {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	if err := enc.Encode(m); err != nil {
@@ -92,18 +96,24 @@ func (g *Gadget) Status(w io.Writer) error {
 	return err
 }
 
-func (g *Gadget) Register(addr string) error {
+func (g *Gadget) Register(addr string) (string, error) {
+	if g.Host == "" {
+		if err := g.Fetch(); err != nil {
+			fmt.Println(g, err)
+			return "", err
+		}
+	}
 	a := map[string]string{"address": addr}
 	buf := &bytes.Buffer{}
 	enc := json.NewEncoder(buf)
 	enc.Encode(&a)
 	r, err := http.Post(fmt.Sprintf("%s/clients", g.Host), "application/json", buf)
 	if err != nil {
-		return err
+		return "", err
 	}
 	r.Body.Close()
 	if r.StatusCode != http.StatusOK {
-		return fmt.Errorf("unexpected response from %s: %d", g.Host, r.StatusCode)
+		return "", fmt.Errorf("unexpected response from %s: %d", g.Host, r.StatusCode)
 	}
-	return nil
+	return g.Host, nil
 }
