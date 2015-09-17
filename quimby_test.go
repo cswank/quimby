@@ -376,5 +376,14 @@ var _ = Describe("Quimby", func() {
 			msg = msgs[0]
 			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
 		})
+
+		It("does not allow the sending of messages with a websocket when there are no auth cookies", func() {
+			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/updates"), "http", "ws", -1)
+			h := http.Header{"Origin": {u}}
+			ws, r, err := cstDialer.Dial(u, h)
+			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			Expect(err).ToNot(BeNil())
+			Expect(ws).To(BeNil())
+		})
 	})
 })
