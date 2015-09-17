@@ -359,10 +359,11 @@ var _ = Describe("Quimby", func() {
 			Expect(err).To(BeNil())
 			defer ws.Close()
 
+			uuid := gogadgets.GetUUID()
 			msg := gogadgets.Message{
 				Type:   gogadgets.COMMAND,
 				Body:   "turn on back yard sprinklers",
-				UUID:   gogadgets.GetUUID(),
+				UUID:   uuid,
 				Sender: "cli",
 			}
 			d, _ := json.Marshal(msg)
@@ -375,6 +376,7 @@ var _ = Describe("Quimby", func() {
 
 			msg = msgs[0]
 			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
+			Expect(msg.UUID).To(Equal(uuid))
 		})
 
 		It("does not allow the sending of messages with a websocket when there are no auth cookies", func() {

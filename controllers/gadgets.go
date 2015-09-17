@@ -48,7 +48,7 @@ func GetStatus(args *Args) error {
 		return err
 	}
 
-	return args.Gadget.Status(args.W)
+	return args.Gadget.ReadStatus(args.W)
 }
 
 func SendCommand(args *Args) error {

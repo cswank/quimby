@@ -1,6 +1,7 @@
 package models_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -140,9 +141,25 @@ var _ = Describe("Gadgets", func() {
 		Expect(g2.Host).To(Equal(ts.URL))
 	})
 
+	It("reads the status of the gadget", func() {
+		buf := &bytes.Buffer{}
+		err := g.ReadStatus(buf)
+		Expect(err).To(BeNil())
+
+		var status map[string]map[string]gogadgets.Value
+		dec := json.NewDecoder(buf)
+		err = dec.Decode(&status)
+		Expect(err).To(BeNil())
+
+		Expect(len(status)).To(Equal(5))
+		v := status["back yard"]["sprinklers"]
+		Expect(v.Value).To(BeFalse())
+	})
+
 	It("gets the status of the gadget", func() {
 		status, err := g.Status()
 		Expect(err).To(BeNil())
+
 		Expect(len(status)).To(Equal(5))
 		v := status["back yard"]["sprinklers"]
 		Expect(v.Value).To(BeFalse())
@@ -157,8 +174,9 @@ var _ = Describe("Gadgets", func() {
 	})
 
 	It("registers with a gogadgets instance", func() {
-		err := g.Register(ts.URL)
+		h, err := g.Register(ts.URL)
 		Expect(err).To(BeNil())
+		Expect(h).To(Equal(ts.URL))
 		Expect(len(clients)).To(Equal(1))
 		c := clients[0]
 		Expect(c["address"]).To(Equal(ts.URL))
