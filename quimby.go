@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"os"
 
+	//"github.com/GeertJohan/go.rice"
+	"github.com/GeertJohan/go.rice"
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/auth"
 	"github.com/cswank/quimby/controllers"
@@ -28,7 +30,13 @@ func init() {
 
 func main() {
 	port := os.Getenv("QUIMBY_PORT")
+	if port == "" {
+		log.Fatal("you must specify a port with QUIMBY_PORT")
+	}
 	pth := os.Getenv("QUIMBY_DB")
+	if pth == "" {
+		log.Fatal("you must specify a db location with QUIMBY_DB")
+	}
 	db, err := models.GetDB(pth)
 	if err != nil {
 		log.Fatal(err)
@@ -52,14 +60,14 @@ func start(db *bolt.DB, port, root string) {
 	r.HandleFunc("/api/gadgets/{name}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{name}", DeleteGadget).Methods("DELETE")
 	r.HandleFunc("/api/gadgets/{name}/updates", Connect).Methods("GET")
-
 	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 
+	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/app").HTTPBox()))
 	//r.PathPrefix("/").Handler(http.FileServer(http.Dir(static)))
 
 	http.Handle(root, r)
 	addr := fmt.Sprintf(":%s", port)
-	//fmt.Printf("listening on %s", addr)
+	fmt.Printf("listening on %s", addr)
 	err := http.ListenAndServe(addr, r)
 	log.Println(err)
 }
