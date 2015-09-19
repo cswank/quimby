@@ -77,8 +77,8 @@ func start(db *bolt.DB, port, root string) {
 	r.HandleFunc("/api/gadgets/{name}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{name}", DeleteGadget).Methods("DELETE")
 	r.HandleFunc("/api/gadgets/{name}/updates", Connect).Methods("GET")
-	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/values", GetValues).Methods("GET")
+	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/app").HTTPBox()))
 	//r.PathPrefix("/").Handler(http.FileServer(http.Dir(static)))
