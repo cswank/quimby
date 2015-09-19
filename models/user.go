@@ -3,6 +3,7 @@ package models
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 
 	"github.com/boltdb/bolt"
 
@@ -12,7 +13,7 @@ import (
 type User struct {
 	Username       string   `json:"username"`
 	Password       string   `json:"password,omitempty"`
-	HashedPassword []byte   `json:"hashed_password"`
+	HashedPassword []byte   `json:"hashed_password,omitempty"`
 	Permission     string   `json:"permission"`
 	DB             *bolt.DB `json:"-"`
 }
@@ -29,6 +30,7 @@ func GetUsers(db *bolt.DB) ([]User, error) {
 			if err := json.Unmarshal(v, &u); err != nil {
 				return err
 			}
+			u.HashedPassword = []byte{}
 			users = append(users, u)
 		}
 		return nil
@@ -40,7 +42,8 @@ func (u *User) Fetch() error {
 	return u.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		v := b.Get([]byte(u.Username))
-		return json.Unmarshal(v, u)
+		err := json.Unmarshal(v, u)
+		return err
 	})
 }
 
@@ -74,6 +77,7 @@ func (u *User) Delete() error {
 }
 
 func (u *User) CheckPassword() (bool, error) {
+	fmt.Println(u)
 	pw := u.Password
 	if len(u.HashedPassword) == 0 {
 		if err := u.Fetch(); err != nil {

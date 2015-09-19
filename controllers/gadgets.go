@@ -21,6 +21,14 @@ func init() {
 	clients = map[string]chan gogadgets.Message{}
 }
 
+func Ping(args *Args) error {
+	args.W.Header().Add(
+		"Location",
+		"/api/users/current",
+	)
+	return nil
+}
+
 func GetGadgets(args *Args) error {
 	g, err := models.GetGadgets(args.DB)
 	if err != nil {
@@ -37,6 +45,11 @@ func GetGadget(args *Args) error {
 	}
 	enc := json.NewEncoder(args.W)
 	return enc.Encode(args.Gadget)
+}
+
+func GetUser(args *Args) error {
+	enc := json.NewEncoder(args.W)
+	return enc.Encode(args.User)
 }
 
 func DeleteGadget(args *Args) error {
