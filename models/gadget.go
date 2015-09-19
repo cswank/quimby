@@ -99,7 +99,17 @@ func (g *Gadget) Status() (map[string]map[string]gogadgets.Value, error) {
 }
 
 func (g *Gadget) ReadStatus(w io.Writer) error {
-	r, err := http.Get(fmt.Sprintf("%s/gadgets", g.Host))
+	r, err := http.Get(fmt.Sprintf("http://%s:6111/gadgets", g.Host))
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	_, err = io.Copy(w, r.Body)
+	return err
+}
+
+func (g *Gadget) ReadValues(w io.Writer) error {
+	r, err := http.Get(fmt.Sprintf("http://%s:6111/gadgets/values", g.Host))
 	if err != nil {
 		return err
 	}

@@ -8,11 +8,11 @@ import (
 
 	"github.com/GeertJohan/go.rice"
 	"github.com/boltdb/bolt"
+	"github.com/cswank/quimby/admin"
 	"github.com/cswank/quimby/auth"
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/mux"
-	"github.com/howeyc/gopass"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -22,6 +22,8 @@ var (
 	app      = kingpin.New("quimby", "An interface to gogadets")
 	register = app.Command("register", "Register a new user.")
 	serve    = app.Command("serve", "Start the server.")
+	gadgets  = app.Command("gadgets", "Commands for managing gadgets")
+	add      = gadgets.Command("add", "Add a gadget.")
 )
 
 func init() {
@@ -47,9 +49,10 @@ func main() {
 		log.Fatal(err)
 	}
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
-	// Register user
 	case register.FullCommand():
-		registerUser(db)
+		admin.RegisterUser(db)
+	case add.FullCommand():
+		admin.AddGadget(db)
 	case serve.FullCommand():
 		auth.DB = db
 		start(db, port, "/")
@@ -75,6 +78,7 @@ func start(db *bolt.DB, port, root string) {
 	r.HandleFunc("/api/gadgets/{name}", DeleteGadget).Methods("DELETE")
 	r.HandleFunc("/api/gadgets/{name}/updates", Connect).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
+	r.HandleFunc("/api/gadgets/{name}/values", GetValues).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/app").HTTPBox()))
 	//r.PathPrefix("/").Handler(http.FileServer(http.Dir(static)))
@@ -118,29 +122,10 @@ func GetStatus(w http.ResponseWriter, r *http.Request) {
 	auth.CheckAuth(w, r, controllers.GetStatus, auth.Read)
 }
 
-func Connect(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.Connect, auth.Write)
+func GetValues(w http.ResponseWriter, r *http.Request) {
+	auth.CheckAuth(w, r, controllers.GetValues, auth.Read)
 }
 
-func registerUser(db *bolt.DB) {
-	u := models.User{
-		DB: db,
-	}
-	fmt.Print("username: ")
-	fmt.Scanf("%s", &u.Username)
-	fmt.Print("can write? (y/N): ")
-	var perm string
-	fmt.Scanf("%s", &perm)
-	if perm == "y" || perm == "Y" {
-		u.Permission = "write"
-	}
-	fmt.Printf("password: ")
-	p1 := string(gopass.GetPasswd())
-	fmt.Printf("again: ")
-	p2 := string(gopass.GetPasswd())
-	if p1 != p2 {
-		log.Fatal("passwords don't match")
-	}
-	u.Password = p1
-	log.Println(u.Save())
+func Connect(w http.ResponseWriter, r *http.Request) {
+	auth.CheckAuth(w, r, controllers.Connect, auth.Write)
 }

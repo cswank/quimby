@@ -1,1 +1,13 @@
 <p>Gadgets</p>
+
+<ul>
+  <li ng-repeat="(name, location) in locations">
+    <a>{{name}}</a>
+    <ul>
+      <li ng-repeat="(gadget, value) in location">
+        {{gadget}}: {{value.value}}
+      </li>
+    </ul>
+  </li>
+</ul>
+

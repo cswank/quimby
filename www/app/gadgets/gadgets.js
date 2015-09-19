@@ -2,13 +2,15 @@
 
 angular.module('quimby.gadgets', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/gadgets', {
+        $routeProvider.when('/gadgets/:name', {
             templateUrl: 'gadgets/gadgets.html',
             controller: 'GadgetsCtrl'
         });
     }])
 
-.controller('GadgetsCtrl', ['$scope', '$http', function($scope, $http) {
-    $scope.gadgets = $http.get("api/gadgets");
-    console.log("gadgets", $scope.gadgets);
+.controller('GadgetsCtrl', ['$scope', '$http', '$routeParams', function($scope, $http, $routeParams) {
+    $scope.name = $routeParams.name;
+    $http.get("/api/gadgets/" +  $scope.name + "/values").success(function(locations) {
+        $scope.locations = locations;
+    });
 }]);

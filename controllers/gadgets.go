@@ -60,8 +60,14 @@ func GetStatus(args *Args) error {
 	if err := args.Gadget.Fetch(); err != nil {
 		return err
 	}
-
 	return args.Gadget.ReadStatus(args.W)
+}
+
+func GetValues(args *Args) error {
+	if err := args.Gadget.Fetch(); err != nil {
+		return err
+	}
+	return args.Gadget.ReadValues(args.W)
 }
 
 func SendCommand(args *Args) error {
