@@ -71,6 +71,7 @@ func start(db *bolt.DB, port, root string) {
 
 	r.HandleFunc("/api/ping", Ping).Methods("GET")
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
+	r.HandleFunc("/api/updates", Relay).Methods("POST")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
 	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
 	r.HandleFunc("/api/gadgets/{name}", GetGadget).Methods("GET")
@@ -85,7 +86,7 @@ func start(db *bolt.DB, port, root string) {
 
 	http.Handle(root, r)
 	addr := fmt.Sprintf(":%s", port)
-	fmt.Printf("listening on %s", addr)
+	fmt.Printf("listening on %s\n", addr)
 	err := http.ListenAndServe(addr, r)
 	log.Println(err)
 }
@@ -128,4 +129,8 @@ func GetValues(w http.ResponseWriter, r *http.Request) {
 
 func Connect(w http.ResponseWriter, r *http.Request) {
 	auth.CheckAuth(w, r, controllers.Connect, auth.Write)
+}
+
+func Relay(w http.ResponseWriter, r *http.Request) {
+	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Write)
 }

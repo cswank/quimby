@@ -1,13 +1,7 @@
 <p>Gadgets</p>
-
 <ul>
   <li ng-repeat="(name, location) in locations">
-    <a>{{name}}</a>
-    <ul>
-      <li ng-repeat="(gadget, value) in location" ng-click="toggle(name, gadget)">
-        {{gadget}}: {{value.value}}
-      </li>
-    </ul>
+    <gadget name="{{name}}" location="location"></gadget>
   </li>
 </ul>
 

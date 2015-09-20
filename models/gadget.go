@@ -99,7 +99,7 @@ func (g *Gadget) Status() (map[string]map[string]gogadgets.Value, error) {
 }
 
 func (g *Gadget) ReadStatus(w io.Writer) error {
-	r, err := http.Get(fmt.Sprintf("http://%s:6111/gadgets", g.Host))
+	r, err := http.Get(fmt.Sprintf("%s/gadgets", g.Host))
 	if err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (g *Gadget) ReadStatus(w io.Writer) error {
 }
 
 func (g *Gadget) ReadValues(w io.Writer) error {
-	r, err := http.Get(fmt.Sprintf("http://%s:6111/gadgets/values", g.Host))
+	r, err := http.Get(fmt.Sprintf("%s/gadgets/values", g.Host))
 	if err != nil {
 		return err
 	}
@@ -125,11 +125,14 @@ func (g *Gadget) Register(addr string) (string, error) {
 			return "", err
 		}
 	}
+
 	a := map[string]string{"address": addr}
 	buf := &bytes.Buffer{}
 	enc := json.NewEncoder(buf)
 	enc.Encode(&a)
+	fmt.Println("register")
 	r, err := http.Post(fmt.Sprintf("%s/clients", g.Host), "application/json", buf)
+	fmt.Println("registered", addr, r, err)
 	if err != nil {
 		return "", err
 	}

@@ -15,6 +15,7 @@ import (
 var (
 	addr    string
 	clients map[string]chan gogadgets.Message
+	host    string
 )
 
 func init() {
@@ -57,9 +58,11 @@ func DeleteGadget(args *Args) error {
 }
 
 func GetStatus(args *Args) error {
+
 	if err := args.Gadget.Fetch(); err != nil {
 		return err
 	}
+	fmt.Println("get status", args.Gadget)
 	return args.Gadget.ReadStatus(args.W)
 }
 
@@ -149,6 +152,7 @@ func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
 func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 	for {
 		t, p, err := conn.ReadMessage()
+		fmt.Println("got ws msg", t, string(p), err)
 		if err != nil {
 			return
 		}
@@ -165,12 +169,14 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 }
 
 func RelayMessage(args *Args) error {
+	fmt.Println("relay")
 	var m gogadgets.Message
 	dec := json.NewDecoder(args.R.Body)
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
 	ch, ok := clients[m.Host]
+	fmt.Println("relaying message", m.Host, ok)
 	if !ok {
 		return nil
 	}
@@ -179,9 +185,9 @@ func RelayMessage(args *Args) error {
 }
 
 func getAddr() string {
-	host := os.Getenv("QUIMBY_HOST")
+	host = os.Getenv("QUIMBY_HOST")
 	if host == "" {
-		log.Fatal("please set QUIMBY_HOST")
+		log.Println("please set QUIMBY_HOST")
 	}
 	if addr == "" {
 		addr = fmt.Sprintf("%s/api/updates", host)

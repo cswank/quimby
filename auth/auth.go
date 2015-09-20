@@ -48,10 +48,9 @@ func CheckAuth(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL)
 	}
 
 	args.Gadget = g
-
 	err = ctrl(args)
 	if err != nil {
-		log.Println(err)
+		log.Println(args.R.URL.Path, err)
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
@@ -90,13 +89,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(user)
 	if err != nil {
-		http.Error(w, "bad request 1", http.StatusBadRequest)
+		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
 	goodPassword, err := user.CheckPassword()
 	fmt.Println("good?", goodPassword, err)
 	if !goodPassword {
-		http.Error(w, "bad request 2", http.StatusBadRequest)
+		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
 	value := map[string]string{
