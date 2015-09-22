@@ -131,9 +131,7 @@ func (g *Gadget) Register(addr, cookie string) (string, error) {
 	buf := &bytes.Buffer{}
 	enc := json.NewEncoder(buf)
 	enc.Encode(&a)
-	fmt.Println("register")
 	r, err := http.Post(fmt.Sprintf("%s/clients", g.Host), "application/json", buf)
-	fmt.Println("registered", addr, r, err)
 	if err != nil {
 		return "", err
 	}

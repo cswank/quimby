@@ -23,5 +23,6 @@ _testmain.go
 *.test
 *.prof
 *~
-www-app.rice-box.go
-
+*.rice-box.go
+dist
+.tmp

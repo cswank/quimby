@@ -32,6 +32,9 @@ var (
 func init() {
 	dbPath = os.Getenv("QUIMBY_DB")
 	static = os.Getenv("QUIMBY_STATIC")
+	if static == "" {
+		static = "www/app"
+	}
 
 	// if len(static) == 0 {
 	// 	log.Fatal("you must set the GADGETS_STATIC env var")
@@ -88,8 +91,7 @@ func start(db *bolt.DB, port, root string) {
 	r.HandleFunc("/api/gadgets/{name}/values", GetValues).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 
-	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/app").HTTPBox()))
-	//r.PathPrefix("/").Handler(http.FileServer(http.Dir(static)))
+	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox(static).HTTPBox()))
 
 	http.Handle(root, r)
 	addr := fmt.Sprintf(":%s", port)
