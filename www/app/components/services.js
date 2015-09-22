@@ -17,15 +17,14 @@ angular.module('quimby.services', [])
                 });
             });
         }
-        this.toggle =  function(location, name, callback) {
+        this.send =  function(location, name, callback) {
             var val = locations[location][name].value;
             var onoff = val ? "off":"on";
             var command = commands[location + " " + name][onoff];
-            console.log(command);
             callback(command);
         }
         this.update = function(msg) {
-            console.log(msg);
+            
         }
     }])
     .factory('$sockets', ['$location', '$http', '$timeout', '$routeParams', function($location, $http, $timeout, $routeParams) {
@@ -35,39 +34,28 @@ angular.module('quimby.services', [])
         var host;
         var callback;
         
-        function getWebsockets() {
+        function getWebsocket() {
             var prot = "wss";
             if ($location.protocol() == "http") {
                 prot = "ws";
             }
             var url = prot + "://" + $location.host() + ":8111/api/gadgets/" + $routeParams.name + "/updates";
             ws = new WebSocket(url);
-            console.log("got ws", ws);
             return ws;
         }
 
-        function sendMessage(message) {
-            message = JSON.parse(message);
-            $timeout.cancel(statusPromise);
-            var url = "/api/gadgets/" + host + "/commands";
-            $http.post(url, message.message).success(function(data) {
-                getStatus();
-            });
-        }
-        
         function doConnect(errorCallback) {
             if(ws != undefined) {
                 ws.close();
                 ws = null;
             }
-            ws = getWebsockets(host);
+            ws = getWebsocket(host);
             ws.onopen = function() {
             };
             ws.onerror = function() {
             };
             ws.onmessage = function(message) {
                 message = JSON.parse(message.data);
-                console.log("got msg", message);
                 callback(message);
             };
         }
@@ -78,8 +66,8 @@ angular.module('quimby.services', [])
                 doConnect();
             },
             send: function(command) {
-                console.log("sending", command);
                 ws.send(JSON.stringify({
+                    sender: "quimby",
                     type: "command",
                     body: command,
                 }));

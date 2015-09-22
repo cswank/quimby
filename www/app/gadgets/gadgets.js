@@ -8,9 +8,17 @@ angular.module('quimby.gadgets', ['ngRoute'])
         });
     }])
 
-.controller('GadgetsCtrl', ['$scope', '$gadgets', '$routeParams', function($scope, $gadgets, $routeParams) {
+.controller('GadgetsCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', function($scope, $gadgets, $sockets, $routeParams) {
     $scope.name = $routeParams.name;
     $gadgets.getGadgets($scope.name, function(locations) {
         $scope.locations = locations;
+    });
+    
+    $sockets.connect(function(msg) {
+        if (msg.type == "update") {
+            $scope.$apply(function() {
+                $scope.locations[msg.location][msg.name] = msg.value;
+            })
+        }
     });
 }]);

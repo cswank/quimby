@@ -32,3 +32,7 @@ func Write(args *controllers.Args) bool {
 func Read(args *controllers.Args) bool {
 	return args.User.Permission == "write" || args.User.Permission == "admin" || args.User.Permission == "read"
 }
+
+func Anyone(args *controllers.Args) bool {
+	return true
+}

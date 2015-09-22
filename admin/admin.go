@@ -9,7 +9,18 @@ import (
 	"github.com/howeyc/gopass"
 )
 
-func RegisterUser(db *bolt.DB) {
+func ListUsers(db *bolt.DB) {
+	users, err := models.GetUsers(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("# username  permission")
+	for i, u := range users {
+		fmt.Println(i+1, u.Username, u.Permission)
+	}
+}
+
+func AddUser(db *bolt.DB) {
 	u := models.User{
 		DB: db,
 	}
@@ -47,5 +58,16 @@ func AddGadget(db *bolt.DB) {
 		fmt.Println(g.Save())
 	} else {
 		fmt.Println("not saving")
+	}
+}
+
+func ListGadgets(db *bolt.DB) {
+	gadgets, err := models.GetGadgets(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("# name host")
+	for i, g := range gadgets {
+		fmt.Println(i+1, g.Name, g.Host)
 	}
 }

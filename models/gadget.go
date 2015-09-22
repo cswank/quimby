@@ -118,7 +118,7 @@ func (g *Gadget) ReadValues(w io.Writer) error {
 	return err
 }
 
-func (g *Gadget) Register(addr string) (string, error) {
+func (g *Gadget) Register(addr, cookie string) (string, error) {
 	if g.Host == "" {
 		if err := g.Fetch(); err != nil {
 			fmt.Println(g, err)
@@ -126,7 +126,8 @@ func (g *Gadget) Register(addr string) (string, error) {
 		}
 	}
 
-	a := map[string]string{"address": addr}
+	a := map[string]string{"address": addr, "cookie": cookie}
+
 	buf := &bytes.Buffer{}
 	enc := json.NewEncoder(buf)
 	enc.Encode(&a)

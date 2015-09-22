@@ -17,13 +17,16 @@ import (
 )
 
 var (
-	static   string
-	dbPath   string
-	app      = kingpin.New("quimby", "An interface to gogadets")
-	register = app.Command("register", "Register a new user.")
-	serve    = app.Command("serve", "Start the server.")
-	gadgets  = app.Command("gadgets", "Commands for managing gadgets")
-	add      = gadgets.Command("add", "Add a gadget.")
+	static     string
+	dbPath     string
+	app        = kingpin.New("quimby", "An interface to gogadets")
+	users      = app.Command("users", "User management")
+	userAdd    = users.Command("add", "Add a new user.")
+	userList   = users.Command("list", "List users.")
+	serve      = app.Command("serve", "Start the server.")
+	gadgets    = app.Command("gadgets", "Commands for managing gadgets")
+	gadgetAdd  = gadgets.Command("add", "Add a gadget.")
+	gadgetList = gadgets.Command("list", "List the gadgets.")
 )
 
 func init() {
@@ -49,10 +52,14 @@ func main() {
 		log.Fatal(err)
 	}
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
-	case register.FullCommand():
-		admin.RegisterUser(db)
-	case add.FullCommand():
+	case userAdd.FullCommand():
+		admin.AddUser(db)
+	case userList.FullCommand():
+		admin.ListUsers(db)
+	case gadgetAdd.FullCommand():
 		admin.AddGadget(db)
+	case gadgetList.FullCommand():
+		admin.ListGadgets(db)
 	case serve.FullCommand():
 		auth.DB = db
 		start(db, port, "/")
@@ -132,5 +139,5 @@ func Connect(w http.ResponseWriter, r *http.Request) {
 }
 
 func Relay(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Write)
+	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Anyone)
 }

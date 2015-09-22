@@ -4,18 +4,23 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"os"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
+	"github.com/gorilla/securecookie"
 	"github.com/gorilla/websocket"
 )
 
 var (
-	addr    string
-	clients map[string]chan gogadgets.Message
-	host    string
+	addr         string
+	clients      map[string]chan gogadgets.Message
+	host         string
+	hashKey      = []byte(os.Getenv("QUIMBY_HASH_KEY"))
+	blockKey     = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
+	SecureCookie = securecookie.New(hashKey, blockKey)
 )
 
 func init() {
@@ -58,11 +63,9 @@ func DeleteGadget(args *Args) error {
 }
 
 func GetStatus(args *Args) error {
-
 	if err := args.Gadget.Fetch(); err != nil {
 		return err
 	}
-	fmt.Println("get status", args.Gadget)
 	return args.Gadget.ReadStatus(args.W)
 }
 
@@ -111,7 +114,20 @@ func AddGadget(args *Args) error {
 //a websocket.  It pushes new messages from the
 //instance to the websocket and vice versa.
 func Connect(args *Args) error {
-	h, err := args.Gadget.Register(getAddr())
+
+	value := map[string]string{
+		"user": args.User.Username,
+	}
+
+	encoded, _ := SecureCookie.Encode("quimby", value)
+	cookie := &http.Cookie{
+		Name:     "quimby",
+		Value:    encoded,
+		Path:     "/",
+		HttpOnly: false,
+	}
+
+	h, err := args.Gadget.Register(getAddr(), cookie.String())
 	if err != nil {
 		return err
 	}
@@ -152,7 +168,6 @@ func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
 func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 	for {
 		t, p, err := conn.ReadMessage()
-		fmt.Println("got ws msg", t, string(p), err)
 		if err != nil {
 			return
 		}
@@ -169,14 +184,12 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 }
 
 func RelayMessage(args *Args) error {
-	fmt.Println("relay")
 	var m gogadgets.Message
 	dec := json.NewDecoder(args.R.Body)
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
 	ch, ok := clients[m.Host]
-	fmt.Println("relaying message", m.Host, ok)
 	if !ok {
 		return nil
 	}

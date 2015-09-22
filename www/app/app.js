@@ -7,7 +7,8 @@ angular.module('quimby', [
     'ngAnimate',
     'quimby.gadgets',
     'quimby.directives',
-    'quimby.services'
+    'quimby.services',
+    'quimby.filters'
 ]).
     config(['$routeProvider', function($routeProvider) {
         $routeProvider.otherwise({redirectTo: '/gadgets'});
