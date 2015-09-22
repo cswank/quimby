@@ -1,0 +1,13 @@
+{
+    "gadgets": [
+        {
+            "location": "lab",
+            "name": "led",
+            "pin": {
+                "type": "gpio",
+                "port": "8",
+                "pin": "9"
+            }
+        }
+    ]
+}
