@@ -6,14 +6,14 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/cswank/quimby/Godeps/_workspace/src/github.com/GeertJohan/go.rice"
-	"github.com/cswank/quimby/Godeps/_workspace/src/github.com/boltdb/bolt"
-	"github.com/cswank/quimby/Godeps/_workspace/src/github.com/gorilla/mux"
-	"github.com/cswank/quimby/Godeps/_workspace/src/gopkg.in/alecthomas/kingpin.v2"
+	"github.com/GeertJohan/go.rice"
+	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/admin"
 	"github.com/cswank/quimby/auth"
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
+	"github.com/gorilla/mux"
+	"gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
