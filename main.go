@@ -17,7 +17,6 @@ import (
 )
 
 var (
-	static     string
 	dbPath     string
 	app        = kingpin.New("quimby", "An interface to gogadets")
 	users      = app.Command("users", "User management")
@@ -31,14 +30,6 @@ var (
 
 func init() {
 	dbPath = os.Getenv("QUIMBY_DB")
-	static = os.Getenv("QUIMBY_STATIC")
-	if static == "" {
-		static = "www/app"
-	}
-
-	// if len(static) == 0 {
-	// 	log.Fatal("you must set the GADGETS_STATIC env var")
-	// }
 }
 
 func main() {
@@ -91,7 +82,7 @@ func start(db *bolt.DB, port, root string) {
 	r.HandleFunc("/api/gadgets/{name}/values", GetValues).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 
-	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox(static).HTTPBox()))
+	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
 	http.Handle(root, r)
 	addr := fmt.Sprintf(":%s", port)

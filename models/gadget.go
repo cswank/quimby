@@ -121,7 +121,6 @@ func (g *Gadget) ReadValues(w io.Writer) error {
 func (g *Gadget) Register(addr, cookie string) (string, error) {
 	if g.Host == "" {
 		if err := g.Fetch(); err != nil {
-			fmt.Println(g, err)
 			return "", err
 		}
 	}

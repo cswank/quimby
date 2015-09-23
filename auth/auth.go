@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -93,7 +92,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	goodPassword, err := user.CheckPassword()
-	fmt.Println("good?", goodPassword, err)
 	if !goodPassword {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
