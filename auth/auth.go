@@ -69,7 +69,9 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 		return nil, err
 	}
 	user.Username = m["user"]
-	return user, user.Fetch()
+	err = user.Fetch()
+	user.HashedPassword = []byte{}
+	return user, err
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
