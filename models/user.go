@@ -3,7 +3,6 @@ package models
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 
 	"github.com/boltdb/bolt"
 
@@ -77,7 +76,6 @@ func (u *User) Delete() error {
 }
 
 func (u *User) CheckPassword() (bool, error) {
-	fmt.Println(u)
 	pw := u.Password
 	if len(u.HashedPassword) == 0 {
 		if err := u.Fetch(); err != nil {

@@ -2,7 +2,6 @@ package auth
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -69,7 +68,10 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 		return nil, err
 	}
 	user.Username = m["user"]
-	return user, user.Fetch()
+
+	err = user.Fetch()
+	user.HashedPassword = []byte{}
+	return user, err
 }
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -93,7 +95,6 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	goodPassword, err := user.CheckPassword()
-	fmt.Println("good?", goodPassword, err)
 	if !goodPassword {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
