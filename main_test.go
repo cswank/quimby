@@ -41,6 +41,15 @@ var cstDialer = websocket.Dialer{
 	WriteBufferSize: 1024,
 }
 
+type fakeLogger struct {
+	f bool
+}
+
+func (f *fakeLogger) Println(v ...interface{})          {}
+func (f *fakeLogger) Printf(s string, v ...interface{}) {}
+func (f *fakeLogger) Fatal(v ...interface{})            { f.f = true }
+func (f *fakeLogger) Fatalf(s string, v ...interface{}) { f.f = true }
+
 var _ = Describe("Quimby", func() {
 	var (
 		port        string
@@ -58,9 +67,11 @@ var _ = Describe("Quimby", func() {
 		ts          *httptest.Server
 		msgs        []gogadgets.Message
 		clients     []map[string]string
+		lg          *fakeLogger
 	)
 
 	BeforeEach(func() {
+		lg = &fakeLogger{}
 		msgs = []gogadgets.Message{}
 		clients = []map[string]string{}
 		ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -148,7 +159,7 @@ var _ = Describe("Quimby", func() {
 		err = sprinklers.Save()
 		Expect(err).To(BeNil())
 
-		go start(db, port, root)
+		go start(db, port, root, lg)
 
 		var r *http.Response
 		Eventually(func() error {

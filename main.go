@@ -45,6 +45,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	lg := log.New(os.Stdout, "quimby ", log.Ltime)
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case userAdd.FullCommand():
 		admin.AddUser(db)
@@ -56,13 +57,13 @@ func main() {
 		admin.ListGadgets(db)
 	case serve.FullCommand():
 		auth.DB = db
-		start(db, port, "/")
+		start(db, port, "/", lg)
 	}
 	defer db.Close()
 
 }
 
-func start(db *bolt.DB, port, root string) {
+func start(db *bolt.DB, port, root string, lg controllers.Logger) {
 	auth.DB = db
 
 	r := mux.NewRouter()
@@ -86,7 +87,7 @@ func start(db *bolt.DB, port, root string) {
 
 	http.Handle(root, r)
 	addr := fmt.Sprintf(":%s", port)
-	fmt.Printf("listening on %s\n", addr)
+	lg.Printf("listening on %s\n", addr)
 	err := http.ListenAndServe(addr, r)
 	log.Println(err)
 }
