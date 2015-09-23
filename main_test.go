@@ -13,12 +13,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/boltdb/bolt"
-	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/Godeps/_workspace/src/github.com/boltdb/bolt"
+	"github.com/cswank/quimby/Godeps/_workspace/src/github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/Godeps/_workspace/src/github.com/gorilla/websocket"
+	. "github.com/cswank/quimby/Godeps/_workspace/src/github.com/onsi/ginkgo"
+	. "github.com/cswank/quimby/Godeps/_workspace/src/github.com/onsi/gomega"
 	"github.com/cswank/quimby/models"
-	"github.com/gorilla/websocket"
-	. "github.com/onsi/ginkgo"
-	. "github.com/onsi/gomega"
 )
 
 func init() {
