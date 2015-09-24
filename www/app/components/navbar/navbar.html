@@ -1,26 +1,16 @@
 <div>
-  <div layout="vertical">
-    <md-sidenav md-component-id="left" class="md-sidenav-left" flex>
-      <md-content layout-padding>
-        <md-toolbar id="sidenav-toolbar">
-          Chief Quimby
-        </md-toolbar>
-        <dt class="navlinks">
-          <dl><a href="/#/gadgets" ng-click="closeLeftMenu('gadgets')" ng-class="{active: isActive('/gadgets')}">gadgets</a></dl>
-          <md-divider></md-divider>
-          <dl><a href="" ng-click="showLogout()">logout</a></dl>
-        </dt>
-      </md-content>
-    </md-sidenav>
-  </div>
   <md-toolbar>
-    <div class="md-toolbar-tools">
-      <span ng-show="loggedIn">
-        <a>Welcome {{user.username}}</a>
-      </span>
-      <span ng-hide="loggedIn">
-        <md-button ng-click="showLogin()">Login</md-button>
-      </span>
+    <div layout="row">
+      <div flex></div>
+      <div class="md-toolbar-tools user-info" flex="20">
+        <span ng-show="loggedIn">
+          <a>Welcome {{user.username}}</a>
+          <a class="logout" ng-click="showLogout()"> log out</a>
+        </span>
+        <span ng-hide="loggedIn">
+          <md-button ng-click="showLogin()">Login</md-button>
+        </span>
+      </div>
     </div>
   </md-toolbar>
 </div>

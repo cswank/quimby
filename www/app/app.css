@@ -6,11 +6,6 @@ body {
     height: 100%;
 }
 
-#sidenav-toolbar {
-    background-color: white;
-    color: gray;
-}
-
 .navlinks a {
     text-decoration: none;
     color: gray;
@@ -28,12 +23,8 @@ md-toolbar md-select-label.md-select-label {
     color:white;
 }
 
-.toolbar-search {
-    background-color: white;
-}
-
-#main {
-    
+.logout {
+    font-size: small;
 }
 
 .login-modal .modal-dialog {
@@ -66,5 +57,5 @@ md-dialog md-content {
 }
 
 .user-info {
-    min-width: 320px;
+    min-width: 220px;
 }

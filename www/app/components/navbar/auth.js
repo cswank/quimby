@@ -21,15 +21,11 @@ angular.module('quimby.services')
                         .error(function (data, status, headers, config) {
                             loggedIn = false;
                             user = false;
-                            if (callback) {
-                                callback(false);
-                            }
                         });
                 }
             },
             login: function(username, password, callback, errorCallback) {
                 var u = {username:username, password: password};
-                console.log(u);
                 $http({
                     url: '/api/login',
                     method: "POST",

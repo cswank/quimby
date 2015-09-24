@@ -17,15 +17,16 @@ import (
 )
 
 var (
-	dbPath     string
-	app        = kingpin.New("quimby", "An interface to gogadets")
-	users      = app.Command("users", "User management")
-	userAdd    = users.Command("add", "Add a new user.")
-	userList   = users.Command("list", "List users.")
-	serve      = app.Command("serve", "Start the server.")
-	gadgets    = app.Command("gadgets", "Commands for managing gadgets")
-	gadgetAdd  = gadgets.Command("add", "Add a gadget.")
-	gadgetList = gadgets.Command("list", "List the gadgets.")
+	dbPath       string
+	app          = kingpin.New("quimby", "An interface to gogadets")
+	users        = app.Command("users", "User management")
+	userAdd      = users.Command("add", "Add a new user.")
+	userList     = users.Command("list", "List users.")
+	serve        = app.Command("serve", "Start the server.")
+	gadgets      = app.Command("gadgets", "Commands for managing gadgets")
+	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
+	gadgetList   = gadgets.Command("list", "List the gadgets.")
+	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
 )
 
 func init() {
@@ -55,6 +56,8 @@ func main() {
 		admin.AddGadget(db)
 	case gadgetList.FullCommand():
 		admin.ListGadgets(db)
+	case gadgetDelete.FullCommand():
+		admin.DeleteGadget(db)
 	case serve.FullCommand():
 		auth.DB = db
 		start(db, port, "/", lg)

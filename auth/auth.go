@@ -4,22 +4,17 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/mux"
-	"github.com/gorilla/securecookie"
 )
 
 type controller func(args *controllers.Args) error
 
 var (
-	DB           *bolt.DB
-	hashKey      = []byte(os.Getenv("QUIMBY_HASH_KEY"))
-	blockKey     = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
-	SecureCookie = securecookie.New(hashKey, blockKey)
+	DB *bolt.DB
 )
 
 func CheckAuth(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
@@ -63,7 +58,7 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 		return nil, err
 	}
 	var m map[string]string
-	err = SecureCookie.Decode("quimby", cookie.Value, &m)
+	err = controllers.SecureCookie.Decode("quimby", cookie.Value, &m)
 	if err != nil {
 		return nil, err
 	}
@@ -103,12 +98,13 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		"user": user.Username,
 	}
 
-	encoded, _ := SecureCookie.Encode("quimby", value)
+	encoded, _ := controllers.SecureCookie.Encode("quimby", value)
 	cookie := &http.Cookie{
 		Name:     "quimby",
 		Value:    encoded,
 		Path:     "/",
 		HttpOnly: false,
 	}
+	w.Header().Set("Location", "/api/users/current")
 	http.SetCookie(w, cookie)
 }

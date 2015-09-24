@@ -2,23 +2,16 @@
 
 angular.module('quimby.gadgets', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/gadgets/:name', {
+        $routeProvider.when('/gadgets', {
             templateUrl: 'gadgets/gadgets.html',
             controller: 'GadgetsCtrl'
         });
     }])
 
-.controller('GadgetsCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', function($scope, $gadgets, $sockets, $routeParams) {
-    $scope.name = $routeParams.name;
-    $gadgets.getGadgets($scope.name, function(locations) {
-        $scope.locations = locations;
-    });
-    
-    $sockets.connect(function(msg) {
-        if (msg.type == "update") {
-            $scope.$apply(function() {
-                $scope.locations[msg.location][msg.name] = msg.value;
-            })
-        }
+.controller('GadgetsCtrl', ['$scope', '$gadgets', '$auth', function($scope, $gadgets, $auth) {
+    $auth.getUser(function(user) {
+        $gadgets.getGadgets(function(data) {
+            $scope.gadgets = data;
+        });
     });
 }]);

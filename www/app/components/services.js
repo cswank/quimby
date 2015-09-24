@@ -4,10 +4,17 @@ angular.module('quimby.services', [])
     .service('$gadgets', ['$http', function ($http) {
         var commands = {};
         var locations = {};
-        this.getGadgets = function(name, callback) {
+        this.getGadgets = function(callback) {
+            $http.get("/api/gadgets").success(function(data) {
+                callback(data);
+            });
+        }
+        this.getDevices = function(name, callback) {
             $http.get("/api/gadgets/" +  name + "/values").success(function(data) {
                 locations = data;
                 callback(locations);
+            }).error(function() {
+                
             });
             $http.get("/api/gadgets/" +  name + "/status").success(function(statuses) {
                 angular.forEach(statuses, function(value, key) {
@@ -39,7 +46,7 @@ angular.module('quimby.services', [])
             if ($location.protocol() == "http") {
                 prot = "ws";
             }
-            var url = prot + "://" + $location.host() + ":8111/api/gadgets/" + $routeParams.name + "/updates";
+            var url = prot + "://" + $location.host() + ":" + $location.port() + "/api/gadgets/" + $routeParams.name + "/updates";
             ws = new WebSocket(url);
             return ws;
         }
@@ -66,11 +73,12 @@ angular.module('quimby.services', [])
                 doConnect();
             },
             send: function(command) {
-                ws.send(JSON.stringify({
+                var msg = JSON.stringify({
                     sender: "quimby",
                     type: "command",
                     body: command,
-                }));
+                });
+                ws.send(msg);
             },
             close: function() {
                 if (ws != undefined) {

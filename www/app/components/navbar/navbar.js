@@ -74,6 +74,7 @@ angular.module('quimby.directives')
                                 $scope.message = "";
                                 $scope.user = user;
                                 $scope.loggedIn = true;
+                                $location.path("/gadgets");
                             }, function(){
                                 $scope.message = "the username or password is not correct, please try again";
                                 $scope.showLogin();

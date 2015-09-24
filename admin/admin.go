@@ -61,11 +61,29 @@ func AddGadget(db *bolt.DB) {
 	}
 }
 
+func DeleteGadget(db *bolt.DB) {
+	gadgets, err := models.GetGadgets(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	fmt.Println("pick a number")
+	listGadgets(gadgets)
+	var n int
+	fmt.Scanf("%d", &n)
+	g := gadgets[n-1]
+	g.DB = db
+	fmt.Println(g.Delete())
+}
+
 func ListGadgets(db *bolt.DB) {
 	gadgets, err := models.GetGadgets(db)
 	if err != nil {
 		log.Fatal(err)
 	}
+	listGadgets(gadgets)
+}
+
+func listGadgets(gadgets []models.Gadget) {
 	fmt.Println("# name host")
 	for i, g := range gadgets {
 		fmt.Println(i+1, g.Name, g.Host)

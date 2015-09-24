@@ -6,7 +6,7 @@ angular.module('quimby.directives')
             restrict: "E",
             replace: true,
             transclude: true,
-            templateUrl: "/gadgets/device.html?t=" + new Date().getTime(),
+            templateUrl: "/gadget/device.html?t=" + new Date().getTime(),
             scope: {
                 name: '=',
                 value: '=',
