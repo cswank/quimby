@@ -46,7 +46,7 @@ angular.module('quimby.services', [])
             if ($location.protocol() == "http") {
                 prot = "ws";
             }
-            var url = prot + "://" + $location.host() + ":" + $location.port() + "/api/gadgets/" + $routeParams.name + "/updates";
+            var url = prot + "://" + $location.host() + ":" + $location.port() + "/api/gadgets/" + $routeParams.name + "/websocket";
             ws = new WebSocket(url);
             return ws;
         }

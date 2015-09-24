@@ -53,7 +53,9 @@ func (f *fakeLogger) Fatalf(s string, v ...interface{}) { f.f = true }
 var _ = Describe("Quimby", func() {
 	var (
 		port        string
+		port2       string
 		root        string
+		iRoot       string
 		dir         string
 		pth         string
 		u           *models.User
@@ -110,10 +112,14 @@ var _ = Describe("Quimby", func() {
 			}
 		}))
 		port = fmt.Sprintf("%d", 1024+rand.Intn(65535-1024))
+		port2 = fmt.Sprintf("%d", 1024+rand.Intn(65535-1024))
 
 		root = fmt.Sprintf("%s", RandString(10))
+		iRoot = fmt.Sprintf("%s", RandString(10))
 
-		os.Setenv("QUIMBY_HOST", fmt.Sprintf("http://localhost:%s", port))
+		os.Setenv("QUIMBY_PORT", port)
+		os.Setenv("QUIMBY_INTERNAL_PORT", port2)
+		os.Setenv("QUIMBY_HOST", "http://localhost")
 		addr = fmt.Sprintf("http://localhost:%s/api/%%s", port)
 
 		dir, _ = ioutil.TempDir("", "")
@@ -159,7 +165,7 @@ var _ = Describe("Quimby", func() {
 		err = sprinklers.Save()
 		Expect(err).To(BeNil())
 
-		go start(db, port, root, lg)
+		go start(db, port, root, iRoot, lg)
 
 		var r *http.Response
 		Eventually(func() error {
@@ -363,7 +369,7 @@ var _ = Describe("Quimby", func() {
 		})
 
 		It("allows the sending of messages with a websocket", func() {
-			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/updates"), "http", "ws", -1)
+			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
 			c := cookies[0]
 			h := http.Header{"Origin": {u}, "Cookie": {c.String()}}
 			ws, _, err := cstDialer.Dial(u, h)
@@ -391,7 +397,7 @@ var _ = Describe("Quimby", func() {
 		})
 
 		It("does not allow the sending of messages with a websocket when there are no auth cookies", func() {
-			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/updates"), "http", "ws", -1)
+			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
 			h := http.Header{"Origin": {u}}
 			ws, r, err := cstDialer.Dial(u, h)
 			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))

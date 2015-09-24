@@ -60,14 +60,26 @@ func main() {
 		admin.DeleteGadget(db)
 	case serve.FullCommand():
 		auth.DB = db
-		start(db, port, "/", lg)
+		start(db, port, "/", "/api", lg)
 	}
 	defer db.Close()
 
 }
 
-func start(db *bolt.DB, port, root string, lg controllers.Logger) {
+func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) {
 	auth.DB = db
+
+	i := mux.NewRouter()
+	i.HandleFunc("/internal/updates", Relay).Methods("POST")
+	http.Handle(iRoot, i)
+	a := fmt.Sprintf(":%s", os.Getenv("QUIMBY_INTERNAL_PORT"))
+	go func() {
+		lg.Printf("listening on %s", a)
+		err := http.ListenAndServe(a, i)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	r := mux.NewRouter()
 
@@ -76,13 +88,12 @@ func start(db *bolt.DB, port, root string, lg controllers.Logger) {
 
 	r.HandleFunc("/api/ping", Ping).Methods("GET")
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
-	r.HandleFunc("/api/updates", Relay).Methods("POST")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
 	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
 	r.HandleFunc("/api/gadgets/{name}", GetGadget).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{name}", DeleteGadget).Methods("DELETE")
-	r.HandleFunc("/api/gadgets/{name}/updates", Connect).Methods("GET")
+	r.HandleFunc("/api/gadgets/{name}/websocket", Connect).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/values", GetValues).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
 

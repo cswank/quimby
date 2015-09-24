@@ -139,6 +139,7 @@ func Connect(args *Args) error {
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
+		CheckOrigin:     func(r *http.Request) bool { return true },
 	}
 
 	conn, err := upgrader.Upgrade(args.W, args.R, nil)
@@ -203,7 +204,7 @@ func getAddr() string {
 		log.Println("please set QUIMBY_HOST")
 	}
 	if addr == "" {
-		addr = fmt.Sprintf("%s/api/updates", host)
+		addr = fmt.Sprintf("%s:%s/internal/updates", os.Getenv("QUIMBY_HOST"), os.Getenv("QUIMBY_INTERNAL_PORT"))
 	}
 	return addr
 }
