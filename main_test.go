@@ -35,7 +35,7 @@ func RandString(n int) string {
 	return string(b)
 }
 
-var cstDialer = websocket.Dialer{
+var dialer = websocket.Dialer{
 	Subprotocols:    []string{"p1", "p2"},
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -61,6 +61,7 @@ var _ = Describe("Quimby", func() {
 		u           *models.User
 		u2          *models.User
 		addr        string
+		addr2       string
 		db          *bolt.DB
 		cookies     []*http.Cookie
 		readCookies []*http.Cookie
@@ -121,6 +122,7 @@ var _ = Describe("Quimby", func() {
 		os.Setenv("QUIMBY_INTERNAL_PORT", port2)
 		os.Setenv("QUIMBY_HOST", "http://localhost")
 		addr = fmt.Sprintf("http://localhost:%s/api/%%s", port)
+		addr2 = fmt.Sprintf("http://localhost:%s/%%s", port2)
 
 		dir, _ = ioutil.TempDir("", "")
 		pth = path.Join(dir, "db")
@@ -214,6 +216,33 @@ var _ = Describe("Quimby", func() {
 			r, err := http.Get(fmt.Sprintf(addr, "gadgets"))
 			Expect(err).To(BeNil())
 			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+		})
+		It("does not let you get a gadget", func() {
+			r, err := http.Get(fmt.Sprintf(addr, "gadgets/sprinklers"))
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			d, _ := ioutil.ReadAll(r.Body)
+			Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+			r.Body.Close()
+		})
+
+		It("does not let you delete a gadget", func() {
+			req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/sprinklers"), nil)
+			Expect(err).To(BeNil())
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			d, _ := ioutil.ReadAll(r.Body)
+			Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+			defer r.Body.Close()
+		})
+		It("does not allow the getting of a websocket", func() {
+			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
+			h := http.Header{"Origin": {u}}
+			ws, r, err := dialer.Dial(u, h)
+			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			Expect(err).ToNot(BeNil())
+			Expect(ws).To(BeNil())
 		})
 	})
 
@@ -372,39 +401,38 @@ var _ = Describe("Quimby", func() {
 			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
 			c := cookies[0]
 			h := http.Header{"Origin": {u}, "Cookie": {c.String()}}
-			ws, _, err := cstDialer.Dial(u, h)
+			ws, _, err := dialer.Dial(u, h)
 			Expect(err).To(BeNil())
 			defer ws.Close()
 
 			uuid := gogadgets.GetUUID()
 			msg := gogadgets.Message{
-				Type: gogadgets.UPDATE,
+				Location: "back yard",
+				Name:     "sprinklers",
+				Type:     gogadgets.UPDATE,
+				Host:     ts.URL,
 				Value: gogadgets.Value{
 					Value: true,
 				},
 				UUID:   uuid,
-				Sender: "cli",
+				Sender: "sprinklers",
 			}
-			d, _ := json.Marshal(msg)
-			err = ws.WriteMessage(websocket.TextMessage, d)
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(msg)
+			req, err := http.NewRequest("POST", fmt.Sprintf(addr2, "internal/updates"), &buf)
 			Expect(err).To(BeNil())
+			req.AddCookie(cookies[0])
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusOK))
+			defer r.Body.Close()
 
-			Eventually(func() int {
-				return len(msgs)
-			}).Should(Equal(1))
-
-			msg = msgs[0]
-			Expect(msg.Value.Value).To(BeTrue())
-			Expect(msg.UUID).To(Equal(uuid))
-		})
-
-		It("does not allow the sending of messages with a websocket when there are no auth cookies", func() {
-			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
-			h := http.Header{"Origin": {u}}
-			ws, r, err := cstDialer.Dial(u, h)
-			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
-			Expect(err).ToNot(BeNil())
-			Expect(ws).To(BeNil())
+			var msg2 gogadgets.Message
+			err = ws.ReadJSON(&msg2)
+			Expect(msg2.Value.Value).To(BeTrue())
+			Expect(msg2.Location).To(Equal("back yard"))
+			Expect(msg2.UUID).To(Equal(uuid))
 		})
 	})
 })
