@@ -69,6 +69,28 @@ func (g *Gadget) Update(cmd string) error {
 	return g.UpdateMessage(m)
 }
 
+func (g *Gadget) UpdateDevice(location string, name string, v gogadgets.Value) error {
+	cmd := g.getCommand(location, name, v)
+	m := gogadgets.Message{
+		UUID:   gogadgets.GetUUID(),
+		Sender: "quimby",
+		Type:   gogadgets.COMMAND,
+		Body:   cmd,
+	}
+	return g.UpdateMessage(m)
+}
+
+func (g *Gadget) getCommand(location string, name string, v gogadgets.Value) string {
+	return fmt.Sprintf("%s %s %s", g.getVerb(v), location, name)
+}
+
+func (g *Gadget) getVerb(v gogadgets.Value) string {
+	if v.Value == true {
+		return "turn on"
+	}
+	return "turn off"
+}
+
 func (g *Gadget) UpdateMessage(m gogadgets.Message) error {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)

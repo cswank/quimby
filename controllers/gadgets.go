@@ -184,6 +184,18 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 	}
 }
 
+func UpdateDevice(args *Args) error {
+	if err := args.Gadget.Fetch(); err != nil {
+		return err
+	}
+	var v gogadgets.Value
+	dec := json.NewDecoder(args.R.Body)
+	if err := dec.Decode(&v); err != nil {
+		return err
+	}
+	return args.Gadget.UpdateDevice(args.Vars["location"], args.Vars["device"], v)
+}
+
 func RelayMessage(args *Args) error {
 	var m gogadgets.Message
 	dec := json.NewDecoder(args.R.Body)

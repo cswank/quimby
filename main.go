@@ -84,6 +84,7 @@ func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) 
 	r.HandleFunc("/api/gadgets/{name}/websocket", Connect).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/values", GetValues).Methods("GET")
 	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
+	r.HandleFunc("/api/gadgets/{name}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
@@ -151,4 +152,8 @@ func Connect(w http.ResponseWriter, r *http.Request) {
 
 func Relay(w http.ResponseWriter, r *http.Request) {
 	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Write)
+}
+
+func UpdateDevice(w http.ResponseWriter, r *http.Request) {
+	auth.CheckAuth(w, r, controllers.UpdateDevice, auth.Write)
 }
