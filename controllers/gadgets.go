@@ -45,10 +45,6 @@ func GetGadgets(args *Args) error {
 }
 
 func GetGadget(args *Args) error {
-	err := args.Gadget.Fetch()
-	if err != nil {
-		return err
-	}
 	enc := json.NewEncoder(args.W)
 	return enc.Encode(args.Gadget)
 }
@@ -63,24 +59,14 @@ func DeleteGadget(args *Args) error {
 }
 
 func GetStatus(args *Args) error {
-	if err := args.Gadget.Fetch(); err != nil {
-		return err
-	}
 	return args.Gadget.ReadStatus(args.W)
 }
 
 func GetValues(args *Args) error {
-	if err := args.Gadget.Fetch(); err != nil {
-		return err
-	}
 	return args.Gadget.ReadValues(args.W)
 }
 
 func SendCommand(args *Args) error {
-	if err := args.Gadget.Fetch(); err != nil {
-		return err
-	}
-
 	var m map[string]string
 	dec := json.NewDecoder(args.R.Body)
 	if err := dec.Decode(&m); err != nil {
@@ -184,10 +170,11 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 	}
 }
 
+func GetDevice(args *Args) error {
+	return args.Gadget.ReadDevice(args.W, args.Vars["location"], args.Vars["device"])
+}
+
 func UpdateDevice(args *Args) error {
-	if err := args.Gadget.Fetch(); err != nil {
-		return err
-	}
 	var v gogadgets.Value
 	dec := json.NewDecoder(args.R.Body)
 	if err := dec.Decode(&v); err != nil {

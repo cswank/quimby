@@ -69,6 +69,25 @@ func (g *Gadget) Update(cmd string) error {
 	return g.UpdateMessage(m)
 }
 
+func (g *Gadget) ReadDevice(w io.Writer, location, device string) error {
+	r, err := http.Get(fmt.Sprintf("%s/gadgets/locations/%s/devices/%s/status", g.Host, location, device))
+	if err != nil {
+		return err
+	}
+	defer r.Body.Close()
+	_, err = io.Copy(w, r.Body)
+	return err
+}
+
+func (g *Gadget) GetDevice(location string, name string) (gogadgets.Value, error) {
+	m, err := g.GetValues()
+	v, ok := m[location][name]
+	if !ok {
+		return v, fmt.Errorf("%s %s not found", location, name)
+	}
+	return v, err
+}
+
 func (g *Gadget) UpdateDevice(location string, name string, v gogadgets.Value) error {
 	cmd := g.getCommand(location, name, v)
 	m := gogadgets.Message{
@@ -130,6 +149,17 @@ func (g *Gadget) ReadStatus(w io.Writer) error {
 	return err
 }
 
+func (g *Gadget) GetValues() (map[string]map[string]gogadgets.Value, error) {
+	r, err := http.Get(fmt.Sprintf("%s/gadgets/values", g.Host))
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+	var m map[string]map[string]gogadgets.Value
+	dec := json.NewDecoder(r.Body)
+	return m, dec.Decode(&m)
+}
+
 func (g *Gadget) ReadValues(w io.Writer) error {
 	r, err := http.Get(fmt.Sprintf("%s/gadgets/values", g.Host))
 	if err != nil {
@@ -141,12 +171,6 @@ func (g *Gadget) ReadValues(w io.Writer) error {
 }
 
 func (g *Gadget) Register(addr, cookie string) (string, error) {
-	if g.Host == "" {
-		if err := g.Fetch(); err != nil {
-			return "", err
-		}
-	}
-
 	a := map[string]string{"address": addr, "cookie": cookie}
 
 	buf := &bytes.Buffer{}

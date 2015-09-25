@@ -41,6 +41,13 @@ func CheckAuth(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL)
 		Name: vars["name"],
 	}
 
+	if g.Name != "" {
+		if err := g.Fetch(); err != nil {
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+	}
+
 	args.Gadget = g
 	err = ctrl(args)
 	if err != nil {

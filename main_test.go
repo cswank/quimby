@@ -79,9 +79,15 @@ var _ = Describe("Quimby", func() {
 		clients = []map[string]string{}
 		ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" {
-				fmt.Fprintln(
-					w,
-					`{
+				if r.URL.Path == "/gadgets/locations/back yard/devices/sprinklers/status" {
+					fmt.Fprintln(
+						w,
+						`{"value": true, "io": true}`,
+					)
+				} else {
+					fmt.Fprintln(
+						w,
+						`{
   "back garden": {
     "sprinklers": {
       "value": false,
@@ -95,7 +101,8 @@ var _ = Describe("Quimby", func() {
     }
   }
 }`,
-				)
+					)
+				}
 			} else if r.Method == "POST" {
 				if r.URL.Path == "/gadgets" {
 					var m gogadgets.Message
@@ -363,6 +370,22 @@ var _ = Describe("Quimby", func() {
 			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
 		})
 
+		It("lets you get the value of a device", func() {
+			u := fmt.Sprintf(addr, "gadgets/sprinklers/locations/back%20yard/devices/sprinklers/status")
+			req, err := http.NewRequest("GET", u, nil)
+			Expect(err).To(BeNil())
+			req.AddCookie(cookies[0])
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			defer r.Body.Close()
+
+			var v gogadgets.Value
+			dec := json.NewDecoder(r.Body)
+			err = dec.Decode(&v)
+			Expect(err).To(BeNil())
+			Expect(v.Value).To(BeTrue())
+		})
+
 		It("lets you turn on a device", func() {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
@@ -405,7 +428,35 @@ var _ = Describe("Quimby", func() {
 			Expect(msg.Body).To(Equal("turn off front yard sprinklers"))
 		})
 
-		It("allows the getting of messages with a websocket", func() {
+		It("allows the sending of a message with a websocket", func() {
+			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
+			c := cookies[0]
+			h := http.Header{"Origin": {u}, "Cookie": {c.String()}}
+			ws, _, err := dialer.Dial(u, h)
+			Expect(err).To(BeNil())
+			defer ws.Close()
+
+			uuid := gogadgets.GetUUID()
+			msg := gogadgets.Message{
+				Type:   gogadgets.COMMAND,
+				Body:   "turn on back yard sprinklers",
+				UUID:   uuid,
+				Sender: "cli",
+			}
+			d, _ := json.Marshal(msg)
+			err = ws.WriteMessage(websocket.TextMessage, d)
+			Expect(err).To(BeNil())
+
+			Eventually(func() int {
+				return len(msgs)
+			}).Should(Equal(1))
+
+			msg = msgs[0]
+			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
+			Expect(msg.UUID).To(Equal(uuid))
+		})
+
+		It("allows the getting of a message with a websocket", func() {
 			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
 			c := cookies[0]
 			h := http.Header{"Origin": {u}, "Cookie": {c.String()}}

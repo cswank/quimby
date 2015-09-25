@@ -39,7 +39,6 @@ angular.module('quimby.services', [])
         var outWs;
         var statusPromise;
         var host;
-        var callback;
         
         function getWebsocket() {
             var prot = "wss";
@@ -51,7 +50,7 @@ angular.module('quimby.services', [])
             return ws;
         }
 
-        function doConnect(errorCallback) {
+        function doConnect(callback) {
             if(ws != undefined) {
                 ws.close();
                 ws = null;
@@ -69,8 +68,7 @@ angular.module('quimby.services', [])
         
         return {
             connect: function(cb) {
-                callback = cb;
-                doConnect();
+                doConnect(cb);
             },
             send: function(command) {
                 var msg = JSON.stringify({
