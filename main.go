@@ -63,7 +63,6 @@ func main() {
 		start(db, port, "/", "/api", lg)
 	}
 	defer db.Close()
-
 }
 
 func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) {
@@ -147,9 +146,9 @@ func GetValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func Connect(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.Connect, auth.Write)
+	auth.CheckAuth(w, r, controllers.Connect, auth.Read)
 }
 
 func Relay(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Anyone)
+	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Write)
 }

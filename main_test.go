@@ -368,7 +368,7 @@ var _ = Describe("Quimby", func() {
 			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
 		})
 
-		It("allows the sending of messages with a websocket", func() {
+		It("allows the getting of messages with a websocket", func() {
 			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
 			c := cookies[0]
 			h := http.Header{"Origin": {u}, "Cookie": {c.String()}}
@@ -378,8 +378,10 @@ var _ = Describe("Quimby", func() {
 
 			uuid := gogadgets.GetUUID()
 			msg := gogadgets.Message{
-				Type:   gogadgets.COMMAND,
-				Body:   "turn on back yard sprinklers",
+				Type: gogadgets.UPDATE,
+				Value: gogadgets.Value{
+					Value: true,
+				},
 				UUID:   uuid,
 				Sender: "cli",
 			}
@@ -392,7 +394,7 @@ var _ = Describe("Quimby", func() {
 			}).Should(Equal(1))
 
 			msg = msgs[0]
-			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
+			Expect(msg.Value.Value).To(BeTrue())
 			Expect(msg.UUID).To(Equal(uuid))
 		})
 
