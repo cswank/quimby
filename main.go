@@ -63,29 +63,17 @@ func main() {
 		start(db, port, "/", "/api", lg)
 	}
 	defer db.Close()
-
 }
 
 func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) {
 	auth.DB = db
 
-	i := mux.NewRouter()
-	i.HandleFunc("/internal/updates", Relay).Methods("POST")
-	http.Handle(iRoot, i)
-	a := fmt.Sprintf(":%s", os.Getenv("QUIMBY_INTERNAL_PORT"))
-	go func() {
-		lg.Printf("listening on %s", a)
-		err := http.ListenAndServe(a, i)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
+	go startInternal(iRoot, lg)
 
 	r := mux.NewRouter()
 
 	r.HandleFunc("/api/login", auth.Login).Methods("POST")
 	r.HandleFunc("/api/logout", auth.Logout).Methods("POST")
-
 	r.HandleFunc("/api/ping", Ping).Methods("GET")
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
@@ -104,6 +92,21 @@ func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) 
 	lg.Printf("listening on %s\n", addr)
 	err := http.ListenAndServe(addr, r)
 	log.Println(err)
+}
+
+//This is the endpoint that the gadgets report to. It is
+//served on a separate port so it doesn't have to be exposed
+//publicly if the main port is exposed.
+func startInternal(iRoot string, lg controllers.Logger) {
+	r := mux.NewRouter()
+	r.HandleFunc("/internal/updates", Relay).Methods("POST")
+	http.Handle(iRoot, r)
+	a := fmt.Sprintf(":%s", os.Getenv("QUIMBY_INTERNAL_PORT"))
+	lg.Printf("listening on %s", a)
+	err := http.ListenAndServe(a, r)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func Ping(w http.ResponseWriter, r *http.Request) {
@@ -143,9 +146,9 @@ func GetValues(w http.ResponseWriter, r *http.Request) {
 }
 
 func Connect(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.Connect, auth.Write)
+	auth.CheckAuth(w, r, controllers.Connect, auth.Read)
 }
 
 func Relay(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Anyone)
+	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Write)
 }
