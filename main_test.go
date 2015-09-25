@@ -236,6 +236,47 @@ var _ = Describe("Quimby", func() {
 			Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
 			defer r.Body.Close()
 		})
+
+		It("does not let you add a gadget", func() {
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			g := models.Gadget{
+				Name: "back yard",
+				Host: "http://overthere.com",
+			}
+			enc.Encode(g)
+			r, err := http.Post(fmt.Sprintf(addr, "gadgets"), "application/json", &buf)
+			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			d, _ := ioutil.ReadAll(r.Body)
+			Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+			Expect(err).To(BeNil())
+			r.Body.Close()
+		})
+
+		It("lets you get the status of a gadget", func() {
+			r, err := http.Get(fmt.Sprintf(addr, "gadgets/sprinklers/status"))
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			d, _ := ioutil.ReadAll(r.Body)
+			Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+			r.Body.Close()
+		})
+
+		It("does not let you send a command to a gadget", func() {
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			m := map[string]string{
+				"command": "turn on back yard sprinklers",
+			}
+			enc.Encode(m)
+			r, err := http.Post(fmt.Sprintf(addr, "gadgets/sprinklers"), "application/json", &buf)
+			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			Expect(err).To(BeNil())
+			d, _ := ioutil.ReadAll(r.Body)
+			Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+			r.Body.Close()
+		})
+
 		It("does not allow the getting of a websocket", func() {
 			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
 			h := http.Header{"Origin": {u}}
