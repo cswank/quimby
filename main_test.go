@@ -252,6 +252,16 @@ var _ = Describe("Quimby", func() {
 			Expect(g.Host).To(Equal(ts.URL))
 		})
 
+		It("gives a 404 for a non-gadget", func() {
+			req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/airdefencesystem"), nil)
+			Expect(err).To(BeNil())
+			req.AddCookie(cookies[0])
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusNotFound))
+			r.Body.Close()
+		})
+
 		It("lets you delete a gadget", func() {
 			req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/sprinklers"), nil)
 			Expect(err).To(BeNil())
@@ -297,7 +307,7 @@ var _ = Describe("Quimby", func() {
 			Expect(len(gadgs)).To(Equal(2))
 		})
 
-		It("lets you add a gadget", func() {
+		FIt("lets you add a gadget", func() {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			g := models.Gadget{
