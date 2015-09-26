@@ -9,7 +9,6 @@ import (
 	"github.com/GeertJohan/go.rice"
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/admin"
-	"github.com/cswank/quimby/auth"
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/mux"
@@ -59,21 +58,20 @@ func main() {
 	case gadgetDelete.FullCommand():
 		admin.DeleteGadget(db)
 	case serve.FullCommand():
-		auth.DB = db
 		start(db, port, "/", "/api", lg)
 	}
 	defer db.Close()
 }
 
 func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) {
-	auth.DB = db
+	controllers.DB = db
 
 	go startInternal(iRoot, lg)
 
 	r := mux.NewRouter()
 
-	r.HandleFunc("/api/login", auth.Login).Methods("POST")
-	r.HandleFunc("/api/logout", auth.Logout).Methods("POST")
+	r.HandleFunc("/api/login", controllers.Login).Methods("POST")
+	r.HandleFunc("/api/logout", controllers.Logout).Methods("POST")
 	r.HandleFunc("/api/ping", Ping).Methods("GET")
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
@@ -112,53 +110,53 @@ func startInternal(iRoot string, lg controllers.Logger) {
 }
 
 func Ping(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.Ping, auth.Read)
+	controllers.Handle(w, r, controllers.Ping, controllers.Read)
 }
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.GetUser, auth.Read)
+	controllers.Handle(w, r, controllers.GetUser, controllers.Read)
 }
 
 func GetGadgets(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.GetGadgets, auth.Read)
+	controllers.Handle(w, r, controllers.GetGadgets, controllers.Read)
 }
 
 func GetGadget(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.GetGadget, auth.Read)
+	controllers.Handle(w, r, controllers.GetGadget, controllers.Read)
 }
 
 func AddGadget(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.AddGadget, auth.Write)
+	controllers.Handle(w, r, controllers.AddGadget, controllers.Write)
 }
 
 func SendCommand(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.SendCommand, auth.Write)
+	controllers.Handle(w, r, controllers.SendCommand, controllers.Write)
 }
 
 func DeleteGadget(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.DeleteGadget, auth.Write)
+	controllers.Handle(w, r, controllers.DeleteGadget, controllers.Write)
 }
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.GetStatus, auth.Read)
+	controllers.Handle(w, r, controllers.GetStatus, controllers.Read)
 }
 
 func GetValues(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.GetValues, auth.Read)
+	controllers.Handle(w, r, controllers.GetValues, controllers.Read)
 }
 
 func Connect(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.Connect, auth.Read)
+	controllers.Handle(w, r, controllers.Connect, controllers.Read)
 }
 
 func Relay(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.RelayMessage, auth.Write)
+	controllers.Handle(w, r, controllers.RelayMessage, controllers.Write)
 }
 
 func UpdateDevice(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.UpdateDevice, auth.Write)
+	controllers.Handle(w, r, controllers.UpdateDevice, controllers.Write)
 }
 
 func GetDevice(w http.ResponseWriter, r *http.Request) {
-	auth.CheckAuth(w, r, controllers.GetDevice, auth.Write)
+	controllers.Handle(w, r, controllers.GetDevice, controllers.Write)
 }

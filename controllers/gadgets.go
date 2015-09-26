@@ -10,17 +10,7 @@ import (
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
-	"github.com/gorilla/securecookie"
 	"github.com/gorilla/websocket"
-)
-
-var (
-	addr         string
-	clients      map[string]chan gogadgets.Message
-	host         string
-	hashKey      = []byte(os.Getenv("QUIMBY_HASH_KEY"))
-	blockKey     = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
-	SecureCookie = securecookie.New(hashKey, blockKey)
 )
 
 func init() {
@@ -105,7 +95,7 @@ func Connect(args *Args) error {
 		"user": args.User.Username,
 	}
 
-	encoded, _ := SecureCookie.Encode("quimby", value)
+	encoded, _ := sc.Encode("quimby", value)
 	cookie := &http.Cookie{
 		Name:     "quimby",
 		Value:    encoded,
