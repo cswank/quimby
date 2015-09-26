@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/cswank/quimby/models"
@@ -18,6 +19,9 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 	err = sc.Decode("quimby", cookie.Value, &m)
 	if err != nil {
 		return nil, err
+	}
+	if m["user"] == "" {
+		return nil, errors.New("no way, eh")
 	}
 	user.Username = m["user"]
 	err = user.Fetch()
