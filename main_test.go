@@ -307,7 +307,7 @@ var _ = Describe("Quimby", func() {
 			Expect(len(gadgs)).To(Equal(2))
 		})
 
-		FIt("lets you add a gadget", func() {
+		It("lets you add a gadget", func() {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			g := models.Gadget{
@@ -547,7 +547,7 @@ var _ = Describe("Quimby", func() {
 			r.Body.Close()
 		})
 
-		It("lets you get the status of a gadget", func() {
+		It("does not let you get the status of a gadget", func() {
 			r, err := http.Get(fmt.Sprintf(addr, "gadgets/sprinklers/status"))
 			Expect(err).To(BeNil())
 			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))

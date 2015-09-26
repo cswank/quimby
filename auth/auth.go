@@ -2,7 +2,7 @@ package auth
 
 import (
 	"encoding/json"
-	"log"
+	"errors"
 	"net/http"
 
 	"github.com/boltdb/bolt"
@@ -18,42 +18,99 @@ var (
 )
 
 func CheckAuth(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
-	user, err := getUserFromCookie(r)
+	h := &handler{w: w, r: r, acl: acl, ctrl: ctrl}
+	user := h.getUser()
+	args := h.getArgs(user)
+	h.checkACL(args)
+	h.getGadget(args)
+	h.callCtrl(args)
+	h.finish()
+}
+
+type handler struct {
+	w      http.ResponseWriter
+	r      *http.Request
+	acl    ACL
+	ctrl   controller
+	err    error
+	status int
+	msg    string
+}
+
+func (h *handler) getUser() *models.User {
+	u, err := getUserFromCookie(h.r)
 	if err != nil {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
-		return
+		h.err = err
+		h.msg = "Not Authorized"
+		h.status = http.StatusUnauthorized
 	}
-	vars := mux.Vars(r)
-	args := &controllers.Args{
-		W:    w,
-		R:    r,
-		User: user,
-		Vars: vars,
+	return u
+}
+
+func (h *handler) getArgs(u *models.User) *controllers.Args {
+	if h.err != nil {
+		return nil
+	}
+	return &controllers.Args{
+		W:    h.w,
+		R:    h.r,
+		User: u,
+		Vars: mux.Vars(h.r),
 		DB:   DB,
 	}
-	if !acl(args) {
-		http.Error(w, "Not Authorized", http.StatusUnauthorized)
+}
+
+func (h *handler) checkACL(args *controllers.Args) {
+	if h.err != nil {
+		return
+	}
+	if !h.acl(args) {
+		h.err = errors.New("Not Authorized")
+		h.msg = "Not Authorized"
+		h.status = http.StatusUnauthorized
+	}
+}
+
+func (h *handler) getGadget(args *controllers.Args) {
+	if h.err != nil || args.Vars["name"] == "" {
 		return
 	}
 
 	g := &models.Gadget{
 		DB:   DB,
-		Name: vars["name"],
+		Name: args.Vars["name"],
 	}
 
-	if g.Name != "" {
-		if err := g.Fetch(); err != nil {
-			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-			return
+	h.err = g.Fetch()
+	if h.err != nil {
+		if h.err == models.NotFound {
+			h.msg = "Not Found"
+			h.status = http.StatusNotFound
+		} else {
+			h.status = http.StatusInternalServerError
+			h.msg = "Internal Server Error"
 		}
 	}
-
 	args.Gadget = g
-	err = ctrl(args)
-	if err != nil {
-		log.Println(args.R.URL.Path, err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+}
+
+func (h *handler) callCtrl(args *controllers.Args) {
+	if h.err != nil {
+		return
 	}
+	h.err = h.ctrl(args)
+	if h.err != nil {
+		h.msg = h.err.Error()
+		h.status = http.StatusInternalServerError
+	}
+}
+
+func (h *handler) finish() {
+	if h.err == nil {
+		return
+	}
+	h.w.WriteHeader(h.status)
+	h.w.Write([]byte(h.msg))
 }
 
 func getUserFromCookie(r *http.Request) (*models.User, error) {
@@ -70,7 +127,6 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 		return nil, err
 	}
 	user.Username = m["user"]
-
 	err = user.Fetch()
 	user.HashedPassword = []byte{}
 	return user, err
