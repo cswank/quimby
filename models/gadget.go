@@ -3,6 +3,7 @@ package models
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -16,6 +17,10 @@ type Gadget struct {
 	Host string   `json:"host"`
 	DB   *bolt.DB `json:"-"`
 }
+
+var (
+	NotFound = errors.New("not found")
+)
 
 func GetGadgets(db *bolt.DB) ([]Gadget, error) {
 	gadgets := []Gadget{}
@@ -40,6 +45,9 @@ func (g *Gadget) Fetch() error {
 	return g.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("gadgets"))
 		v := b.Get([]byte(g.Name))
+		if len(v) == 0 {
+			return NotFound
+		}
 		return json.Unmarshal(v, g)
 	})
 }
