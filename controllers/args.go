@@ -62,12 +62,12 @@ func (a *Args) checkACL() {
 }
 
 func (a *Args) getGadget() {
-	if a.Vars["name"] == "" {
+	if a.Vars["id"] == "" {
 		return
 	}
 	a.Gadget = &models.Gadget{
-		DB:   DB,
-		Name: a.Vars["name"],
+		DB: DB,
+		Id: a.Vars["id"],
 	}
 
 	a.err = a.Gadget.Fetch()
@@ -83,9 +83,6 @@ func (a *Args) getGadget() {
 }
 
 func (a *Args) callCtrl() {
-	if a.err != nil {
-		return
-	}
 	a.err = a.ctrl(a)
 	if a.err != nil {
 		a.msg = a.err.Error()

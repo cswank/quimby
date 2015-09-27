@@ -25,6 +25,7 @@ var (
 	gadgets      = app.Command("gadgets", "Commands for managing gadgets")
 	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
+	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
 	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
 )
 
@@ -55,6 +56,8 @@ func main() {
 		admin.AddGadget(db)
 	case gadgetList.FullCommand():
 		admin.ListGadgets(db)
+	case gadgetEdit.FullCommand():
+		admin.EditGadget(db)
 	case gadgetDelete.FullCommand():
 		admin.DeleteGadget(db)
 	case serve.FullCommand():
@@ -76,14 +79,14 @@ func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) 
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
 	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
-	r.HandleFunc("/api/gadgets/{name}", GetGadget).Methods("GET")
-	r.HandleFunc("/api/gadgets/{name}", SendCommand).Methods("POST")
-	r.HandleFunc("/api/gadgets/{name}", DeleteGadget).Methods("DELETE")
-	r.HandleFunc("/api/gadgets/{name}/websocket", Connect).Methods("GET")
-	r.HandleFunc("/api/gadgets/{name}/values", GetValues).Methods("GET")
-	r.HandleFunc("/api/gadgets/{name}/status", GetStatus).Methods("GET")
-	r.HandleFunc("/api/gadgets/{name}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
-	r.HandleFunc("/api/gadgets/{name}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}", GetGadget).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}", SendCommand).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}", DeleteGadget).Methods("DELETE")
+	r.HandleFunc("/api/gadgets/{id}/websocket", Connect).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/values", GetValues).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/status", GetStatus).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 

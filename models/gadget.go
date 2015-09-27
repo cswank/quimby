@@ -13,6 +13,7 @@ import (
 )
 
 type Gadget struct {
+	Id   string   `json:"id"`
 	Name string   `json:"name"`
 	Host string   `json:"host"`
 	DB   *bolt.DB `json:"-"`
@@ -44,7 +45,7 @@ func GetGadgets(db *bolt.DB) ([]Gadget, error) {
 func (g *Gadget) Fetch() error {
 	return g.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("gadgets"))
-		v := b.Get([]byte(g.Name))
+		v := b.Get([]byte(g.Id))
 		if len(v) == 0 {
 			return NotFound
 		}
@@ -53,17 +54,20 @@ func (g *Gadget) Fetch() error {
 }
 
 func (g *Gadget) Save() error {
+	if g.Id == "" {
+		g.Id = gogadgets.GetUUID()
+	}
 	return g.DB.Update(func(tx *bolt.Tx) error {
 		d, _ := json.Marshal(g)
 		b := tx.Bucket([]byte("gadgets"))
-		return b.Put([]byte(g.Name), d)
+		return b.Put([]byte(g.Id), d)
 	})
 }
 
 func (g *Gadget) Delete() error {
 	return g.DB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("gadgets"))
-		return b.Delete([]byte(g.Name))
+		return b.Delete([]byte(g.Id))
 	})
 }
 
