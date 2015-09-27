@@ -1,10 +1,16 @@
 'use strict';
 
 angular.module('quimby.services')
-    .factory('$auth', ['$http', '$location', function($http, $location) {
+    .factory('$auth', ['$http', '$location', '$localStorage', function($http, $location, $localStorage) {
+        var storage = $localStorage;
         var loggedIn = false;
         var user = false;
+        var token = storage.token;
+        $http.defaults.headers.common.Authorization = token;
         return {
+            getToken: function() {
+                return token;
+            },
             getUser: function(callback) {
                 if (user) {
                     callback(user);
@@ -12,7 +18,7 @@ angular.module('quimby.services')
                 else  {
                     $http.get('/api/ping')
                         .success(function (data, status, headers, config) {
-                            loggedIn = true;
+                            loggedIn = true;                
                             $http.get(headers("Location")).success(function(data) {
                                 user = data;
                                 callback(user);
@@ -33,6 +39,9 @@ angular.module('quimby.services')
                     headers: {'Content-Type': 'application/json'}
                 }).success(function (data, status, headers, config) {
                     loggedIn = true;
+                    token = headers().authorization;
+                    storage.token = token;
+                    $http.defaults.headers.common.Authorization = token;
                     $http.get(headers('Location')).success(function(data) {
                         user = data;
                         callback(data);
@@ -43,16 +52,7 @@ angular.module('quimby.services')
                 });
             },
             logout: function(callback) {
-                $http({
-                    url: '/api/logout',
-                    method: "POST",
-                    headers: {'Content-Type': 'application/json'}
-                }).success(function (data, status, headers, config) {
-                    loggedIn = false;
-                    callback();
-                }).error(function (data, status, headers, config) {
-                    
-                });
+                storage.token = "";
             }
         }
     }]);

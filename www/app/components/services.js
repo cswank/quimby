@@ -7,6 +7,8 @@ angular.module('quimby.services', [])
         this.getGadgets = function(callback) {
             $http.get("/api/gadgets").success(function(data) {
                 callback(data);
+            }).error(function() {
+                console.log("didn't get gadgets");
             });
         }
         this.getDevices = function(name, callback) {
@@ -14,7 +16,7 @@ angular.module('quimby.services', [])
                 locations = data;
                 callback(locations);
             }).error(function() {
-                
+              
             });
             $http.get("/api/gadgets/" +  name + "/status").success(function(statuses) {
                 angular.forEach(statuses, function(value, key) {

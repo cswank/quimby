@@ -48,16 +48,6 @@ angular.module('quimby.directives')
                         }
                     });
                 }
-                $scope.openLeftMenu = function() {
-                    $mdSidenav('left').toggle();
-                };
-                $scope.closeLeftMenu = function(page) {
-                    $scope.page = page;
-                    $mdSidenav('left').toggle();
-                };
-                $scope.isActive = function(route) {
-                    return route === $location.path();
-                }
                 $scope.showLogin = function(ev) {
                     $mdDialog.show({
                         controller: LoginController,

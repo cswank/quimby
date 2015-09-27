@@ -5,6 +5,7 @@ angular.module('quimby', [
     'ngRoute',
     'ngMaterial',
     'ngAnimate',
+    'ngStorage',
     'quimby.gadgets',
     'quimby.gadget',    
     'quimby.directives',
