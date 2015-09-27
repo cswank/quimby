@@ -46,7 +46,7 @@ func Handle(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
 }
 
 func (a *Args) getUser() {
-	a.User, a.err = getUserFromCookie(a.R)
+	a.User, a.err = getUserFromToken(a.R)
 	if a.err != nil {
 		a.msg = "Not Authorized"
 		a.status = http.StatusUnauthorized

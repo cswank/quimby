@@ -32,17 +32,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	value := map[string]string{
-		"user": user.Username,
-	}
 
-	encoded, _ := sc.Encode("quimby", value)
-	cookie := &http.Cookie{
-		Name:     "quimby",
-		Value:    encoded,
-		Path:     "/",
-		HttpOnly: false,
+	token, err := generateToken(user)
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+	} else {
+		w.Header().Set("Location", "/api/users/current")
+		w.Header().Set("Authorization", "Bearer "+token)
 	}
-	w.Header().Set("Location", "/api/users/current")
-	http.SetCookie(w, cookie)
 }

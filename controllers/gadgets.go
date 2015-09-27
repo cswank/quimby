@@ -91,19 +91,12 @@ func AddGadget(args *Args) error {
 //instance to the websocket and vice versa.
 func Connect(args *Args) error {
 
-	value := map[string]string{
-		"user": args.User.Username,
+	token, err := generateToken(args.User)
+	if err != nil {
+		return err
 	}
 
-	encoded, _ := sc.Encode("quimby", value)
-	cookie := &http.Cookie{
-		Name:     "quimby",
-		Value:    encoded,
-		Path:     "/",
-		HttpOnly: false,
-	}
-
-	h, err := args.Gadget.Register(getAddr(), cookie.String())
+	h, err := args.Gadget.Register(getAddr(), token)
 	if err != nil {
 		return err
 	}
