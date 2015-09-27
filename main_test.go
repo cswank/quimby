@@ -388,7 +388,10 @@ var _ = Describe("Quimby", func() {
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
 
-			Expect(len(msgs)).To(Equal(1))
+			Eventually(func() int {
+				return len(msgs)
+			}).Should(Equal(1))
+
 			msg := msgs[0]
 			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
 		})
@@ -540,6 +543,23 @@ var _ = Describe("Quimby", func() {
 			Expect(msg2.Value.Value).To(BeTrue())
 			Expect(msg2.Location).To(Equal("back yard"))
 			Expect(msg2.UUID).To(Equal(uuid))
+		})
+	})
+
+	Context("hackers hacking in", func() {
+		Describe("does not let you", func() {
+			It("get gadgets when you mess with the token", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+				Expect(err).To(BeNil())
+				l := len(token)
+				req.Header.Add("Authorization", token[:l-2])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(string(d)).To(Equal("Not Authorized"))
+			})
 		})
 	})
 
