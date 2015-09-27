@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"errors"
-	"log"
 	"net/http"
 
 	"github.com/boltdb/bolt"
@@ -29,7 +28,7 @@ type Args struct {
 }
 
 func Handle(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
-	log.Println(r.URL.Path)
+	LG.Println(r.URL.Path)
 	a := &Args{
 		W:    w,
 		R:    r,

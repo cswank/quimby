@@ -17,4 +17,5 @@ var (
 	addr    string
 	clients map[string]chan gogadgets.Message
 	host    string
+	LG      Logger
 )

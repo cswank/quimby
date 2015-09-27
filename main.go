@@ -68,6 +68,7 @@ func main() {
 
 func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) {
 	controllers.DB = db
+	controllers.LG = lg
 
 	go startInternal(iRoot, lg)
 

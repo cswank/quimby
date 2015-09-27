@@ -2,15 +2,20 @@
 
 angular.module('quimby.gadget', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/gadgets/:name', {
+        $routeProvider.when('/gadgets/:id', {
             templateUrl: 'gadget/gadget.html',
             controller: 'GadgetCtrl'
         });
     }])
 
 .controller('GadgetCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', function($scope, $gadgets, $sockets, $routeParams) {
-    $scope.name = $routeParams.name;
-    $gadgets.getDevices($scope.name, function(locations) {
+    $scope.id = $routeParams.id;
+
+    $gadgets.getGadget($scope.id, function(data) {
+        $scope.gadget = data;
+    });
+        
+    $gadgets.getDevices($scope.id, function(locations) {
         $scope.locations = locations;
     });
     
