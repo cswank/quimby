@@ -8,10 +8,15 @@ angular.module('quimby.gadgets', ['ngRoute'])
         });
     }])
 
-.controller('GadgetsCtrl', ['$scope', '$gadgets', '$auth', function($scope, $gadgets, $auth) {
-    $auth.getUser(function(user) {
-        $gadgets.getGadgets(function(data) {
-            $scope.gadgets = data;
-        });
+.controller('GadgetsCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', function($scope, $rootScope, $gadgets, $auth) {
+    
+    $rootScope.$watch('user', function(user) {
+        if (user != {}) {
+            $gadgets.getGadgets(function(data) {
+                $scope.gadgets = data;
+            });
+        } else {
+            $scope.gadgets = {};
+        }
     });
 }]);

@@ -32,6 +32,7 @@ angular.module('quimby.directives')
             templateUrl: "/components/navbar/navbar.html?t=" + new Date().getTime(),
             controller: function($scope, $rootScope, $timeout) {
                 $scope.loggedIn = false;
+                $rootScope.user = {};
                 $scope.showLogout = function(ev) {
                     $mdDialog.show({
                         controller: LogoutController,
@@ -40,10 +41,9 @@ angular.module('quimby.directives')
                     }).then(function(result) {
                         if (result) {
                             $auth.logout(function() {
-                                $mdSidenav('left').toggle();
+                                $rootScope.user = {};
                                 $scope.user = {};
                                 $scope.loggedIn = false;
-                                $scope.requests = [];
                             });
                         }
                     });
@@ -75,6 +75,7 @@ angular.module('quimby.directives')
                 
                 $auth.getUser(function(user) {
                     if (user) {
+                        $rootScope.user = user;
                         $scope.user = user;
                         $scope.loggedIn = true;
                     } else {
