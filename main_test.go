@@ -471,14 +471,31 @@ var _ = Describe("Quimby", func() {
 		})
 
 		It("allows the sending of a message with a websocket", func() {
-			u := strings.Replace(
-				fmt.Sprintf(
-					addr,
-					"gadgets/",
-					sprinklers.Id,
-					"/websocket",
-				), "http", "ws", -1)
-			h := http.Header{"Origin": {u}, "Authorization": {token}}
+			//get the ticket for a websocket
+			u := fmt.Sprintf(
+				addr,
+				"gadgets/",
+				sprinklers.Id,
+				"/websocket",
+			)
+
+			req, err := http.NewRequest("GET", u, nil)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			r.Body.Close()
+			l := r.Header.Get("Location")
+
+			a := strings.Replace(addr, "http", "ws", -1)
+			a = strings.Replace(a, "/api/", "", -1)
+			u = fmt.Sprintf(
+				a,
+				l,
+				"",
+				"",
+			)
+			h := http.Header{"Origin": {u}}
 			ws, _, err := dialer.Dial(u, h)
 			Expect(err).To(BeNil())
 			defer ws.Close()
@@ -504,14 +521,32 @@ var _ = Describe("Quimby", func() {
 		})
 
 		It("allows the getting of a message with a websocket", func() {
-			u := strings.Replace(
-				fmt.Sprintf(
-					addr,
-					"gadgets/",
-					sprinklers.Id,
-					"/websocket",
-				), "http", "ws", -1)
-			h := http.Header{"Origin": {u}, "Authorization": {token}}
+			//get the ticket for a websocket
+			u := fmt.Sprintf(
+				addr,
+				"gadgets/",
+				sprinklers.Id,
+				"/websocket",
+			)
+
+			req, err := http.NewRequest("GET", u, nil)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			r.Body.Close()
+			l := r.Header.Get("Location")
+
+			a := strings.Replace(addr, "http", "ws", -1)
+			a = strings.Replace(a, "/api/", "", -1)
+			u = fmt.Sprintf(
+				a,
+				l,
+				"",
+				"",
+			)
+
+			h := http.Header{"Origin": {u}}
 			ws, _, err := dialer.Dial(u, h)
 			Expect(err).To(BeNil())
 			defer ws.Close()
@@ -531,10 +566,10 @@ var _ = Describe("Quimby", func() {
 			var buf bytes.Buffer
 			enc := json.NewEncoder(&buf)
 			enc.Encode(msg)
-			req, err := http.NewRequest("POST", fmt.Sprintf(addr2, "internal/updates", "", ""), &buf)
+			req, err = http.NewRequest("POST", fmt.Sprintf(addr2, "internal/updates", "", ""), &buf)
 			Expect(err).To(BeNil())
 			req.Header.Add("Authorization", token)
-			r, err := http.DefaultClient.Do(req)
+			r, err = http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			Expect(r.StatusCode).To(Equal(http.StatusOK))
 			defer r.Body.Close()

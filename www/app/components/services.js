@@ -49,14 +49,13 @@ angular.module('quimby.services', [])
         var statusPromise;
         var host;
         
-        function getWebsocket() {
+        function getWebsocket(uri) {
             var prot = "wss";
             if ($location.protocol() == "http") {
                 prot = "ws";
             }
-            var url = prot + "://" + $location.host() + ":" + $location.port() + "/api/gadgets/" + $routeParams.id + "/websocket";
-            ws = new WebSocket(url);
-            return ws;
+            var url = prot + "://" + $location.host() + ":" + $location.port() + uri;
+            return new WebSocket(url);
         }
 
         function doConnect(callback) {
@@ -64,15 +63,17 @@ angular.module('quimby.services', [])
                 ws.close();
                 ws = null;
             }
-            ws = getWebsocket(host);
-            ws.onopen = function() {
-            };
-            ws.onerror = function() {
-            };
-            ws.onmessage = function(message) {
-                message = JSON.parse(message.data);
-                callback(message);
-            };
+            var url = "/api/gadgets/" + $routeParams.id + "/websocket";
+            $http.get(url).success(data, status, headers, config) {
+                var h = headers();
+                ws = getWebsocket(h.location);
+                ws.onopen = function() {};
+                ws.onerror = function() {};
+                ws.onmessage = function(message) {
+                    message = JSON.parse(message.data);
+                    callback(message);
+                };
+            });
         }
         
         return {

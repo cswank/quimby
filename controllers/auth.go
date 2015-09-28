@@ -33,9 +33,7 @@ func init() {
 }
 
 func getUserFromToken(r *http.Request) (*models.User, error) {
-	user := &models.User{
-		DB: DB,
-	}
+	user := &models.User{}
 
 	token, err := jwt.ParseFromRequest(r, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
@@ -50,9 +48,7 @@ func getUserFromToken(r *http.Request) (*models.User, error) {
 	}
 
 	user.Username = token.Claims["sub"].(string)
-	err = user.Fetch()
-	user.HashedPassword = []byte{}
-	return user, err
+	return user, nil
 }
 
 func generateToken(user *models.User) (string, error) {
