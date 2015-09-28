@@ -53,6 +53,9 @@ angular.module('quimby.services')
             },
             logout: function(callback) {
                 storage.token = "";
+                $http.defaults.headers.common.Authorization = '';
+                user = {};
+                callback({});
             }
         }
     }]);
