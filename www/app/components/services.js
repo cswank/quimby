@@ -64,11 +64,9 @@ angular.module('quimby.services', [])
                 ws = null;
             }
             var url = "/api/gadgets/" + $routeParams.id + "/websocket";
-            $http.get(url).success(data, status, headers, config) {
+            $http.get(url).success(function(data, status, headers, config) {
                 var h = headers();
                 ws = getWebsocket(h.location);
-                ws.onopen = function() {};
-                ws.onerror = function() {};
                 ws.onmessage = function(message) {
                     message = JSON.parse(message.data);
                     callback(message);
