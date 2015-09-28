@@ -221,12 +221,14 @@ func UpdateDevice(args *Args) error {
 }
 
 func RelayMessage(args *Args) error {
+	fmt.Println("relay")
 	var m gogadgets.Message
 	dec := json.NewDecoder(args.R.Body)
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
 	ch, ok := clients[m.Host]
+	fmt.Println("relay", ch, ok)
 	if !ok {
 		return nil
 	}

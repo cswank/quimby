@@ -182,12 +182,12 @@ func (g *Gadget) ReadValues(w io.Writer) error {
 	return err
 }
 
-func (g *Gadget) Register(addr, cookie string) (string, error) {
-	a := map[string]string{"address": addr, "cookie": cookie}
+func (g *Gadget) Register(addr, token string) (string, error) {
+	m := map[string]string{"address": addr, "token": token}
 
 	buf := &bytes.Buffer{}
 	enc := json.NewEncoder(buf)
-	enc.Encode(&a)
+	enc.Encode(&m)
 	r, err := http.Post(fmt.Sprintf("%s/clients", g.Host), "application/json", buf)
 	if err != nil {
 		return "", err
