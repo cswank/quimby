@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -553,6 +554,22 @@ var _ = Describe("Quimby", func() {
 				Expect(err).To(BeNil())
 				l := len(token)
 				req.Header.Add("Authorization", token[:l-2])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(string(d)).To(Equal("Not Authorized"))
+			})
+			It("get gadgets when you change the token", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+				Expect(err).To(BeNil())
+				parts := strings.Split(readToken, ".")
+				p := []byte(`{"exp":2443503371,"iat":1443416971,"sub":"me"}`)
+				s := base64.StdEncoding.EncodeToString(p)
+				parts[1] = strings.Replace(s, "=", "", -1)
+				t := strings.Join(parts, ".")
+				req.Header.Add("Authorization", t)
 				r, err := http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()

@@ -18,8 +18,8 @@ import (
 var (
 	privKey     *rsa.PrivateKey
 	PubKey      *rsa.PublicKey
-	pubKeyPath  = os.Getenv("QUIMBY_PUB_KEY")
-	privKeyPath = os.Getenv("QUIMBY_PRIV_KEY")
+	pubKeyPath  = os.Getenv("QUIMBY_JWT_PUB")
+	privKeyPath = os.Getenv("QUIMBY_JWT_PRIV")
 )
 
 const (
@@ -46,7 +46,7 @@ func getUserFromToken(r *http.Request) (*models.User, error) {
 	})
 
 	if err != nil || !token.Valid {
-		return nil, errors.New("no way, eh")
+		return nil, errors.New("invalid token")
 	}
 
 	user.Username = token.Claims["sub"].(string)

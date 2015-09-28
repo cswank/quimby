@@ -27,6 +27,9 @@ var (
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
 	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
 	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
+
+	keyPath  = os.Getenv("QUIMBY_TLS_KEY")
+	certPath = os.Getenv("QUIMBY_TLS_CERT")
 )
 
 func init() {
@@ -94,8 +97,11 @@ func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) 
 	http.Handle(root, r)
 	addr := fmt.Sprintf(":%s", port)
 	lg.Printf("listening on %s\n", addr)
-	err := http.ListenAndServe(addr, r)
-	log.Println(err)
+	if keyPath == "" {
+		lg.Println(http.ListenAndServe(addr, r))
+	} else {
+		lg.Println(http.ListenAndServeTLS(":443", certPath, keyPath, nil))
+	}
 }
 
 //This is the endpoint that the gadgets report to. It is
