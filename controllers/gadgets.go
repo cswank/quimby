@@ -10,17 +10,7 @@ import (
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
-	"github.com/gorilla/securecookie"
 	"github.com/gorilla/websocket"
-)
-
-var (
-	addr         string
-	clients      map[string]chan gogadgets.Message
-	host         string
-	hashKey      = []byte(os.Getenv("QUIMBY_HASH_KEY"))
-	blockKey     = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
-	SecureCookie = securecookie.New(hashKey, blockKey)
 )
 
 func init() {
@@ -45,10 +35,6 @@ func GetGadgets(args *Args) error {
 }
 
 func GetGadget(args *Args) error {
-	err := args.Gadget.Fetch()
-	if err != nil {
-		return err
-	}
 	enc := json.NewEncoder(args.W)
 	return enc.Encode(args.Gadget)
 }
@@ -63,24 +49,14 @@ func DeleteGadget(args *Args) error {
 }
 
 func GetStatus(args *Args) error {
-	if err := args.Gadget.Fetch(); err != nil {
-		return err
-	}
 	return args.Gadget.ReadStatus(args.W)
 }
 
 func GetValues(args *Args) error {
-	if err := args.Gadget.Fetch(); err != nil {
-		return err
-	}
 	return args.Gadget.ReadValues(args.W)
 }
 
 func SendCommand(args *Args) error {
-	if err := args.Gadget.Fetch(); err != nil {
-		return err
-	}
-
 	var m map[string]string
 	dec := json.NewDecoder(args.R.Body)
 	if err := dec.Decode(&m); err != nil {
@@ -115,19 +91,12 @@ func AddGadget(args *Args) error {
 //instance to the websocket and vice versa.
 func Connect(args *Args) error {
 
-	value := map[string]string{
-		"user": args.User.Username,
+	token, err := generateToken(args.User)
+	if err != nil {
+		return err
 	}
 
-	encoded, _ := SecureCookie.Encode("quimby", value)
-	cookie := &http.Cookie{
-		Name:     "quimby",
-		Value:    encoded,
-		Path:     "/",
-		HttpOnly: false,
-	}
-
-	h, err := args.Gadget.Register(getAddr(), cookie.String())
+	h, err := args.Gadget.Register(getAddr(), token)
 	if err != nil {
 		return err
 	}
@@ -182,6 +151,19 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 			return
 		}
 	}
+}
+
+func GetDevice(args *Args) error {
+	return args.Gadget.ReadDevice(args.W, args.Vars["location"], args.Vars["device"])
+}
+
+func UpdateDevice(args *Args) error {
+	var v gogadgets.Value
+	dec := json.NewDecoder(args.R.Body)
+	if err := dec.Decode(&v); err != nil {
+		return err
+	}
+	return args.Gadget.UpdateDevice(args.Vars["location"], args.Vars["device"], v)
 }
 
 func RelayMessage(args *Args) error {

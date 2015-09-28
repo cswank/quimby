@@ -41,8 +41,10 @@ func (u *User) Fetch() error {
 	return u.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		v := b.Get([]byte(u.Username))
-		err := json.Unmarshal(v, u)
-		return err
+		if len(v) == 0 {
+			return NotFound
+		}
+		return json.Unmarshal(v, u)
 	})
 }
 

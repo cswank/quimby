@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -35,7 +36,7 @@ func RandString(n int) string {
 	return string(b)
 }
 
-var cstDialer = websocket.Dialer{
+var dialer = websocket.Dialer{
 	Subprotocols:    []string{"p1", "p2"},
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
@@ -52,24 +53,25 @@ func (f *fakeLogger) Fatalf(s string, v ...interface{}) { f.f = true }
 
 var _ = Describe("Quimby", func() {
 	var (
-		port        string
-		port2       string
-		root        string
-		iRoot       string
-		dir         string
-		pth         string
-		u           *models.User
-		u2          *models.User
-		addr        string
-		db          *bolt.DB
-		cookies     []*http.Cookie
-		readCookies []*http.Cookie
-		lights      *models.Gadget
-		sprinklers  *models.Gadget
-		ts          *httptest.Server
-		msgs        []gogadgets.Message
-		clients     []map[string]string
-		lg          *fakeLogger
+		port       string
+		port2      string
+		root       string
+		iRoot      string
+		dir        string
+		pth        string
+		u          *models.User
+		u2         *models.User
+		addr       string
+		addr2      string
+		db         *bolt.DB
+		token      string
+		readToken  string
+		lights     *models.Gadget
+		sprinklers *models.Gadget
+		ts         *httptest.Server
+		msgs       []gogadgets.Message
+		clients    []map[string]string
+		lg         *fakeLogger
 	)
 
 	BeforeEach(func() {
@@ -78,9 +80,15 @@ var _ = Describe("Quimby", func() {
 		clients = []map[string]string{}
 		ts = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if r.Method == "GET" {
-				fmt.Fprintln(
-					w,
-					`{
+				if r.URL.Path == "/gadgets/locations/back yard/devices/sprinklers/status" {
+					fmt.Fprintln(
+						w,
+						`{"value": true, "io": true}`,
+					)
+				} else {
+					fmt.Fprintln(
+						w,
+						`{
   "back garden": {
     "sprinklers": {
       "value": false,
@@ -94,7 +102,8 @@ var _ = Describe("Quimby", func() {
     }
   }
 }`,
-				)
+					)
+				}
 			} else if r.Method == "POST" {
 				if r.URL.Path == "/gadgets" {
 					var m gogadgets.Message
@@ -120,7 +129,8 @@ var _ = Describe("Quimby", func() {
 		os.Setenv("QUIMBY_PORT", port)
 		os.Setenv("QUIMBY_INTERNAL_PORT", port2)
 		os.Setenv("QUIMBY_HOST", "http://localhost")
-		addr = fmt.Sprintf("http://localhost:%s/api/%%s", port)
+		addr = fmt.Sprintf("http://localhost:%s/api/%%s%%s%%s", port)
+		addr2 = fmt.Sprintf("http://localhost:%s/%%s%%s%%s", port2)
 
 		dir, _ = ioutil.TempDir("", "")
 		pth = path.Join(dir, "db")
@@ -176,13 +186,13 @@ var _ = Describe("Quimby", func() {
 				Password: "hushhush",
 			}
 			enc.Encode(usr)
-			url := fmt.Sprintf(addr, "login")
+			url := fmt.Sprintf(addr, "login", "", "")
 			var err error
 			r, err = http.Post(url, "application/json", &buf)
 			return err
 		}).Should(BeNil())
 		Expect(r.StatusCode).To(Equal(http.StatusOK))
-		cookies = r.Cookies()
+		token = r.Header.Get("Authorization")
 
 		buf := bytes.Buffer{}
 		enc := json.NewEncoder(&buf)
@@ -191,12 +201,12 @@ var _ = Describe("Quimby", func() {
 			Password: "shhhhhhhh",
 		}
 		enc.Encode(usr2)
-		url := fmt.Sprintf(addr, "login")
+		url := fmt.Sprintf(addr, "login", "", "")
 		r, err = http.Post(url, "application/json", &buf)
 		Expect(err).To(BeNil())
 
 		Expect(r.StatusCode).To(Equal(http.StatusOK))
-		readCookies = r.Cookies()
+		readToken = r.Header.Get("Authorization")
 	})
 
 	AfterEach(func() {
@@ -206,22 +216,26 @@ var _ = Describe("Quimby", func() {
 
 	Context("logging in and out", func() {
 		It("lets you log in", func() {
-			Expect(len(cookies)).To(Equal(1))
+			//Already logged in above in BeforeEach
+			Expect(len(token)).ToNot(Equal(0))
 		})
-	})
-	Context("not logged in", func() {
-		It("does not let you get gadgets", func() {
-			r, err := http.Get(fmt.Sprintf(addr, "gadgets"))
+
+		It("lets you log out", func() {
+			req, err := http.NewRequest("POST", fmt.Sprintf(addr, "logout", "", ""), nil)
 			Expect(err).To(BeNil())
-			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			defer r.Body.Close()
+			Expect(r.StatusCode).To(Equal(http.StatusOK))
 		})
 	})
 
 	Context("logged in", func() {
 		It("lets you get gadgets", func() {
-			req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets"), nil)
+			req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(cookies[0])
+			req.Header.Add("Authorization", token)
 			r, err := http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
@@ -235,9 +249,10 @@ var _ = Describe("Quimby", func() {
 		})
 
 		It("lets you get a gadget", func() {
-			req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/sprinklers"), nil)
+			u := fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "")
+			req, err := http.NewRequest("GET", u, nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(cookies[0])
+			req.Header.Add("Authorization", token)
 			r, err := http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
@@ -250,17 +265,27 @@ var _ = Describe("Quimby", func() {
 			Expect(g.Host).To(Equal(ts.URL))
 		})
 
-		It("lets you delete a gadget", func() {
-			req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/sprinklers"), nil)
+		It("gives a 404 for a non-gadget", func() {
+			req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/notarealid", "", ""), nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(cookies[0])
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusNotFound))
+			r.Body.Close()
+		})
+
+		It("lets you delete a gadget", func() {
+			req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), nil)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
 			r, err := http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
 
-			req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets"), nil)
+			req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(cookies[0])
+			req.Header.Add("Authorization", token)
 			r, err = http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
@@ -273,17 +298,17 @@ var _ = Describe("Quimby", func() {
 		})
 
 		It("doesn't let a read only user delete a gadget", func() {
-			req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/sprinklers"), nil)
+			req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(readCookies[0])
+			req.Header.Add("Authorization", readToken)
 			r, err := http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
 			defer r.Body.Close()
 
-			req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets"), nil)
+			req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(readCookies[0])
+			req.Header.Add("Authorization", readToken)
 			r, err = http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
@@ -304,9 +329,9 @@ var _ = Describe("Quimby", func() {
 			}
 			enc.Encode(g)
 
-			req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets"), &buf)
+			req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets", "", ""), &buf)
 			Expect(err).To(BeNil())
-			req.AddCookie(cookies[0])
+			req.Header.Add("Authorization", token)
 			r, err := http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
@@ -315,9 +340,9 @@ var _ = Describe("Quimby", func() {
 			u := r.Header["Location"][0]
 			Expect(u).To(Equal("/api/gadgets/back%20yard"))
 
-			req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets"), nil)
+			req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(cookies[0])
+			req.Header.Add("Authorization", token)
 			r, err = http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
@@ -331,9 +356,10 @@ var _ = Describe("Quimby", func() {
 		})
 
 		It("lets you get the status of a gadget", func() {
-			req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/sprinklers/status"), nil)
+			u := fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "/status")
+			req, err := http.NewRequest("GET", u, nil)
 			Expect(err).To(BeNil())
-			req.AddCookie(readCookies[0])
+			req.Header.Add("Authorization", readToken)
 			r, err := http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
@@ -356,23 +382,104 @@ var _ = Describe("Quimby", func() {
 			}
 			enc.Encode(m)
 
-			req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets/sprinklers"), &buf)
+			req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), &buf)
 			Expect(err).To(BeNil())
-			req.AddCookie(cookies[0])
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			defer r.Body.Close()
+
+			Eventually(func() int {
+				return len(msgs)
+			}).Should(Equal(1))
+
+			msg := msgs[0]
+			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
+		})
+
+		It("lets you get the value of a device", func() {
+			u := fmt.Sprintf(
+				addr,
+				"gadgets/",
+				sprinklers.Id,
+				"/locations/back%20yard/devices/sprinklers/status",
+			)
+			req, err := http.NewRequest("GET", u, nil)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			defer r.Body.Close()
+
+			var v gogadgets.Value
+			dec := json.NewDecoder(r.Body)
+			err = dec.Decode(&v)
+			Expect(err).To(BeNil())
+			Expect(v.Value).To(BeTrue())
+		})
+
+		It("lets you turn on a device", func() {
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			v := gogadgets.Value{
+				Value: true,
+			}
+			enc.Encode(v)
+
+			u := fmt.Sprintf(
+				addr,
+				"gadgets/",
+				sprinklers.Id,
+				"/locations/front%20yard/devices/sprinklers/status",
+			)
+			req, err := http.NewRequest("POST", u, &buf)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
 			r, err := http.DefaultClient.Do(req)
 			Expect(err).To(BeNil())
 			defer r.Body.Close()
 
 			Expect(len(msgs)).To(Equal(1))
 			msg := msgs[0]
-			Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
+			Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
 		})
 
-		It("allows the sending of messages with a websocket", func() {
-			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
-			c := cookies[0]
-			h := http.Header{"Origin": {u}, "Cookie": {c.String()}}
-			ws, _, err := cstDialer.Dial(u, h)
+		It("lets you turn off a device", func() {
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			v := gogadgets.Value{
+				Value: false,
+			}
+			enc.Encode(v)
+
+			u := fmt.Sprintf(
+				addr,
+				"gadgets/",
+				sprinklers.Id,
+				"/locations/front%20yard/devices/sprinklers/status",
+			)
+			req, err := http.NewRequest("POST", u, &buf)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			defer r.Body.Close()
+
+			Expect(len(msgs)).To(Equal(1))
+			msg := msgs[0]
+			Expect(msg.Body).To(Equal("turn off front yard sprinklers"))
+		})
+
+		It("allows the sending of a message with a websocket", func() {
+			u := strings.Replace(
+				fmt.Sprintf(
+					addr,
+					"gadgets/",
+					sprinklers.Id,
+					"/websocket",
+				), "http", "ws", -1)
+			h := http.Header{"Origin": {u}, "Authorization": {token}}
+			ws, _, err := dialer.Dial(u, h)
 			Expect(err).To(BeNil())
 			defer ws.Close()
 
@@ -396,13 +503,193 @@ var _ = Describe("Quimby", func() {
 			Expect(msg.UUID).To(Equal(uuid))
 		})
 
-		It("does not allow the sending of messages with a websocket when there are no auth cookies", func() {
-			u := strings.Replace(fmt.Sprintf(addr, "gadgets/sprinklers/websocket"), "http", "ws", -1)
-			h := http.Header{"Origin": {u}}
-			ws, r, err := cstDialer.Dial(u, h)
-			Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
-			Expect(err).ToNot(BeNil())
-			Expect(ws).To(BeNil())
+		It("allows the getting of a message with a websocket", func() {
+			u := strings.Replace(
+				fmt.Sprintf(
+					addr,
+					"gadgets/",
+					sprinklers.Id,
+					"/websocket",
+				), "http", "ws", -1)
+			h := http.Header{"Origin": {u}, "Authorization": {token}}
+			ws, _, err := dialer.Dial(u, h)
+			Expect(err).To(BeNil())
+			defer ws.Close()
+
+			uuid := gogadgets.GetUUID()
+			msg := gogadgets.Message{
+				Location: "back yard",
+				Name:     "sprinklers",
+				Type:     gogadgets.UPDATE,
+				Host:     ts.URL,
+				Value: gogadgets.Value{
+					Value: true,
+				},
+				UUID:   uuid,
+				Sender: "sprinklers",
+			}
+			var buf bytes.Buffer
+			enc := json.NewEncoder(&buf)
+			enc.Encode(msg)
+			req, err := http.NewRequest("POST", fmt.Sprintf(addr2, "internal/updates", "", ""), &buf)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusOK))
+			defer r.Body.Close()
+
+			var msg2 gogadgets.Message
+			err = ws.ReadJSON(&msg2)
+			Expect(msg2.Value.Value).To(BeTrue())
+			Expect(msg2.Location).To(Equal("back yard"))
+			Expect(msg2.UUID).To(Equal(uuid))
+		})
+	})
+
+	Context("hackers hacking in", func() {
+		Describe("does not let you", func() {
+			It("get gadgets when you mess with the token", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+				Expect(err).To(BeNil())
+				l := len(token)
+				req.Header.Add("Authorization", token[:l-2])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(string(d)).To(Equal("Not Authorized"))
+			})
+			It("get gadgets when you change the token", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+				Expect(err).To(BeNil())
+				parts := strings.Split(readToken, ".")
+				p := []byte(`{"exp":2443503371,"iat":1443416971,"sub":"me"}`)
+				s := base64.StdEncoding.EncodeToString(p)
+				parts[1] = strings.Replace(s, "=", "", -1)
+				t := strings.Join(parts, ".")
+				req.Header.Add("Authorization", t)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(string(d)).To(Equal("Not Authorized"))
+			})
+		})
+	})
+
+	Context("not logged in", func() {
+		Describe("does not let you", func() {
+			It("get gadgets", func() {
+				r, err := http.Get(fmt.Sprintf(addr, "gadgets", "", ""))
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+			})
+			It(" get a gadget", func() {
+				r, err := http.Get(fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""))
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+				r.Body.Close()
+			})
+
+			It(" delete a gadget", func() {
+				req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), nil)
+				Expect(err).To(BeNil())
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+				defer r.Body.Close()
+			})
+
+			It(" add a gadget", func() {
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				g := models.Gadget{
+					Name: "back yard",
+					Host: "http://overthere.com",
+				}
+				enc.Encode(g)
+				r, err := http.Post(fmt.Sprintf(addr, "gadgets", "", ""), "application/json", &buf)
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+				Expect(err).To(BeNil())
+				r.Body.Close()
+			})
+
+			It(" get the status of a gadget", func() {
+				u := fmt.Sprintf(
+					addr,
+					"gadgets/",
+					sprinklers.Id,
+					"/status",
+				)
+				r, err := http.Get(u)
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+				r.Body.Close()
+			})
+
+			It(" send a command to a gadget", func() {
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				m := map[string]string{
+					"command": "turn on back yard sprinklers",
+				}
+				enc.Encode(m)
+				u := fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "")
+				r, err := http.Post(u, "application/json", &buf)
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				Expect(err).To(BeNil())
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+				r.Body.Close()
+			})
+
+			It("does not allow the getting of a websocket", func() {
+				u := strings.Replace(
+					fmt.Sprintf(
+						addr,
+						"gadgets/",
+						sprinklers.Id,
+						"/websocket",
+					), "http", "ws", -1)
+				h := http.Header{"Origin": {u}}
+				ws, r, err := dialer.Dial(u, h)
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				Expect(err).ToNot(BeNil())
+				Expect(ws).To(BeNil())
+			})
+
+			It(" turn on a device", func() {
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				v := gogadgets.Value{
+					Value: true,
+				}
+				enc.Encode(v)
+
+				u := fmt.Sprintf(
+					addr,
+					"gadgets/",
+					sprinklers.Id,
+					"/locations/front%20yard/devices/sprinklers/status",
+				)
+				r, err := http.Post(u, "application/json", &buf)
+				Expect(err).To(BeNil())
+				d, _ := ioutil.ReadAll(r.Body)
+				Expect(strings.TrimSpace(string(d))).To(Equal("Not Authorized"))
+				r.Body.Close()
+				Expect(len(msgs)).To(Equal(0))
+			})
 		})
 	})
 })

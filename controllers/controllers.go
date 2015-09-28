@@ -1,10 +1,8 @@
 package controllers
 
 import (
-	"net/http"
-
 	"github.com/boltdb/bolt"
-	"github.com/cswank/quimby/models"
+	"github.com/cswank/gogadgets"
 )
 
 type Logger interface {
@@ -14,12 +12,10 @@ type Logger interface {
 	Fatalf(string, ...interface{})
 }
 
-type Args struct {
-	W      http.ResponseWriter
-	R      *http.Request
-	DB     *bolt.DB
-	User   *models.User
-	Gadget *models.Gadget
-	Vars   map[string]string
-	LG     Logger
-}
+var (
+	DB      *bolt.DB
+	addr    string
+	clients map[string]chan gogadgets.Message
+	host    string
+	LG      Logger
+)

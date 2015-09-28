@@ -1,12 +1,13 @@
-<p><a href="#/gadgets">Gadgets</a> {{name}}</p>
-<ul>
-  <li ng-repeat="(name, location) in locations">
-    <a>{{name}}</a>
-    <ul>
-      <li ng-repeat="(device, value) in location">
-        <device location="name" name="device" value="value"></device>
-      </li>
-    </ul>
-  </li>
-</ul>
-
+<div class="page">
+  <p><a href="#/gadgets">Gadgets</a> {{name}}</p>
+  <ul>
+    <li ng-repeat="(name, location) in locations">
+      <a>{{name}}</a>
+      <ul>
+        <li ng-repeat="(device, value) in location">
+          <device location="name" name="device" value="value"></device>
+        </li>
+      </ul>
+    </li>
+  </ul>
+</div>

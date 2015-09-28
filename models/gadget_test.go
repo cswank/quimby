@@ -174,7 +174,7 @@ var _ = Describe("Gadgets", func() {
 	})
 
 	It("registers with a gogadgets instance", func() {
-		h, err := g.Register(ts.URL)
+		h, err := g.Register(ts.URL, "fakecookie")
 		Expect(err).To(BeNil())
 		Expect(h).To(Equal(ts.URL))
 		Expect(len(clients)).To(Equal(1))

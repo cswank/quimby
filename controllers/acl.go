@@ -1,11 +1,9 @@
-package auth
+package controllers
 
-import "github.com/cswank/quimby/controllers"
-
-type ACL func(*controllers.Args) bool
+type ACL func(*Args) bool
 
 func Or(acls ...ACL) ACL {
-	return func(args *controllers.Args) bool {
+	return func(args *Args) bool {
 		for _, f := range acls {
 			if f(args) {
 				return true
@@ -16,7 +14,7 @@ func Or(acls ...ACL) ACL {
 }
 
 func And(acls ...ACL) ACL {
-	return func(args *controllers.Args) bool {
+	return func(args *Args) bool {
 		b := false
 		for _, f := range acls {
 			b = b && f(args)
@@ -25,14 +23,14 @@ func And(acls ...ACL) ACL {
 	}
 }
 
-func Write(args *controllers.Args) bool {
+func Write(args *Args) bool {
 	return args.User.Permission == "write" || args.User.Permission == "admin"
 }
 
-func Read(args *controllers.Args) bool {
+func Read(args *Args) bool {
 	return args.User.Permission == "write" || args.User.Permission == "admin" || args.User.Permission == "read"
 }
 
-func Anyone(args *controllers.Args) bool {
+func Anyone(args *Args) bool {
 	return true
 }

@@ -75,6 +75,29 @@ func DeleteGadget(db *bolt.DB) {
 	fmt.Println(g.Delete())
 }
 
+func EditGadget(db *bolt.DB) {
+	gadgets, err := models.GetGadgets(db)
+	if err != nil {
+		log.Fatal(err)
+	}
+	listGadgets(gadgets)
+	var i int
+	fmt.Scanf("%d", &i)
+	g := gadgets[i-1]
+	g.DB = db
+
+	var n string
+	fmt.Printf("name (%s): ", g.Name)
+	fmt.Scanf("%s", &n)
+	fmt.Printf("host (%s): ", g.Host)
+	fmt.Scanf("%s", &g.Host)
+	if n != g.Name && n != "" {
+		g.Delete()
+		g.Name = n
+	}
+	fmt.Println(g.Save())
+}
+
 func ListGadgets(db *bolt.DB) {
 	gadgets, err := models.GetGadgets(db)
 	if err != nil {

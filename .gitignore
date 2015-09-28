@@ -26,3 +26,4 @@ _testmain.go
 *.rice-box.go
 dist
 .tmp
+bower_components

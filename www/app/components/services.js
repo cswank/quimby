@@ -7,16 +7,25 @@ angular.module('quimby.services', [])
         this.getGadgets = function(callback) {
             $http.get("/api/gadgets").success(function(data) {
                 callback(data);
+            }).error(function() {
+                console.log("didn't get gadgets");
             });
         }
-        this.getDevices = function(name, callback) {
-            $http.get("/api/gadgets/" +  name + "/values").success(function(data) {
+        this.getGadget = function(id, callback) {
+            $http.get("/api/gadgets/" + id).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't get gadget");
+            });
+        }
+        this.getDevices = function(id, callback) {
+            $http.get("/api/gadgets/" +  id + "/values").success(function(data) {
                 locations = data;
                 callback(locations);
             }).error(function() {
-                
+              
             });
-            $http.get("/api/gadgets/" +  name + "/status").success(function(statuses) {
+            $http.get("/api/gadgets/" +  id + "/status").success(function(statuses) {
                 angular.forEach(statuses, function(value, key) {
                     if (value.info.direction == "output") {
                         commands[key] = {on: value.info.on, off: value.info.off};
@@ -39,7 +48,6 @@ angular.module('quimby.services', [])
         var outWs;
         var statusPromise;
         var host;
-        var callback;
         
         function getWebsocket() {
             var prot = "wss";
@@ -51,7 +59,7 @@ angular.module('quimby.services', [])
             return ws;
         }
 
-        function doConnect(errorCallback) {
+        function doConnect(callback) {
             if(ws != undefined) {
                 ws.close();
                 ws = null;
@@ -69,8 +77,7 @@ angular.module('quimby.services', [])
         
         return {
             connect: function(cb) {
-                callback = cb;
-                doConnect();
+                doConnect(cb);
             },
             send: function(command) {
                 var msg = JSON.stringify({
