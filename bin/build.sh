@@ -7,6 +7,7 @@ npm install
 cd ..
 rice embed-go
 godep go install
+rm www-dist.rice-box.go
 cd www
 rm -r dist
 ln -s app dist

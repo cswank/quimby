@@ -59,3 +59,7 @@ md-dialog md-content {
 .user-info {
     min-width: 220px;
 }
+
+.page {
+    margin-left: 30px;
+}
