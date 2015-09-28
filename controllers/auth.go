@@ -7,6 +7,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -28,6 +29,7 @@ const (
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	PubKey = getPublicKey()
 	privKey = getPrivateKey()
 }
