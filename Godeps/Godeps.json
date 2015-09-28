@@ -36,16 +36,17 @@
 			"Rev": "a5fe2436ffcb3236e175e5149162b41cd28bd27d"
 		},
 		{
+			"ImportPath": "github.com/dgrijalva/jwt-go",
+			"Comment": "v2.3.0-6-gf62f64e",
+			"Rev": "f62f64ea222e5e6d6d86421b5507b0862a3ebf7f"
+		},
+		{
 			"ImportPath": "github.com/gorilla/context",
 			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Rev": "f15e0c49460fd49eebe2bcc8486b05d1bef68d3a"
-		},
-		{
-			"ImportPath": "github.com/gorilla/securecookie",
-			"Rev": "ba5126409e0340d53e989ad07501a14949889a0d"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
