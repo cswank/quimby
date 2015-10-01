@@ -30,6 +30,7 @@ var (
 
 	keyPath  = os.Getenv("QUIMBY_TLS_KEY")
 	certPath = os.Getenv("QUIMBY_TLS_CERT")
+	iface    = os.Getenv("QUIMBY_INTERFACE")
 )
 
 func init() {
@@ -96,12 +97,12 @@ func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
 	http.Handle(root, r)
-	addr := fmt.Sprintf(":%s", port)
+	addr := fmt.Sprintf("%s:%s", iface, port)
 	lg.Printf("listening on %s\n", addr)
 	if keyPath == "" {
 		lg.Println(http.ListenAndServe(addr, r))
 	} else {
-		lg.Println(http.ListenAndServeTLS(":443", certPath, keyPath, nil))
+		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, nil))
 	}
 }
 
