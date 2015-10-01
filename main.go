@@ -42,6 +42,12 @@ func main() {
 	if port == "" {
 		log.Fatal("you must specify a port with QUIMBY_PORT")
 	}
+
+	internalPort := os.Getenv("QUIMBY_INTERNAL_PORT")
+	if port == "" {
+		log.Fatal("you must specify a port with QUIMBY_INTERNAL_PORT")
+	}
+
 	pth := os.Getenv("QUIMBY_DB")
 	if pth == "" {
 		log.Fatal("you must specify a db location with QUIMBY_DB")
@@ -65,16 +71,16 @@ func main() {
 	case gadgetDelete.FullCommand():
 		admin.DeleteGadget(db)
 	case serve.FullCommand():
-		start(db, port, "/", "/api", lg)
+		start(db, port, internalPort, "/", "/api", lg)
 	}
 	defer db.Close()
 }
 
-func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) {
+func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg controllers.Logger) {
 	controllers.DB = db
 	controllers.LG = lg
 
-	go startInternal(iRoot, lg)
+	go startInternal(iRoot, lg, internalPort)
 
 	r := mux.NewRouter()
 
@@ -109,11 +115,11 @@ func start(db *bolt.DB, port, root string, iRoot string, lg controllers.Logger) 
 //This is the endpoint that the gadgets report to. It is
 //served on a separate port so it doesn't have to be exposed
 //publicly if the main port is exposed.
-func startInternal(iRoot string, lg controllers.Logger) {
+func startInternal(iRoot string, lg controllers.Logger, port string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/internal/updates", Relay).Methods("POST")
 	http.Handle(iRoot, r)
-	a := fmt.Sprintf(":%s", os.Getenv("QUIMBY_INTERNAL_PORT"))
+	a := fmt.Sprintf(":%s", port)
 	lg.Printf("listening on %s", a)
 	err := http.ListenAndServe(a, r)
 	if err != nil {

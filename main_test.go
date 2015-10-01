@@ -175,7 +175,7 @@ var _ = Describe("Quimby", func() {
 		err = sprinklers.Save()
 		Expect(err).To(BeNil())
 
-		go start(db, port, root, iRoot, lg)
+		go start(db, port, port2, root, iRoot, lg)
 
 		var r *http.Response
 		Eventually(func() error {
@@ -186,7 +186,7 @@ var _ = Describe("Quimby", func() {
 				Password: "hushhush",
 			}
 			enc.Encode(usr)
-			url := fmt.Sprintf(addr, "login", "", "")
+			url := fmt.Sprintf(addr, "login?auth=jwt", "", "")
 			var err error
 			r, err = http.Post(url, "application/json", &buf)
 			return err
@@ -201,7 +201,7 @@ var _ = Describe("Quimby", func() {
 			Password: "shhhhhhhh",
 		}
 		enc.Encode(usr2)
-		url := fmt.Sprintf(addr, "login", "", "")
+		url := fmt.Sprintf(addr, "login?auth=jwt", "", "")
 		r, err = http.Post(url, "application/json", &buf)
 		Expect(err).To(BeNil())
 
