@@ -46,34 +46,20 @@ func Handle(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
 	a.finish()
 }
 
+type userGetter func(*http.Request) (*models.User, error)
+
 func (a *Args) getUser() {
-	if len(a.Vars["ticket"]) > 0 {
-		a.doGetUserFromTicket()
-	} else {
-		a.doGetUserFromToken()
+	f := getUserFromCookie
+
+	if len(a.R.Header.Get("Authorization")) > 0 {
+		f = getUserFromToken
 	}
+	a.User, a.err = f(a.R)
 	if a.err == nil {
 		a.User.DB = a.DB
 		a.err = a.User.Fetch()
 		a.User.HashedPassword = []byte{}
-	}
-}
-
-func (a *Args) doGetUserFromTicket() {
-	var t ticket
-	t, a.err = checkTicket(a.Vars["ticket"], a.R.Host)
-	if a.err != nil {
-		a.msg = "Not Authorized"
-		a.status = http.StatusUnauthorized
 	} else {
-		a.User = &models.User{Username: t.user}
-		a.Vars["id"] = t.id
-	}
-}
-
-func (a *Args) doGetUserFromToken() {
-	a.User, a.err = getUserFromToken(a.R)
-	if a.err != nil {
 		a.msg = "Not Authorized"
 		a.status = http.StatusUnauthorized
 	}

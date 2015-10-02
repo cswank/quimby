@@ -93,8 +93,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg contro
 	r.HandleFunc("/api/gadgets/{id}", GetGadget).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}", DeleteGadget).Methods("DELETE")
-	r.HandleFunc("/api/gadgets/{id}/websocket", GetTicket).Methods("GET")
-	r.HandleFunc("/api/websocket/{ticket}", Connect).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/websocket", Connect).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/values", GetValues).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/status", GetStatus).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
@@ -161,10 +160,6 @@ func GetStatus(w http.ResponseWriter, r *http.Request) {
 
 func GetValues(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.GetValues, controllers.Read)
-}
-
-func GetTicket(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetTicket, controllers.Read)
 }
 
 func Connect(w http.ResponseWriter, r *http.Request) {
