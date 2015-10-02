@@ -112,6 +112,7 @@ var _ = Describe("Gadgets", func() {
 
 	It("can save", func() {
 		g2 := &Gadget{
+			Id:   g.Id,
 			Name: "lights",
 			DB:   db,
 		}
