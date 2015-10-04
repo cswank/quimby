@@ -10,7 +10,8 @@ angular.module('quimby.directives')
             scope: {
                 name: '=',
                 value: '=',
-                location: '='
+                location: '=',
+                direction: '='
             },
             controller: function($scope) {
                 $scope.toggle = function() {

@@ -15,7 +15,8 @@ angular.module('quimby.gadget', ['ngRoute'])
         $scope.gadget = data;
     });
         
-    $gadgets.getDevices($scope.id, function(locations) {
+    $gadgets.getDevices($scope.id, function(locations, directions) {
+        $scope.directions = directions;
         $scope.locations = locations;
     });
     

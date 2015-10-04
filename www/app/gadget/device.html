@@ -1,4 +1,8 @@
-<div ng-click="toggle()">
-  <a>{{name}}: {{value.value | onoff }}</a>
+<div>
+  <div ng-show="direction=='output'" ng-click="toggle()">
+    <a>{{name}}: {{value.value | onoff }}</a>
+  </div>
+  <div ng-show="direction=='input'">
+    <a>{{name}}: {{value.value}}</a>
+  </div>
 </div>
-
