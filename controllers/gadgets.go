@@ -15,7 +15,7 @@ import (
 )
 
 func init() {
-	clients = map[string]chan gogadgets.Message{}
+	clients = make(map[string]map[string](chan gogadgets.Message))
 }
 
 func Ping(args *Args) error {
@@ -110,10 +110,18 @@ func Connect(args *Args) error {
 	if err != nil {
 		return err
 	}
-	updates := make(chan gogadgets.Message)
+	ch := make(chan gogadgets.Message)
 	ws := make(chan gogadgets.Message)
+	q := make(chan bool)
 
-	clients[h] = updates
+	chs, ok := clients[h]
+	if !ok {
+		chs = map[string](chan gogadgets.Message){}
+	}
+
+	uuid := gogadgets.GetUUID()
+	chs[uuid] = ch
+	clients[h] = chs
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -126,14 +134,18 @@ func Connect(args *Args) error {
 		return err
 	}
 
-	go listen(conn, ws)
+	go listen(conn, ws, q)
 
 	for {
 		select {
 		case msg := <-ws:
 			args.Gadget.UpdateMessage(msg)
-		case msg := <-updates:
+		case msg := <-ch:
 			sendSocketMessage(conn, msg)
+		case <-q:
+			m := clients[h]
+			delete(m, uuid)
+			return nil
 		}
 	}
 	return nil
@@ -145,7 +157,7 @@ func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
 	conn.WriteMessage(websocket.TextMessage, d)
 }
 
-func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
+func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
 	for {
 		t, p, err := conn.ReadMessage()
 		if err != nil {
@@ -158,6 +170,7 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message) {
 			}
 			ch <- m
 		} else if t == websocket.CloseMessage || t == -1 {
+			q <- true
 			return
 		}
 	}
@@ -182,11 +195,13 @@ func RelayMessage(args *Args) error {
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
-	ch, ok := clients[m.Host]
+	chs, ok := clients[m.Host]
 	if !ok {
 		return nil
 	}
-	ch <- m
+	for _, ch := range chs {
+		ch <- m
+	}
 	return nil
 }
 

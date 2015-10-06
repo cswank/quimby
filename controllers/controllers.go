@@ -18,7 +18,7 @@ type Logger interface {
 var (
 	DB       *bolt.DB
 	addr     string
-	clients  map[string]chan gogadgets.Message
+	clients  map[string]map[string]chan gogadgets.Message
 	host     string
 	LG       Logger
 	hashKey  = []byte(os.Getenv("QUIMBY_HASH_KEY"))
