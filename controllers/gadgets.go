@@ -138,8 +138,7 @@ func Connect(args *Args) error {
 		case msg := <-ch:
 			sendSocketMessage(conn, msg)
 		case <-q:
-			m := Clients.clients[h]
-			delete(m, uuid)
+			Clients.Delete(h, uuid)
 			return nil
 		}
 	}
@@ -191,7 +190,7 @@ func RelayMessage(args *Args) error {
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
-	chs, ok := Clients.clients[m.Host]
+	chs, ok := Clients.Get(m.Host)
 	if !ok {
 		return nil
 	}

@@ -28,6 +28,16 @@ func (c *ClientHolder) Add(key string, chs map[string](chan gogadgets.Message)) 
 	c.lock.Unlock()
 }
 
+func (c *ClientHolder) Delete(host, uuid string) {
+	c.lock.Lock()
+	m, ok := c.clients[host]
+	if ok {
+		delete(m, uuid)
+	}
+	c.clients[host] = m
+	c.lock.Unlock()
+}
+
 func (c *ClientHolder) MarshalJSON() ([]byte, error) {
 	m := map[string]int{}
 	c.lock.Lock()
