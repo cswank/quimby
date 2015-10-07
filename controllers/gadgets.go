@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"sync"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
@@ -15,6 +16,30 @@ import (
 
 type ClientHolder struct {
 	clients map[string]map[string](chan gogadgets.Message)
+	lock    sync.Mutex
+}
+
+func (c *ClientHolder) Get(key string) (map[string](chan gogadgets.Message), bool) {
+	c.lock.Lock()
+	m, ok := c.clients[key]
+	c.lock.Unlock()
+	return m, ok
+}
+
+func (c *ClientHolder) Add(key string, chs map[string](chan gogadgets.Message)) {
+	c.lock.Lock()
+	c.clients[key] = chs
+	c.lock.Unlock()
+}
+
+func (c *ClientHolder) MarshalJSON() ([]byte, error) {
+	m := map[string]int{}
+	c.lock.Lock()
+	for k, v := range Clients.clients {
+		m[k] = len(v)
+	}
+	c.lock.Unlock()
+	return json.Marshal(m)
 }
 
 func NewClientHolder() *ClientHolder {
@@ -32,12 +57,9 @@ func Ping(args *Args) error {
 }
 
 func GetClients(args *Args) error {
-	m := map[string]int{}
-	for k, v := range Clients.clients {
-		m[k] = len(v)
-	}
-	enc := json.NewEncoder(args.W)
-	return enc.Encode(m)
+	d, err := json.Marshal(Clients)
+	args.W.Write(d)
+	return err
 }
 
 func GetGadgets(args *Args) error {
@@ -128,14 +150,14 @@ func Connect(args *Args) error {
 	ws := make(chan gogadgets.Message)
 	q := make(chan bool)
 
-	chs, ok := Clients.clients[h]
+	chs, ok := Clients.Get(h)
 	if !ok {
 		chs = map[string](chan gogadgets.Message){}
 	}
 
 	uuid := gogadgets.GetUUID()
 	chs[uuid] = ch
-	Clients.clients[h] = chs
+	Clients.Add(h, chs)
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
