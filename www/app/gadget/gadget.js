@@ -27,4 +27,9 @@ angular.module('quimby.gadget', ['ngRoute'])
             })
         }
     });
+    
+    $scope.$on('$locationChangeStart', function( event ) {
+        $sockets.close();
+    });
+
 }]);

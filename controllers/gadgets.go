@@ -3,7 +3,6 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -176,6 +175,7 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
 	for {
 		t, p, err := conn.ReadMessage()
 		if err != nil {
+			q <- true
 			return
 		}
 		if t == websocket.TextMessage {
@@ -223,7 +223,7 @@ func RelayMessage(args *Args) error {
 func getAddr() string {
 	host = os.Getenv("QUIMBY_HOST")
 	if host == "" {
-		log.Println("please set QUIMBY_HOST")
+		LG.Println("please set QUIMBY_HOST")
 	}
 	if addr == "" {
 		addr = fmt.Sprintf("%s:%s/internal/updates", os.Getenv("QUIMBY_HOST"), os.Getenv("QUIMBY_INTERNAL_PORT"))
