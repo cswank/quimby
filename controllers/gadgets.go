@@ -7,46 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"sync"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/websocket"
 )
-
-type ClientHolder struct {
-	clients map[string]map[string](chan gogadgets.Message)
-	lock    sync.Mutex
-}
-
-func (c *ClientHolder) Get(key string) (map[string](chan gogadgets.Message), bool) {
-	c.lock.Lock()
-	m, ok := c.clients[key]
-	c.lock.Unlock()
-	return m, ok
-}
-
-func (c *ClientHolder) Add(key string, chs map[string](chan gogadgets.Message)) {
-	c.lock.Lock()
-	c.clients[key] = chs
-	c.lock.Unlock()
-}
-
-func (c *ClientHolder) MarshalJSON() ([]byte, error) {
-	m := map[string]int{}
-	c.lock.Lock()
-	for k, v := range Clients.clients {
-		m[k] = len(v)
-	}
-	c.lock.Unlock()
-	return json.Marshal(m)
-}
-
-func NewClientHolder() *ClientHolder {
-	return &ClientHolder{
-		clients: make(map[string]map[string](chan gogadgets.Message)),
-	}
-}
 
 func Ping(args *Args) error {
 	args.W.Header().Add(
@@ -54,12 +19,6 @@ func Ping(args *Args) error {
 		"/api/users/current",
 	)
 	return nil
-}
-
-func GetClients(args *Args) error {
-	d, err := json.Marshal(Clients)
-	args.W.Write(d)
-	return err
 }
 
 func GetGadgets(args *Args) error {

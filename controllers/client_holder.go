@@ -1,0 +1,45 @@
+package controllers
+
+import (
+	"encoding/json"
+	"sync"
+
+	"github.com/cswank/gogadgets"
+)
+
+//ClientHolder keeps track of the connected websocket clients.  It holds the chans
+//that get written to when a Gogadgets system sends an update to Quimby.  That chan
+//is used to relay the message the correct websocket.
+type ClientHolder struct {
+	clients map[string]map[string](chan gogadgets.Message)
+	lock    sync.Mutex
+}
+
+func (c *ClientHolder) Get(key string) (map[string](chan gogadgets.Message), bool) {
+	c.lock.Lock()
+	m, ok := c.clients[key]
+	c.lock.Unlock()
+	return m, ok
+}
+
+func (c *ClientHolder) Add(key string, chs map[string](chan gogadgets.Message)) {
+	c.lock.Lock()
+	c.clients[key] = chs
+	c.lock.Unlock()
+}
+
+func (c *ClientHolder) MarshalJSON() ([]byte, error) {
+	m := map[string]int{}
+	c.lock.Lock()
+	for k, v := range Clients.clients {
+		m[k] = len(v)
+	}
+	c.lock.Unlock()
+	return json.Marshal(m)
+}
+
+func NewClientHolder() *ClientHolder {
+	return &ClientHolder{
+		clients: make(map[string]map[string](chan gogadgets.Message)),
+	}
+}

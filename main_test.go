@@ -23,7 +23,12 @@ import (
 	. "github.com/onsi/gomega"
 )
 
+var (
+	p int
+)
+
 func init() {
+	p = 1024 + rand.Intn(65535-2024)
 	rand.Seed(time.Now().UnixNano())
 }
 
@@ -52,6 +57,10 @@ func (f *fakeLogger) Printf(s string, v ...interface{}) {}
 func (f *fakeLogger) Fatal(v ...interface{})            { f.f = true }
 func (f *fakeLogger) Fatalf(s string, v ...interface{}) { f.f = true }
 
+func init() {
+
+}
+
 var _ = Describe("Quimby", func() {
 	var (
 		port       string
@@ -64,6 +73,7 @@ var _ = Describe("Quimby", func() {
 		u2         *models.User
 		addr       string
 		addr2      string
+		adminAddr  string
 		db         *bolt.DB
 		token      string
 		readToken  string
@@ -76,6 +86,8 @@ var _ = Describe("Quimby", func() {
 	)
 
 	BeforeEach(func() {
+		port = fmt.Sprintf("%d", p)
+		port2 = fmt.Sprintf("%d", p+1)
 		lg = &fakeLogger{}
 		msgs = []gogadgets.Message{}
 		clients = []map[string]string{}
@@ -121,8 +133,6 @@ var _ = Describe("Quimby", func() {
 				}
 			}
 		}))
-		port = fmt.Sprintf("%d", 1024+rand.Intn(65535-1024))
-		port2 = fmt.Sprintf("%d", 1024+rand.Intn(65535-1024))
 
 		root = fmt.Sprintf("%s", RandString(10))
 		iRoot = fmt.Sprintf("%s", RandString(10))
@@ -132,6 +142,7 @@ var _ = Describe("Quimby", func() {
 		os.Setenv("QUIMBY_HOST", "http://localhost")
 		addr = fmt.Sprintf("http://localhost:%s/api/%%s%%s%%s", port)
 		addr2 = fmt.Sprintf("http://localhost:%s/%%s%%s%%s", port2)
+		adminAddr = fmt.Sprintf("http://localhost:%s/admin/%%s", port)
 
 		dir, _ = ioutil.TempDir("", "")
 		pth = path.Join(dir, "db")
@@ -186,6 +197,7 @@ var _ = Describe("Quimby", func() {
 	})
 
 	AfterEach(func() {
+		p += 2
 		db.Close()
 		os.RemoveAll(dir)
 	})
@@ -224,7 +236,7 @@ var _ = Describe("Quimby", func() {
 
 		Context("admin stuff", func() {
 			It("lets you see how many websocket clients there are", func() {
-				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "clients", "", ""), nil)
+				req, err := http.NewRequest("GET", fmt.Sprintf(adminAddr, "clients"), nil)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
 				r, err := http.DefaultClient.Do(req)
@@ -616,7 +628,7 @@ var _ = Describe("Quimby", func() {
 
 		Context("admin stuff", func() {
 			It("lets you see how many websocket clients there are", func() {
-				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "clients", "", ""), nil)
+				req, err := http.NewRequest("GET", fmt.Sprintf(adminAddr, "clients"), nil)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
 				r, err := http.DefaultClient.Do(req)
