@@ -14,8 +14,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func init() {
-	clients = make(map[string]map[string](chan gogadgets.Message))
+type ClientHolder struct {
+	clients map[string]map[string](chan gogadgets.Message)
+}
+
+func NewClientHolder() *ClientHolder {
+	return &ClientHolder{
+		clients: make(map[string]map[string](chan gogadgets.Message)),
+	}
 }
 
 func Ping(args *Args) error {
@@ -24,6 +30,15 @@ func Ping(args *Args) error {
 		"/api/users/current",
 	)
 	return nil
+}
+
+func GetClients(args *Args) error {
+	m := map[string]int{}
+	for k, v := range Clients.clients {
+		m[k] = len(v)
+	}
+	enc := json.NewEncoder(args.W)
+	return enc.Encode(m)
 }
 
 func GetGadgets(args *Args) error {
@@ -114,14 +129,14 @@ func Connect(args *Args) error {
 	ws := make(chan gogadgets.Message)
 	q := make(chan bool)
 
-	chs, ok := clients[h]
+	chs, ok := Clients.clients[h]
 	if !ok {
 		chs = map[string](chan gogadgets.Message){}
 	}
 
 	uuid := gogadgets.GetUUID()
 	chs[uuid] = ch
-	clients[h] = chs
+	Clients.clients[h] = chs
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -143,7 +158,7 @@ func Connect(args *Args) error {
 		case msg := <-ch:
 			sendSocketMessage(conn, msg)
 		case <-q:
-			m := clients[h]
+			m := Clients.clients[h]
 			delete(m, uuid)
 			return nil
 		}
@@ -195,7 +210,7 @@ func RelayMessage(args *Args) error {
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
-	chs, ok := clients[m.Host]
+	chs, ok := Clients.clients[m.Host]
 	if !ok {
 		return nil
 	}

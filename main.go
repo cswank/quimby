@@ -71,12 +71,14 @@ func main() {
 	case gadgetDelete.FullCommand():
 		admin.DeleteGadget(db)
 	case serve.FullCommand():
-		start(db, port, internalPort, "/", "/api", lg)
+		clients := controllers.NewClientHolder()
+		start(db, port, internalPort, "/", "/api", lg, clients)
 	}
 	defer db.Close()
 }
 
-func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg controllers.Logger) {
+func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg controllers.Logger, clients *controllers.ClientHolder) {
+	controllers.Clients = clients
 	controllers.DB = db
 	controllers.LG = lg
 
@@ -87,6 +89,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg contro
 	r.HandleFunc("/api/login", controllers.Login).Methods("POST")
 	r.HandleFunc("/api/logout", controllers.Logout).Methods("POST")
 	r.HandleFunc("/api/ping", Ping).Methods("GET")
+	r.HandleFunc("/api/clients", GetClients).Methods("GET")
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
 	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
@@ -128,6 +131,10 @@ func startInternal(iRoot string, lg controllers.Logger, port string) {
 
 func Ping(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.Ping, controllers.Read)
+}
+
+func GetClients(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.GetClients, controllers.Write)
 }
 
 func GetUser(w http.ResponseWriter, r *http.Request) {

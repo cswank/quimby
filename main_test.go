@@ -16,6 +16,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
@@ -174,7 +175,8 @@ var _ = Describe("Quimby", func() {
 		}
 		err = sprinklers.Save()
 		Expect(err).To(BeNil())
-		go start(db, port, port2, root, iRoot, lg)
+		clients := controllers.NewClientHolder()
+		go start(db, port, port2, root, iRoot, lg, clients)
 		Eventually(func() error {
 			url := fmt.Sprintf(addr, "ping", "", "")
 			_, err := http.Get(url)
@@ -218,6 +220,24 @@ var _ = Describe("Quimby", func() {
 			Expect(r.StatusCode).To(Equal(http.StatusOK))
 			readToken = r.Header.Get("Authorization")
 
+		})
+
+		Context("admin stuff", func() {
+			It("lets you see how many websocket clients there are", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "clients", "", ""), nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				var m map[string]int
+				dec := json.NewDecoder(r.Body)
+				err = dec.Decode(&m)
+				Expect(err).To(BeNil())
+
+				Expect(len(m)).To(Equal(0))
+			})
 		})
 
 		Context("logging in and out", func() {
@@ -592,6 +612,23 @@ var _ = Describe("Quimby", func() {
 
 			Expect(r.StatusCode).To(Equal(http.StatusOK))
 			readCookies = r.Cookies()
+		})
+
+		Context("admin stuff", func() {
+			It("lets you see how many websocket clients there are", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "clients", "", ""), nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				var m map[string]int
+				dec := json.NewDecoder(r.Body)
+				err = dec.Decode(&m)
+				Expect(err).To(BeNil())
+				Expect(len(m)).To(Equal(0))
+			})
 		})
 
 		Context("logging in and out", func() {

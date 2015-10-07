@@ -4,7 +4,6 @@ import (
 	"os"
 
 	"github.com/boltdb/bolt"
-	"github.com/cswank/gogadgets"
 	"github.com/gorilla/securecookie"
 )
 
@@ -18,7 +17,7 @@ type Logger interface {
 var (
 	DB       *bolt.DB
 	addr     string
-	clients  map[string]map[string]chan gogadgets.Message
+	Clients  *ClientHolder
 	host     string
 	LG       Logger
 	hashKey  = []byte(os.Getenv("QUIMBY_HASH_KEY"))
