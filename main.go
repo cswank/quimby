@@ -181,5 +181,5 @@ func GetDevice(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetClients(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetClients, controllers.Write)
+	controllers.Handle(w, r, controllers.GetClients, controllers.Admin)
 }

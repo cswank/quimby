@@ -23,6 +23,10 @@ func And(acls ...ACL) ACL {
 	}
 }
 
+func Admin(args *Args) bool {
+	return args.User.Permission == "admin"
+}
+
 func Write(args *Args) bool {
 	return args.User.Permission == "write" || args.User.Permission == "admin"
 }

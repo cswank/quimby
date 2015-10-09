@@ -71,12 +71,14 @@ var _ = Describe("Quimby", func() {
 		pth        string
 		u          *models.User
 		u2         *models.User
+		u3         *models.User
 		addr       string
 		addr2      string
 		adminAddr  string
 		db         *bolt.DB
 		token      string
 		readToken  string
+		adminToken string
 		lights     *models.Gadget
 		sprinklers *models.Gadget
 		ts         *httptest.Server
@@ -171,6 +173,16 @@ var _ = Describe("Quimby", func() {
 		err = u2.Save()
 		Expect(err).To(BeNil())
 
+		u3 = &models.User{
+			Username:   "boss",
+			Password:   "sosecret",
+			Permission: "admin",
+			DB:         db,
+		}
+
+		err = u3.Save()
+		Expect(err).To(BeNil())
+
 		lights = &models.Gadget{
 			Name: "lights",
 			Host: ts.URL,
@@ -232,13 +244,26 @@ var _ = Describe("Quimby", func() {
 			Expect(r.StatusCode).To(Equal(http.StatusOK))
 			readToken = r.Header.Get("Authorization")
 
+			buf = bytes.Buffer{}
+			enc = json.NewEncoder(&buf)
+			usr3 := &models.User{
+				Username: "boss",
+				Password: "sosecret",
+			}
+			enc.Encode(usr3)
+
+			r, err = http.Post(url, "application/json", &buf)
+			Expect(err).To(BeNil())
+			Expect(r.StatusCode).To(Equal(http.StatusOK))
+			adminToken = r.Header.Get("Authorization")
+
 		})
 
 		Context("admin stuff", func() {
-			It("lets you see how many websocket clients there are", func() {
+			It("lets admins see how many websocket clients there are", func() {
 				req, err := http.NewRequest("GET", fmt.Sprintf(adminAddr, "clients"), nil)
 				Expect(err).To(BeNil())
-				req.Header.Add("Authorization", token)
+				req.Header.Add("Authorization", adminToken)
 				r, err := http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
@@ -249,6 +274,15 @@ var _ = Describe("Quimby", func() {
 				Expect(err).To(BeNil())
 
 				Expect(len(m)).To(Equal(0))
+			})
+
+			It("does not let non-admins see how many websocket clients there are", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(adminAddr, "clients"), nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
 			})
 		})
 
@@ -593,8 +627,9 @@ var _ = Describe("Quimby", func() {
 	Describe("with cookies", func() {
 
 		var (
-			cookies     []*http.Cookie
-			readCookies []*http.Cookie
+			cookies      []*http.Cookie
+			readCookies  []*http.Cookie
+			adminCookies []*http.Cookie
 		)
 
 		BeforeEach(func() {
@@ -624,13 +659,27 @@ var _ = Describe("Quimby", func() {
 
 			Expect(r.StatusCode).To(Equal(http.StatusOK))
 			readCookies = r.Cookies()
+
+			buf = bytes.Buffer{}
+			enc = json.NewEncoder(&buf)
+			usr3 := &models.User{
+				Username: "boss",
+				Password: "sosecret",
+			}
+			enc.Encode(usr3)
+
+			r, err = http.Post(url, "application/json", &buf)
+			Expect(err).To(BeNil())
+
+			Expect(r.StatusCode).To(Equal(http.StatusOK))
+			adminCookies = r.Cookies()
 		})
 
 		Context("admin stuff", func() {
 			It("lets you see how many websocket clients there are", func() {
 				req, err := http.NewRequest("GET", fmt.Sprintf(adminAddr, "clients"), nil)
 				Expect(err).To(BeNil())
-				req.Header.Add("Authorization", token)
+				req.AddCookie(adminCookies[0])
 				r, err := http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
@@ -640,6 +689,15 @@ var _ = Describe("Quimby", func() {
 				err = dec.Decode(&m)
 				Expect(err).To(BeNil())
 				Expect(len(m)).To(Equal(0))
+			})
+
+			It("does not let non-admins see how many websocket clients there are", func() {
+				req, err := http.NewRequest("GET", fmt.Sprintf(adminAddr, "clients"), nil)
+				Expect(err).To(BeNil())
+				req.AddCookie(cookies[0])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
 			})
 		})
 
@@ -652,7 +710,7 @@ var _ = Describe("Quimby", func() {
 			It("lets you log out", func() {
 				req, err := http.NewRequest("POST", fmt.Sprintf(addr, "logout", "", ""), nil)
 				Expect(err).To(BeNil())
-				req.Header.Add("Authorization", token)
+				req.AddCookie(cookies[0])
 				r, err := http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
@@ -729,7 +787,7 @@ var _ = Describe("Quimby", func() {
 			It("doesn't let a read only user delete a gadget", func() {
 				req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), nil)
 				Expect(err).To(BeNil())
-				req.Header.Add("Authorization", readToken)
+				req.AddCookie(readCookies[0])
 				r, err := http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))

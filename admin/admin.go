@@ -20,18 +20,30 @@ func ListUsers(db *bolt.DB) {
 	}
 }
 
+var (
+	permissions = map[int]string{
+		1: "read",
+		2: "write",
+		3: "admin",
+	}
+)
+
 func AddUser(db *bolt.DB) {
 	u := models.User{
 		DB: db,
 	}
 	fmt.Print("username: ")
 	fmt.Scanf("%s", &u.Username)
-	fmt.Print("can write? (y/N): ")
-	var perm string
-	fmt.Scanf("%s", &perm)
-	if perm == "y" || perm == "Y" {
-		u.Permission = "write"
+	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin")
+	var x int
+	fmt.Scanf("%d", &x)
+
+	perm, ok := permissions[x]
+	if !ok {
+		log.Fatal("select 1, 2, or 3")
 	}
+	u.Permission = perm
+
 	fmt.Printf("password: ")
 	p1 := string(gopass.GetPasswd())
 	fmt.Printf("again: ")
