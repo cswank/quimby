@@ -16,11 +16,13 @@ import (
 )
 
 var (
-	dbPath       string
 	app          = kingpin.New("quimby", "An interface to gogadets")
 	users        = app.Command("users", "User management")
 	userAdd      = users.Command("add", "Add a new user.")
 	userList     = users.Command("list", "List users.")
+	cert         = app.Command("cert", "Make an ssl cert.")
+	domain       = cert.Flag("domain", "The domain for the tls cert.").Required().Short('d').String()
+	pth          = cert.Flag("path", "The directory where the cert files will be written").Required().Short('p').String()
 	serve        = app.Command("serve", "Start the server.")
 	gadgets      = app.Command("gadgets", "Commands for managing gadgets")
 	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
@@ -33,11 +35,43 @@ var (
 	iface    = os.Getenv("QUIMBY_INTERFACE")
 )
 
-func init() {
-	dbPath = os.Getenv("QUIMBY_DB")
+func main() {
+	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
+	case cert.FullCommand():
+		admin.GenerateCert(*domain, *pth)
+	case userAdd.FullCommand():
+		addDB(admin.AddUser)
+	case userList.FullCommand():
+		addDB(admin.ListUsers)
+	case gadgetAdd.FullCommand():
+		addDB(admin.AddGadget)
+	case gadgetList.FullCommand():
+		addDB(admin.ListGadgets)
+	case gadgetEdit.FullCommand():
+		addDB(admin.EditGadget)
+	case gadgetDelete.FullCommand():
+		addDB(admin.DeleteGadget)
+	case serve.FullCommand():
+		addDB(startServer)
+	}
 }
 
-func main() {
+type dbNeeder func(*bolt.DB)
+
+func addDB(f dbNeeder) {
+	pth := os.Getenv("QUIMBY_DB")
+	if pth == "" {
+		log.Fatal("you must specify a db location with QUIMBY_DB")
+	}
+	db, err := models.GetDB(pth)
+	if err != nil {
+		log.Fatalf("could not open db at %s - %v", pth, err)
+	}
+	f(db)
+	defer db.Close()
+}
+
+func startServer(db *bolt.DB) {
 	port := os.Getenv("QUIMBY_PORT")
 	if port == "" {
 		log.Fatal("you must specify a port with QUIMBY_PORT")
@@ -47,34 +81,9 @@ func main() {
 	if port == "" {
 		log.Fatal("you must specify a port with QUIMBY_INTERNAL_PORT")
 	}
-
-	pth := os.Getenv("QUIMBY_DB")
-	if pth == "" {
-		log.Fatal("you must specify a db location with QUIMBY_DB")
-	}
-	db, err := models.GetDB(pth)
-	if err != nil {
-		log.Fatal(err)
-	}
 	lg := log.New(os.Stdout, "quimby ", log.Ltime)
-	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
-	case userAdd.FullCommand():
-		admin.AddUser(db)
-	case userList.FullCommand():
-		admin.ListUsers(db)
-	case gadgetAdd.FullCommand():
-		admin.AddGadget(db)
-	case gadgetList.FullCommand():
-		admin.ListGadgets(db)
-	case gadgetEdit.FullCommand():
-		admin.EditGadget(db)
-	case gadgetDelete.FullCommand():
-		admin.DeleteGadget(db)
-	case serve.FullCommand():
-		clients := controllers.NewClientHolder()
-		start(db, port, internalPort, "/", "/api", lg, clients)
-	}
-	defer db.Close()
+	clients := controllers.NewClientHolder()
+	start(db, port, internalPort, "/", "/api", lg, clients)
 }
 
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg controllers.Logger, clients *controllers.ClientHolder) {

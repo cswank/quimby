@@ -30,8 +30,6 @@ const (
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	PubKey = getPublicKey()
-	privKey = getPrivateKey()
 }
 
 func getUserFromCookie(r *http.Request) (*models.User, error) {
@@ -57,8 +55,12 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 }
 
 func getUserFromToken(r *http.Request) (*models.User, error) {
-	user := &models.User{}
+	if PubKey == nil || privKey == nil {
+		PubKey = getPublicKey()
+		privKey = getPrivateKey()
+	}
 
+	user := &models.User{}
 	token, err := jwt.ParseFromRequest(r, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -76,6 +78,10 @@ func getUserFromToken(r *http.Request) (*models.User, error) {
 }
 
 func generateToken(user *models.User) (string, error) {
+	if PubKey == nil || privKey == nil {
+		PubKey = getPublicKey()
+		privKey = getPrivateKey()
+	}
 	token := jwt.New(jwt.SigningMethodRS512)
 	token.Claims["exp"] = time.Now().Add(time.Duration(24 * time.Hour)).Unix()
 	token.Claims["iat"] = time.Now().Unix()

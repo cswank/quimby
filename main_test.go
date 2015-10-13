@@ -57,10 +57,6 @@ func (f *fakeLogger) Printf(s string, v ...interface{}) {}
 func (f *fakeLogger) Fatal(v ...interface{})            { f.f = true }
 func (f *fakeLogger) Fatalf(s string, v ...interface{}) { f.f = true }
 
-func init() {
-
-}
-
 var _ = Describe("Quimby", func() {
 	var (
 		port       string
