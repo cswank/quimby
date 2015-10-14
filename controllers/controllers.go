@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/boltdb/bolt"
@@ -24,3 +25,8 @@ var (
 	blockKey = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
 	sc       = securecookie.New(hashKey, blockKey)
 )
+
+func Options(args *Args) error {
+	fmt.Println(args.R.URL)
+	return nil
+}
