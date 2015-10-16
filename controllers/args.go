@@ -37,8 +37,8 @@ func Handle(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
 		acl:  acl,
 		ctrl: ctrl,
 	}
-	calls := []caller{a.getUser, a.checkACL, a.getGadget, a.callCtrl}
-	for _, f := range calls {
+
+	for _, f := range a.calls() {
 		if a.err == nil {
 			f()
 		}
@@ -48,6 +48,10 @@ func Handle(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
 
 type userGetter func(*http.Request) (*models.User, error)
 
+func (a *Args) calls() []caller {
+	return []caller{a.getUser, a.checkACL, a.getGadget, a.callCtrl}
+}
+
 func (a *Args) getUser() {
 	f := getUserFromCookie
 
@@ -55,14 +59,14 @@ func (a *Args) getUser() {
 		f = getUserFromToken
 	}
 	a.User, a.err = f(a.R)
-	if a.err == nil {
-		a.User.DB = a.DB
-		a.err = a.User.Fetch()
-		a.User.HashedPassword = []byte{}
-	} else {
+	if a.err != nil {
 		a.msg = "Not Authorized"
 		a.status = http.StatusUnauthorized
+		return
 	}
+	a.User.DB = a.DB
+	a.err = a.User.Fetch()
+	a.User.HashedPassword = []byte{}
 }
 
 func (a *Args) checkACL() {
@@ -103,9 +107,8 @@ func (a *Args) callCtrl() {
 }
 
 func (a *Args) finish() {
-	if a.err == nil {
-		return
+	if a.err != nil {
+		a.W.WriteHeader(a.status)
+		a.W.Write([]byte(a.msg))
 	}
-	a.W.WriteHeader(a.status)
-	a.W.Write([]byte(a.msg))
 }

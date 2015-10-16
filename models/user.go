@@ -59,7 +59,7 @@ func (u *User) IsAuthorized(perm string) bool {
 }
 
 func (u *User) Save() error {
-	if len(u.Password) < 8 {
+	if len(u.HashedPassword) == 0 && len(u.Password) < 8 {
 		return errors.New("password is too short")
 	}
 	u.hashPassword()
@@ -88,6 +88,9 @@ func (u *User) CheckPassword() (bool, error) {
 }
 
 func (u *User) hashPassword() {
+	if len(u.Password) == 0 {
+		return
+	}
 	u.HashedPassword, _ = bcrypt.GenerateFromPassword(
 		[]byte(u.Password),
 		bcrypt.DefaultCost,

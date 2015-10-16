@@ -8,9 +8,9 @@ import (
 
 	"github.com/GeertJohan/go.rice"
 	"github.com/boltdb/bolt"
-	"github.com/cswank/quimby/admin"
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
+	"github.com/cswank/quimby/utils"
 	"github.com/gorilla/mux"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -20,10 +20,12 @@ var (
 	users        = app.Command("users", "User management")
 	userAdd      = users.Command("add", "Add a new user.")
 	userList     = users.Command("list", "List users.")
+	userEdit     = users.Command("edit", "Update a user.")
 	cert         = app.Command("cert", "Make an ssl cert.")
 	domain       = cert.Flag("domain", "The domain for the tls cert.").Required().Short('d').String()
 	pth          = cert.Flag("path", "The directory where the cert files will be written").Required().Short('p').String()
 	serve        = app.Command("serve", "Start the server.")
+	command      = app.Command("command", "Start the server.")
 	gadgets      = app.Command("gadgets", "Commands for managing gadgets")
 	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
@@ -38,19 +40,23 @@ var (
 func main() {
 	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
 	case cert.FullCommand():
-		admin.GenerateCert(*domain, *pth)
+		utils.GenerateCert(*domain, *pth)
 	case userAdd.FullCommand():
-		addDB(admin.AddUser)
+		addDB(utils.AddUser)
 	case userList.FullCommand():
-		addDB(admin.ListUsers)
+		addDB(utils.ListUsers)
+	case userEdit.FullCommand():
+		addDB(utils.EditUser)
 	case gadgetAdd.FullCommand():
-		addDB(admin.AddGadget)
+		addDB(utils.AddGadget)
 	case gadgetList.FullCommand():
-		addDB(admin.ListGadgets)
+		addDB(utils.ListGadgets)
 	case gadgetEdit.FullCommand():
-		addDB(admin.EditGadget)
+		addDB(utils.EditGadget)
 	case gadgetDelete.FullCommand():
-		addDB(admin.DeleteGadget)
+		addDB(utils.DeleteGadget)
+	case command.FullCommand():
+		addDB(utils.SendCommand)
 	case serve.FullCommand():
 		addDB(startServer)
 	}

@@ -28,11 +28,11 @@ func Admin(args *Args) bool {
 }
 
 func Write(args *Args) bool {
-	return args.User.Permission == "write" || args.User.Permission == "admin"
+	return args.User.Permission == "admin" || args.User.Permission == "write"
 }
 
 func Read(args *Args) bool {
-	return args.User.Permission == "write" || args.User.Permission == "admin" || args.User.Permission == "read"
+	return args.User.Permission == "admin" || args.User.Permission == "write" || args.User.Permission == "read"
 }
 
 func Anyone(args *Args) bool {

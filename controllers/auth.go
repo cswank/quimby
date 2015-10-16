@@ -7,7 +7,6 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"math/rand"
 	"net/http"
 	"os"
 	"time"
@@ -22,15 +21,6 @@ var (
 	pubKeyPath  = os.Getenv("QUIMBY_JWT_PUB")
 	privKeyPath = os.Getenv("QUIMBY_JWT_PRIV")
 )
-
-const (
-	tokenDuration = 72
-	expireOffset  = 3600
-)
-
-func init() {
-	rand.Seed(time.Now().UnixNano())
-}
 
 func getUserFromCookie(r *http.Request) (*models.User, error) {
 	user := &models.User{

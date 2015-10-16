@@ -102,6 +102,10 @@ func (g *Gadget) GetDevice(location string, name string) (gogadgets.Value, error
 
 func (g *Gadget) UpdateDevice(location string, name string, v gogadgets.Value) error {
 	cmd := g.getCommand(location, name, v)
+	return g.SendCommand(cmd)
+}
+
+func (g *Gadget) SendCommand(cmd string) error {
 	m := gogadgets.Message{
 		UUID:   gogadgets.GetUUID(),
 		Sender: "quimby",
