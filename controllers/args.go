@@ -9,7 +9,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-type controller func(args *Args) error
+type Controller func(args *Args) error
 type caller func()
 
 type Args struct {
@@ -21,13 +21,13 @@ type Args struct {
 	Vars   map[string]string
 	LG     Logger
 	acl    ACL
-	ctrl   controller
+	ctrl   Controller
 	err    error
 	status int
 	msg    string
 }
 
-func Handle(w http.ResponseWriter, r *http.Request, ctrl controller, acl ACL) {
+func Handle(w http.ResponseWriter, r *http.Request, ctrl Controller, acl ACL) {
 	LG.Println(r.URL.Path)
 	a := &Args{
 		W:    w,
