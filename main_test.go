@@ -300,17 +300,17 @@ var _ = Describe("Quimby", func() {
 		})
 
 		Context("OPTIONS", func() {
-			// It("gets them for gadgets", func() {
-			// 	req, err := http.NewRequest("OPTIONS", fmt.Sprintf(addr, "gadgets", "", ""), nil)
-			// 	Expect(err).To(BeNil())
-			// 	req.Header.Add("Authorization", token)
-			// 	r, err := http.DefaultClient.Do(req)
-			// 	Expect(err).To(BeNil())
-			// 	defer r.Body.Close()
-			// 	d, _ := ioutil.ReadAll(r.Body)
-			// 	expected := `{}`
-			// 	Expect(string(d)).To(MatchJSON(expected))
-			// })
+			It("gets them for gadgets", func() {
+				req, err := http.NewRequest("OPTIONS", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				d, _ := ioutil.ReadAll(r.Body)
+				expected := `{}`
+				Expect(string(d)).To(MatchJSON(expected))
+			})
 		})
 
 		Context("logged in", func() {

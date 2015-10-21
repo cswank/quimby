@@ -10,7 +10,6 @@ import (
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
-	"github.com/go-zoo/bone"
 	"github.com/gorilla/websocket"
 )
 
@@ -173,7 +172,7 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
 }
 
 func GetDevice(args *Args) error {
-	return args.Gadget.ReadDevice(args.W, bone.GetValue(args.R, "location"), bone.GetValue(args.R, "device"))
+	return args.Gadget.ReadDevice(args.W, args.Vars["location"], args.Vars["device"])
 }
 
 func UpdateDevice(args *Args) error {
@@ -182,7 +181,7 @@ func UpdateDevice(args *Args) error {
 	if err := dec.Decode(&v); err != nil {
 		return err
 	}
-	return args.Gadget.UpdateDevice(bone.GetValue(args.R, "location"), bone.GetValue(args.R, "device"), v)
+	return args.Gadget.UpdateDevice(args.Vars["location"], args.Vars["device"], v)
 }
 
 func RelayMessage(args *Args) error {
