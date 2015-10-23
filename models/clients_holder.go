@@ -1,4 +1,4 @@
-package controllers
+package models
 
 import (
 	"encoding/json"
@@ -22,9 +22,14 @@ func (c *ClientHolder) Get(key string) (map[string](chan gogadgets.Message), boo
 	return m, ok
 }
 
-func (c *ClientHolder) Add(key string, chs map[string](chan gogadgets.Message)) {
+func (c *ClientHolder) Add(host, key string, ch chan gogadgets.Message) {
 	c.lock.Lock()
-	c.clients[key] = chs
+	chs, ok := c.clients[host]
+	if !ok {
+		chs = map[string](chan gogadgets.Message){}
+	}
+	chs[key] = ch
+	c.clients[host] = chs
 	c.lock.Unlock()
 }
 

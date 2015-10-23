@@ -88,11 +88,11 @@ func startServer(db *bolt.DB) {
 		log.Fatal("you must specify a port with QUIMBY_INTERNAL_PORT")
 	}
 	lg := log.New(os.Stdout, "quimby ", log.Ltime)
-	clients := controllers.NewClientHolder()
+	clients := models.NewClientHolder()
 	start(db, port, internalPort, "/", "/api", lg, clients)
 }
 
-func startHomeKit(db *bolt.DB, lg controllers.Logger) {
+func startHomeKit(db *bolt.DB, lg models.Logger) {
 	key := os.Getenv("QUIMBY_HOMEKIT")
 	if key == "" {
 		lg.Println("QUIMBY_HOMEKIT not set, not starting homekit")
@@ -102,8 +102,9 @@ func startHomeKit(db *bolt.DB, lg controllers.Logger) {
 	go hk.Start()
 }
 
-func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg controllers.Logger, clients *controllers.ClientHolder) {
-	controllers.Clients = clients
+func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models.Logger, clients *models.ClientHolder) {
+	models.Clients = clients
+	models.LG = lg
 	controllers.DB = db
 	controllers.LG = lg
 
@@ -143,7 +144,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg contro
 //This is the endpoint that the gadgets report to. It is
 //served on a separate port so it doesn't have to be exposed
 //publicly if the main port is exposed.
-func startInternal(iRoot string, lg controllers.Logger, port string) {
+func startInternal(iRoot string, lg models.Logger, port string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/internal/updates", Relay).Methods("POST")
 	http.Handle(iRoot, r)

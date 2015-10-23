@@ -16,7 +16,6 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/gogadgets"
-	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
@@ -194,7 +193,7 @@ var _ = Describe("Quimby", func() {
 		}
 		err = sprinklers.Save()
 		Expect(err).To(BeNil())
-		clients := controllers.NewClientHolder()
+		clients := models.NewClientHolder()
 		go start(db, port, port2, root, iRoot, lg, clients)
 		Eventually(func() error {
 			url := fmt.Sprintf(addr, "ping", "", "")

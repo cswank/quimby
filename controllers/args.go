@@ -19,7 +19,7 @@ type Args struct {
 	User   *models.User
 	Gadget *models.Gadget
 	Vars   map[string]string
-	LG     Logger
+	LG     models.Logger
 	acl    ACL
 	ctrl   Controller
 	err    error
