@@ -6,7 +6,6 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
-	"os"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
@@ -101,22 +100,17 @@ func Connect(args *Args) error {
 		return err
 	}
 
-	h, err := args.Gadget.Register(getAddr(), token)
+	h, err := args.Gadget.Register(models.GetAddr(), token)
 	if err != nil {
 		return err
 	}
-	ch := make(chan gogadgets.Message)
+
 	ws := make(chan gogadgets.Message)
 	q := make(chan bool)
 
-	chs, ok := Clients.Get(h)
-	if !ok {
-		chs = map[string](chan gogadgets.Message){}
-	}
-
+	ch := make(chan gogadgets.Message)
 	uuid := gogadgets.GetUUID()
-	chs[uuid] = ch
-	Clients.Add(h, chs)
+	models.Clients.Add(h, uuid, ch)
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -138,7 +132,7 @@ func Connect(args *Args) error {
 		case msg := <-ch:
 			sendSocketMessage(conn, msg)
 		case <-q:
-			Clients.Delete(h, uuid)
+			models.Clients.Delete(h, uuid)
 			return nil
 		}
 	}
@@ -190,7 +184,7 @@ func RelayMessage(args *Args) error {
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
-	chs, ok := Clients.Get(m.Host)
+	chs, ok := models.Clients.Get(m.Host)
 	if !ok {
 		return nil
 	}
@@ -198,15 +192,4 @@ func RelayMessage(args *Args) error {
 		ch <- m
 	}
 	return nil
-}
-
-func getAddr() string {
-	host = os.Getenv("QUIMBY_HOST")
-	if host == "" {
-		LG.Println("please set QUIMBY_HOST")
-	}
-	if addr == "" {
-		addr = fmt.Sprintf("%s:%s/internal/updates", os.Getenv("QUIMBY_HOST"), os.Getenv("QUIMBY_INTERNAL_PORT"))
-	}
-	return addr
 }

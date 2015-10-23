@@ -8,6 +8,7 @@ import (
 	"github.com/brutella/hc/hap"
 	"github.com/brutella/hc/model"
 	"github.com/brutella/hc/model/accessory"
+	"github.com/cswank/gogadgets"
 )
 
 type HomeKit struct {
@@ -28,9 +29,7 @@ func NewHomeKit(key string, db *bolt.DB) *HomeKit {
 }
 
 func (h *HomeKit) Start() {
-
 	h.getSwitches()
-
 	var t hap.Transport
 	var err error
 	fmt.Println("accesories", len(h.accessories))
@@ -73,6 +72,7 @@ func (h *HomeKit) getSwitches() {
 					Manufacturer: "gogadgets",
 				}
 				s := accessory.NewSwitch(info)
+
 				h.switches[name] = s
 				h.cmds = append(h.cmds, newCMD(s, g, name))
 				h.accessories = append(h.accessories, s.Accessory)
@@ -84,14 +84,17 @@ func (h *HomeKit) getSwitches() {
 type cmd struct {
 	s   model.Switch
 	g   Gadget
+	k   string
 	on  string
 	off string
+	ch  chan gogadgets.Message
 }
 
 func newCMD(s model.Switch, g Gadget, k string) cmd {
 	c := cmd{
 		s:   s,
 		g:   g,
+		k:   k,
 		on:  fmt.Sprintf("turn on %s", k),
 		off: fmt.Sprintf("turn off %s", k),
 	}
@@ -102,5 +105,19 @@ func newCMD(s model.Switch, g Gadget, k string) cmd {
 			c.g.SendCommand(c.off)
 		}
 	})
+	c.ch = make(chan gogadgets.Message)
+	uuid := gogadgets.GetUUID()
+	Clients.Add(g.Host, uuid, c.ch)
+	go c.listen()
 	return c
+}
+
+func (c *cmd) listen() {
+	for {
+		msg := <-c.ch
+		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
+		if key == c.k {
+			c.s.SetOn(msg.Value.Value.(bool))
+		}
+	}
 }
