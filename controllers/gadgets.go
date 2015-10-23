@@ -95,22 +95,13 @@ func randString(n int) string {
 //a websocket.  It pushes new messages from the
 //instance to the websocket and vice versa.
 func Connect(args *Args) error {
-	token, err := generateToken(args.User)
-	if err != nil {
-		return err
-	}
-
-	h, err := args.Gadget.Register(models.GetAddr(), token)
-	if err != nil {
-		return err
-	}
 
 	ws := make(chan gogadgets.Message)
 	q := make(chan bool)
 
 	ch := make(chan gogadgets.Message)
 	uuid := gogadgets.GetUUID()
-	models.Clients.Add(h, uuid, ch)
+	models.Clients.Add(args.Gadget.Host, uuid, ch)
 
 	upgrader := websocket.Upgrader{
 		ReadBufferSize:  1024,
@@ -132,7 +123,7 @@ func Connect(args *Args) error {
 		case msg := <-ch:
 			sendSocketMessage(conn, msg)
 		case <-q:
-			models.Clients.Delete(h, uuid)
+			models.Clients.Delete(args.Gadget.Host, uuid)
 			return nil
 		}
 	}

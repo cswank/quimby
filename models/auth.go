@@ -1,4 +1,4 @@
-package controllers
+package models
 
 import (
 	"bufio"
@@ -11,19 +11,55 @@ import (
 	"os"
 	"time"
 
-	"github.com/cswank/quimby/models"
-	jwt "github.com/dgrijalva/jwt-go"
+	"github.com/boltdb/bolt"
+	"github.com/dgrijalva/jwt-go"
+	"github.com/gorilla/securecookie"
 )
 
 var (
+	DB          *bolt.DB
 	privKey     *rsa.PrivateKey
 	PubKey      *rsa.PublicKey
 	pubKeyPath  = os.Getenv("QUIMBY_JWT_PUB")
 	privKeyPath = os.Getenv("QUIMBY_JWT_PRIV")
+
+	hashKey  = []byte(os.Getenv("QUIMBY_HASH_KEY"))
+	blockKey = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
+	SC       = securecookie.New(hashKey, blockKey)
 )
 
-func getUserFromCookie(r *http.Request) (*models.User, error) {
-	user := &models.User{
+func GenerateCookie(username string) *http.Cookie {
+	value := map[string]string{
+		"user": username,
+	}
+
+	encoded, _ := SC.Encode("quimby", value)
+	return &http.Cookie{
+		Name:     "quimby",
+		Value:    encoded,
+		Path:     "/",
+		HttpOnly: true,
+	}
+}
+
+func GenerateToken(username string, d time.Duration) (string, error) {
+	if PubKey == nil || privKey == nil {
+		PubKey = getPublicKey()
+		privKey = getPrivateKey()
+	}
+	token := jwt.New(jwt.SigningMethodRS512)
+	token.Claims["exp"] = time.Now().Add(d).Unix()
+	token.Claims["iat"] = time.Now().Unix()
+	token.Claims["sub"] = username
+	tokenString, err := token.SignedString(privKey)
+	if err != nil {
+		panic(err)
+	}
+	return tokenString, nil
+}
+
+func GetUserFromCookie(r *http.Request) (*User, error) {
+	user := &User{
 		DB: DB,
 	}
 	cookie, err := r.Cookie("quimby")
@@ -31,7 +67,7 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 		return nil, err
 	}
 	var m map[string]string
-	err = sc.Decode("quimby", cookie.Value, &m)
+	err = SC.Decode("quimby", cookie.Value, &m)
 	if err != nil {
 		return nil, err
 	}
@@ -44,13 +80,13 @@ func getUserFromCookie(r *http.Request) (*models.User, error) {
 	return user, err
 }
 
-func getUserFromToken(r *http.Request) (*models.User, error) {
+func GetUserFromToken(r *http.Request) (*User, error) {
 	if PubKey == nil || privKey == nil {
 		PubKey = getPublicKey()
 		privKey = getPrivateKey()
 	}
 
-	user := &models.User{}
+	user := &User{}
 	token, err := jwt.ParseFromRequest(r, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
@@ -65,22 +101,6 @@ func getUserFromToken(r *http.Request) (*models.User, error) {
 
 	user.Username = token.Claims["sub"].(string)
 	return user, nil
-}
-
-func generateToken(user *models.User) (string, error) {
-	if PubKey == nil || privKey == nil {
-		PubKey = getPublicKey()
-		privKey = getPrivateKey()
-	}
-	token := jwt.New(jwt.SigningMethodRS512)
-	token.Claims["exp"] = time.Now().Add(time.Duration(24 * time.Hour)).Unix()
-	token.Claims["iat"] = time.Now().Unix()
-	token.Claims["sub"] = user.Username
-	tokenString, err := token.SignedString(privKey)
-	if err != nil {
-		panic(err)
-	}
-	return tokenString, nil
 }
 
 func getPrivateKey() *rsa.PrivateKey {

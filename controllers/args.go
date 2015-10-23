@@ -53,10 +53,10 @@ func (a *Args) calls() []caller {
 }
 
 func (a *Args) getUser() {
-	f := getUserFromCookie
+	f := models.GetUserFromCookie
 
 	if len(a.R.Header.Get("Authorization")) > 0 {
-		f = getUserFromToken
+		f = models.GetUserFromToken
 	}
 	a.User, a.err = f(a.R)
 	if a.err != nil {

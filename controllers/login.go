@@ -3,8 +3,13 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/cswank/quimby/models"
+)
+
+var (
+	exp = time.Duration(24 * time.Hour)
 )
 
 func Logout(w http.ResponseWriter, r *http.Request) {
@@ -43,7 +48,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 }
 
 func setToken(w http.ResponseWriter, user *models.User) {
-	token, err := generateToken(user)
+	token, err := models.GenerateToken(user.Username, exp)
 	if err != nil {
 		w.WriteHeader(http.StatusUnauthorized)
 	} else {
@@ -53,16 +58,5 @@ func setToken(w http.ResponseWriter, user *models.User) {
 }
 
 func setCookie(w http.ResponseWriter, user *models.User) {
-	value := map[string]string{
-		"user": user.Username,
-	}
-
-	encoded, _ := sc.Encode("quimby", value)
-	cookie := &http.Cookie{
-		Name:     "quimby",
-		Value:    encoded,
-		Path:     "/",
-		HttpOnly: true,
-	}
-	http.SetCookie(w, cookie)
+	http.SetCookie(w, models.GenerateCookie(user.Username))
 }

@@ -3,12 +3,18 @@ package models
 import (
 	"fmt"
 	"log"
+	"os"
+	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/brutella/hc/hap"
 	"github.com/brutella/hc/model"
 	"github.com/brutella/hc/model/accessory"
 	"github.com/cswank/gogadgets"
+)
+
+var (
+	user = os.Getenv("QUIMBY_USER")
 )
 
 type HomeKit struct {
@@ -70,6 +76,10 @@ func (c *cmd) listen() {
 }
 
 func (h *HomeKit) Start() {
+	if user == "" {
+		LG.Println("didn't set QUIMBY_USER, homekit exiting")
+		return
+	}
 	h.getSwitches()
 	var t hap.Transport
 	var err error
@@ -97,6 +107,7 @@ func (h *HomeKit) getSwitches() {
 	h.cmds = []cmd{}
 	h.accessories = []*accessory.Accessory{}
 	for _, g := range gadgets {
+		h.register(g) //TODO register all gadgets somewhere else
 		if err := g.Fetch(); err != nil {
 			log.Println("not adding %s to homekit: %s", g.Name, err)
 			continue
@@ -120,4 +131,13 @@ func (h *HomeKit) getSwitches() {
 			}
 		}
 	}
+}
+
+func (h *HomeKit) register(g Gadget) error {
+	token, err := GenerateToken(user, time.Duration(24*365*time.Hour))
+	if err != nil {
+		return err
+	}
+	_, err = g.Register(GetAddr(), token)
+	return err
 }

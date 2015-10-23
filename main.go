@@ -104,6 +104,7 @@ func startHomeKit(db *bolt.DB, lg models.Logger) {
 
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models.Logger, clients *models.ClientHolder) {
 	models.Clients = clients
+	models.DB = db
 	models.LG = lg
 	controllers.DB = db
 	controllers.LG = lg
