@@ -27,39 +27,15 @@ func NewHomeKit(key string, db *bolt.DB) *HomeKit {
 	}
 }
 
-type cmd struct {
-	s   model.Switch
-	g   Gadget
-	on  string
-	off string
-}
-
-func newCMD(s model.Switch, g Gadget, k string) cmd {
-	c := cmd{
-		s:   s,
-		g:   g,
-		on:  fmt.Sprintf("turn on %s", k),
-		off: fmt.Sprintf("turn off %s", k),
-	}
-	c.s.OnStateChanged(func(on bool) {
-		if on == true {
-			c.g.SendCommand(c.on)
-		} else {
-			c.g.SendCommand(c.off)
-		}
-	})
-	return c
-}
-
 func (h *HomeKit) Start() {
 
 	h.getSwitches()
 
 	var t hap.Transport
 	var err error
+	fmt.Println("accesories", len(h.accessories))
 	if len(h.accessories) == 1 {
 		t, err = hap.NewIPTransport(h.key, h.accessories[0])
-
 	} else if len(h.accessories) > 1 {
 		t, err = hap.NewIPTransport(h.key, h.accessories[0], h.accessories[1:]...)
 	} else {
@@ -103,4 +79,28 @@ func (h *HomeKit) getSwitches() {
 			}
 		}
 	}
+}
+
+type cmd struct {
+	s   model.Switch
+	g   Gadget
+	on  string
+	off string
+}
+
+func newCMD(s model.Switch, g Gadget, k string) cmd {
+	c := cmd{
+		s:   s,
+		g:   g,
+		on:  fmt.Sprintf("turn on %s", k),
+		off: fmt.Sprintf("turn off %s", k),
+	}
+	c.s.OnStateChanged(func(on bool) {
+		if on == true {
+			c.g.SendCommand(c.on)
+		} else {
+			c.g.SendCommand(c.off)
+		}
+	})
+	return c
 }
