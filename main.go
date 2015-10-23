@@ -11,7 +11,7 @@ import (
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/cswank/quimby/utils"
-	"github.com/go-zoo/bone"
+	"github.com/gorilla/mux"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -110,32 +110,31 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg contro
 	go startInternal(iRoot, lg, internalPort)
 	go startHomeKit(db, lg)
 
-	mux := bone.New()
+	r := mux.NewRouter()
+	r.HandleFunc("/api/login", controllers.Login).Methods("POST")
+	r.HandleFunc("/api/logout", controllers.Logout).Methods("POST")
+	r.HandleFunc("/api/ping", Ping).Methods("GET")
+	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
+	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
+	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}", GetGadget).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}", SendCommand).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}", DeleteGadget).Methods("DELETE")
+	r.HandleFunc("/api/gadgets/{id}/websocket", Connect).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/values", GetValues).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/status", GetStatus).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
+	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
 
-	mux.Post("/api/login", http.HandlerFunc(controllers.Login))
-	mux.Post("/api/logout", http.HandlerFunc(controllers.Logout))
-	mux.Get("/api/ping", http.HandlerFunc(Ping))
-	mux.Get("/api/users/current", http.HandlerFunc(GetUser))
-	mux.Get("/api/gadgets", http.HandlerFunc(GetGadgets))
-	mux.Post("/api/gadgets", http.HandlerFunc(AddGadget))
-	mux.Get("/api/gadgets/:id", http.HandlerFunc(GetGadget))
-	mux.Options("/api/gadgets/:id", http.HandlerFunc(GadgetOptions))
-	mux.Post("/api/gadgets/:id", http.HandlerFunc(SendCommand))
-	mux.Delete("/api/gadgets/:id", http.HandlerFunc(DeleteGadget))
-	mux.Get("/api/gadgets/:id/websocket", http.HandlerFunc(Connect))
-	mux.Get("/api/gadgets/:id/values", http.HandlerFunc(GetValues))
-	mux.Get("/api/gadgets/:id/status", http.HandlerFunc(GetStatus))
-	mux.Get("/api/gadgets/:id/locations/:location/devices/:device/status", http.HandlerFunc(GetDevice))
-	mux.Post("/api/gadgets/:id/locations/:location/devices/:device/status", http.HandlerFunc(UpdateDevice))
-	mux.Get("/admin/clients", http.HandlerFunc(GetClients))
+	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
-	mux.Get("/", http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
+	http.Handle(root, r)
 
-	http.Handle(root, mux)
 	addr := fmt.Sprintf("%s:%s", iface, port)
 	lg.Printf("listening on %s\n", addr)
 	if keyPath == "" {
-		lg.Println(http.ListenAndServe(addr, mux))
+		lg.Println(http.ListenAndServe(addr, r))
 	} else {
 		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, nil))
 	}
@@ -145,12 +144,12 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg contro
 //served on a separate port so it doesn't have to be exposed
 //publicly if the main port is exposed.
 func startInternal(iRoot string, lg controllers.Logger, port string) {
-	mux := bone.New()
-	mux.Post("/internal/updates", http.HandlerFunc(Relay))
-	http.Handle(iRoot, mux)
+	r := mux.NewRouter()
+	r.HandleFunc("/internal/updates", Relay).Methods("POST")
+	http.Handle(iRoot, r)
 	a := fmt.Sprintf(":%s", port)
 	lg.Printf("listening on %s", a)
-	err := http.ListenAndServe(a, mux)
+	err := http.ListenAndServe(a, r)
 	if err != nil {
 		log.Fatal(err)
 	}

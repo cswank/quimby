@@ -6,7 +6,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/models"
-	"github.com/go-zoo/bone"
+	"github.com/gorilla/mux"
 )
 
 type Controller func(args *Args) error
@@ -18,6 +18,7 @@ type Args struct {
 	DB     *bolt.DB
 	User   *models.User
 	Gadget *models.Gadget
+	Vars   map[string]string
 	LG     Logger
 	acl    ACL
 	ctrl   Controller
@@ -31,6 +32,7 @@ func Handle(w http.ResponseWriter, r *http.Request, ctrl Controller, acl ACL) {
 	a := &Args{
 		W:    w,
 		R:    r,
+		Vars: mux.Vars(r),
 		DB:   DB,
 		acl:  acl,
 		ctrl: ctrl,
@@ -76,13 +78,12 @@ func (a *Args) checkACL() {
 }
 
 func (a *Args) getGadget() {
-	id := bone.GetValue(a.R, "id")
-	if id == "" {
+	if a.Vars["id"] == "" {
 		return
 	}
 	a.Gadget = &models.Gadget{
 		DB: DB,
-		Id: id,
+		Id: a.Vars["id"],
 	}
 
 	a.err = a.Gadget.Fetch()

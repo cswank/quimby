@@ -41,21 +41,12 @@
 			"Rev": "f62f64ea222e5e6d6d86421b5507b0862a3ebf7f"
 		},
 		{
-			"ImportPath": "github.com/go-zoo/bone",
-			"Comment": "v1.1-7-g861b030",
-			"Rev": "861b03028e1b30a532649b69bded364b410b7f71"
-		},
-		{
 			"ImportPath": "github.com/gorilla/context",
 			"Rev": "215affda49addc4c8ef7e2534915df2c8c35c6cd"
 		},
 		{
 			"ImportPath": "github.com/gorilla/mux",
 			"Rev": "f15e0c49460fd49eebe2bcc8486b05d1bef68d3a"
-		},
-		{
-			"ImportPath": "github.com/gorilla/securecookie",
-			"Rev": "e95799a481bbcc3d01c2ad5178524cb8bec9f370"
 		},
 		{
 			"ImportPath": "github.com/gorilla/websocket",
