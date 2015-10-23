@@ -34,47 +34,6 @@ func NewHomeKit(key string, db *bolt.DB) *HomeKit {
 	}
 }
 
-type cmd struct {
-	s   model.Switch
-	g   Gadget
-	k   string
-	on  string
-	off string
-	ch  chan gogadgets.Message
-}
-
-func newCMD(s model.Switch, g Gadget, k string) cmd {
-	c := cmd{
-		s:   s,
-		g:   g,
-		k:   k,
-		on:  fmt.Sprintf("turn on %s", k),
-		off: fmt.Sprintf("turn off %s", k),
-	}
-	c.s.OnStateChanged(func(on bool) {
-		if on == true {
-			c.g.SendCommand(c.on)
-		} else {
-			c.g.SendCommand(c.off)
-		}
-	})
-	c.ch = make(chan gogadgets.Message)
-	uuid := gogadgets.GetUUID()
-	Clients.Add(g.Host, uuid, c.ch)
-	go c.listen()
-	return c
-}
-
-func (c *cmd) listen() {
-	for {
-		msg := <-c.ch
-		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
-		if key == c.k {
-			c.s.SetOn(msg.Value.Value.(bool))
-		}
-	}
-}
-
 func (h *HomeKit) Start() {
 	if user == "" {
 		LG.Println("didn't set QUIMBY_USER, homekit exiting")
@@ -83,9 +42,9 @@ func (h *HomeKit) Start() {
 	h.getSwitches()
 	var t hap.Transport
 	var err error
+	fmt.Println("accesories", len(h.accessories))
 	if len(h.accessories) == 1 {
 		t, err = hap.NewIPTransport(h.key, h.accessories[0])
-
 	} else if len(h.accessories) > 1 {
 		t, err = hap.NewIPTransport(h.key, h.accessories[0], h.accessories[1:]...)
 	} else {
@@ -140,4 +99,45 @@ func (h *HomeKit) register(g Gadget) error {
 	}
 	_, err = g.Register(GetAddr(), token)
 	return err
+}
+
+type cmd struct {
+	s   model.Switch
+	g   Gadget
+	k   string
+	on  string
+	off string
+	ch  chan gogadgets.Message
+}
+
+func newCMD(s model.Switch, g Gadget, k string) cmd {
+	c := cmd{
+		s:   s,
+		g:   g,
+		k:   k,
+		on:  fmt.Sprintf("turn on %s", k),
+		off: fmt.Sprintf("turn off %s", k),
+	}
+	c.s.OnStateChanged(func(on bool) {
+		if on == true {
+			c.g.SendCommand(c.on)
+		} else {
+			c.g.SendCommand(c.off)
+		}
+	})
+	c.ch = make(chan gogadgets.Message)
+	uuid := gogadgets.GetUUID()
+	Clients.Add(g.Host, uuid, c.ch)
+	go c.listen()
+	return c
+}
+
+func (c *cmd) listen() {
+	for {
+		msg := <-c.ch
+		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
+		if key == c.k {
+			c.s.SetOn(msg.Value.Value.(bool))
+		}
+	}
 }

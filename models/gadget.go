@@ -31,7 +31,7 @@ func GetGadgets(db *bolt.DB) ([]Gadget, error) {
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			var g Gadget
+			g := Gadget{DB: db}
 			if err := json.Unmarshal(v, &g); err != nil {
 				return err
 			}
