@@ -143,16 +143,16 @@ func (g *Gadget) UpdateMessage(m gogadgets.Message) error {
 	return nil
 }
 
-func (g *Gadget) Status() (map[string]map[string]gogadgets.Value, error) {
-	var s map[string]map[string]gogadgets.Value
+func (g *Gadget) Status() (map[string]gogadgets.Message, error) {
+	var m map[string]gogadgets.Message
 	r, err := http.Get(fmt.Sprintf("%s/gadgets", g.Host))
 
 	if err != nil {
-		return s, err
+		return m, err
 	}
 	defer r.Body.Close()
 	dec := json.NewDecoder(r.Body)
-	return s, dec.Decode(&s)
+	return m, dec.Decode(&m)
 }
 
 func (g *Gadget) ReadStatus(w io.Writer) error {

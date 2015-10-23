@@ -92,12 +92,23 @@ func startServer(db *bolt.DB) {
 	start(db, port, internalPort, "/", "/api", lg, clients)
 }
 
+func startHomeKit(db *bolt.DB, lg controllers.Logger) {
+	key := os.Getenv("QUIMBY_HOMEKIT")
+	if key == "" {
+		lg.Println("QUIMBY_HOMEKIT not set, not starting homekit")
+		return
+	}
+	hk := models.NewHomeKit(key, db)
+	go hk.Start()
+}
+
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg controllers.Logger, clients *controllers.ClientHolder) {
 	controllers.Clients = clients
 	controllers.DB = db
 	controllers.LG = lg
 
 	go startInternal(iRoot, lg, internalPort)
+	go startHomeKit(db, lg)
 
 	mux := bone.New()
 
@@ -106,9 +117,9 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg contro
 	mux.Get("/api/ping", http.HandlerFunc(Ping))
 	mux.Get("/api/users/current", http.HandlerFunc(GetUser))
 	mux.Get("/api/gadgets", http.HandlerFunc(GetGadgets))
-	//mux.Options("/api/:rest:.*}", http.HandlerFunc(GadgetsOptions))
 	mux.Post("/api/gadgets", http.HandlerFunc(AddGadget))
 	mux.Get("/api/gadgets/:id", http.HandlerFunc(GetGadget))
+	mux.Options("/api/gadgets/:id", http.HandlerFunc(GadgetOptions))
 	mux.Post("/api/gadgets/:id", http.HandlerFunc(SendCommand))
 	mux.Delete("/api/gadgets/:id", http.HandlerFunc(DeleteGadget))
 	mux.Get("/api/gadgets/:id/websocket", http.HandlerFunc(Connect))
@@ -153,12 +164,12 @@ func GetUser(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.GetUser, controllers.Read)
 }
 
-func GadgetsOptions(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.Options, controllers.Read)
-}
-
 func GetGadgets(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.GetGadgets, controllers.Read)
+}
+
+func GadgetOptions(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.GadgetOptions, controllers.Read)
 }
 
 func GetGadget(w http.ResponseWriter, r *http.Request) {

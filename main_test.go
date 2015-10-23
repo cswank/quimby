@@ -300,17 +300,27 @@ var _ = Describe("Quimby", func() {
 		})
 
 		Context("OPTIONS", func() {
-			// It("gets them for gadgets", func() {
-			// 	req, err := http.NewRequest("OPTIONS", fmt.Sprintf(addr, "gadgets", "", ""), nil)
-			// 	Expect(err).To(BeNil())
-			// 	req.Header.Add("Authorization", token)
-			// 	r, err := http.DefaultClient.Do(req)
-			// 	Expect(err).To(BeNil())
-			// 	defer r.Body.Close()
-			// 	d, _ := ioutil.ReadAll(r.Body)
-			// 	expected := `{}`
-			// 	Expect(string(d)).To(MatchJSON(expected))
-			// })
+			// FIt("gets them for gadgets", func() {
+			// 				req, err := http.NewRequest("OPTIONS", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), nil)
+			// 				Expect(err).To(BeNil())
+			// 				req.Header.Add("Authorization", token)
+			// 				r, err := http.DefaultClient.Do(req)
+			// 				Expect(err).To(BeNil())
+			// 				defer r.Body.Close()
+			// 				d, _ := ioutil.ReadAll(r.Body)
+			// 				expected := `{
+			//   "POST": {
+			//     "description": "send a command to the gogadgets target",
+			//     "body": "{\"command\": \"turn on kitchen light\"}",
+			//     "response": "no body"
+			//   },
+			//   "GET": {
+			//     "description": "get the metadata for a gogadgets target",
+			//     "response": "{\"host\": \"http://127.0.0.1:55507\", \"id\": \"f174b39e-4d7d-4d7c-9fbf-ba0947058498\", \"name\": \"sprinklers\"}"
+			//   }
+			// }`
+			// 				Expect(string(d)).To(MatchJSON(expected))
+			// 			})
 		})
 
 		Context("logged in", func() {
