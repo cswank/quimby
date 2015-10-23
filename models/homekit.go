@@ -42,7 +42,6 @@ func (h *HomeKit) Start() {
 	h.getSwitches()
 	var t hap.Transport
 	var err error
-	fmt.Println("accesories", len(h.accessories))
 	if len(h.accessories) == 1 {
 		t, err = hap.NewIPTransport(h.key, h.accessories[0])
 	} else if len(h.accessories) > 1 {
