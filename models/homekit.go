@@ -15,6 +15,7 @@ import (
 
 var (
 	user = os.Getenv("QUIMBY_USER")
+	pth  = os.Getenv("QUIMBY_HOMEKIT_PATH")
 )
 
 type HomeKit struct {
@@ -35,17 +36,17 @@ func NewHomeKit(key string, db *bolt.DB) *HomeKit {
 }
 
 func (h *HomeKit) Start() {
-	if user == "" {
-		LG.Println("didn't set QUIMBY_USER, homekit exiting")
+	if user == "" || pth == "" {
+		LG.Println("didn't set QUIMBY_USER or QUIMBY_HOMEKIT_PATH, homekit exiting")
 		return
 	}
 	h.getSwitches()
 	var t hap.Transport
 	var err error
 	if len(h.accessories) == 1 {
-		t, err = hap.NewIPTransport(h.key, h.accessories[0])
+		t, err = hap.NewIPTransport(h.key, pth, h.accessories[0])
 	} else if len(h.accessories) > 1 {
-		t, err = hap.NewIPTransport(h.key, h.accessories[0], h.accessories[1:]...)
+		t, err = hap.NewIPTransport(h.key, pth, h.accessories[0], h.accessories[1:]...)
 	} else {
 		return
 	}
@@ -53,6 +54,7 @@ func (h *HomeKit) Start() {
 		log.Fatal(err)
 	}
 	t.Start()
+	LG.Println("homekit is done")
 }
 
 func (h *HomeKit) getSwitches() {
