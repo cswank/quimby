@@ -125,6 +125,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/gadgets/{id}/websocket", Connect).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/values", GetValues).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/status", GetStatus).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/notes", AddNote).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}/notes", GetNotes).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
 	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
@@ -191,6 +193,14 @@ func DeleteGadget(w http.ResponseWriter, r *http.Request) {
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.GetStatus, controllers.Read)
+}
+
+func AddNote(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.AddNote, controllers.Write)
+}
+
+func GetNotes(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.GetNotes, controllers.Read)
 }
 
 func GetValues(w http.ResponseWriter, r *http.Request) {

@@ -47,6 +47,28 @@ func GetStatus(args *Args) error {
 	return args.Gadget.ReadStatus(args.W)
 }
 
+func AddNote(args *Args) error {
+	var m map[string]string
+	dec := json.NewDecoder(args.R.Body)
+	if err := dec.Decode(&m); err != nil {
+		return err
+	}
+	n, ok := m["text"]
+	if !ok {
+		return fmt.Errorf("bad request")
+	}
+	return args.Gadget.AddNote(models.Note{Text: n, Author: args.User.Username})
+}
+
+func GetNotes(args *Args) error {
+	notes, err := args.Gadget.GetNotes(nil, nil)
+	if err != nil {
+		return err
+	}
+	enc := json.NewEncoder(args.W)
+	return enc.Encode(notes)
+}
+
 func GetValues(args *Args) error {
 	return args.Gadget.ReadValues(args.W)
 }

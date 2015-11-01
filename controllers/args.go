@@ -102,7 +102,11 @@ func (a *Args) callCtrl() {
 	a.err = a.ctrl(a)
 	if a.err != nil {
 		a.msg = a.err.Error()
-		a.status = http.StatusInternalServerError
+		if a.msg == "bad request" {
+			a.status = http.StatusBadRequest
+		} else {
+			a.status = http.StatusInternalServerError
+		}
 	}
 }
 

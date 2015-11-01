@@ -356,6 +356,23 @@ var _ = Describe("Quimby", func() {
 				Expect(g.Host).To(Equal(ts.URL))
 			})
 
+			It("lets you add notes to a gadget", func() {
+				u := fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "/notes")
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				note := map[string]string{
+					"text": "jibber jabber",
+				}
+				enc.Encode(note)
+				req, err := http.NewRequest("POST", u, &buf)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				r.Body.Close()
+			})
+
 			It("gives a 404 for a non-gadget", func() {
 				req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/notarealid", "", ""), nil)
 				Expect(err).To(BeNil())
@@ -769,6 +786,43 @@ var _ = Describe("Quimby", func() {
 				Expect(err).To(BeNil())
 				Expect(g.Name).To(Equal("sprinklers"))
 				Expect(g.Host).To(Equal(ts.URL))
+			})
+
+			It("lets you add notes to a gadget", func() {
+				u := fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "/notes")
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				note := map[string]string{
+					"text": "jibber jabber",
+				}
+				enc.Encode(note)
+				req, err := http.NewRequest("POST", u, &buf)
+				Expect(err).To(BeNil())
+				req.AddCookie(cookies[0])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				r.Body.Close()
+			})
+
+			It("lets you get notes from a gadget", func() {
+				err := sprinklers.AddNote(models.Note{Text: "how's things?", Author: "me"})
+				Expect(err).To(BeNil())
+				u := fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "/notes")
+				req, err := http.NewRequest("GET", u, nil)
+				Expect(err).To(BeNil())
+				req.AddCookie(cookies[0])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				var notes []models.Note
+				dec := json.NewDecoder(r.Body)
+				err = dec.Decode(&notes)
+				Expect(err).To(BeNil())
+				r.Body.Close()
+				Expect(len(notes)).To(Equal(1))
+				n := notes[0]
+				Expect(n.Text).To(Equal("how's things?"))
 			})
 
 			It("gives a 404 for a non-gadget", func() {
