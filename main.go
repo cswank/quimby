@@ -119,6 +119,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
 	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
+	r.HandleFunc("/api/gadgets/sms", SendSMSCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}", GetGadget).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}", DeleteGadget).Methods("DELETE")
@@ -181,6 +182,10 @@ func GetGadget(w http.ResponseWriter, r *http.Request) {
 
 func AddGadget(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.AddGadget, controllers.Write)
+}
+
+func AddGadget(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.SendSMSCommand, controllers.Twillo)
 }
 
 func SendCommand(w http.ResponseWriter, r *http.Request) {

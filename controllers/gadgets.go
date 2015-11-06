@@ -3,9 +3,11 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
+	"os"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
@@ -71,6 +73,11 @@ func GetNotes(args *Args) error {
 
 func GetValues(args *Args) error {
 	return args.Gadget.ReadValues(args.W)
+}
+
+func SendSMSCommand(args *Args) error {
+	io.Copy(os.Stdout, args.R.Body)
+	args.W.Write([]byte(`<Response></Response>`))
 }
 
 func SendCommand(args *Args) error {
