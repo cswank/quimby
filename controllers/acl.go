@@ -1,5 +1,7 @@
 package controllers
 
+import "log"
+
 type ACL func(*Args) bool
 
 func Or(acls ...ACL) ACL {
@@ -29,6 +31,11 @@ func Admin(args *Args) bool {
 
 func Write(args *Args) bool {
 	return args.User.Permission == "admin" || args.User.Permission == "write"
+}
+
+func Twillo(args *Args) bool {
+	log.Println(args.R.Header)
+	return true
 }
 
 func Read(args *Args) bool {
