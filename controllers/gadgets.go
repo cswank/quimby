@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"time"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
@@ -71,11 +72,16 @@ func GetNotes(args *Args) error {
 	return enc.Encode(notes)
 }
 
-func AddStat(args *Args) error {
-	return nil
+func AddDataPoint(args *Args) error {
+	var m map[string]float64
+	dec := json.NewDecoder(args.R.Body)
+	if err := dec.Decode(&m); err != nil {
+		return err
+	}
+	return args.Gadget.SaveDataPoint(args.Vars["device"], time.Now(), m["value"])
 }
 
-func GetStats(args *Args) error {
+func GetDataPoints(args *Args) error {
 	return nil
 }
 

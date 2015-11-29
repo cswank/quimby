@@ -2,6 +2,7 @@ package models
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -50,13 +51,51 @@ func GetGadgets(db *bolt.DB) ([]Gadget, error) {
 
 func (g *Gadget) Fetch() error {
 	return g.DB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(_gadgets)
-		v := b.Get([]byte(g.Id))
+		v := tx.Bucket(_gadgets).Get([]byte(g.Id))
 		if len(v) == 0 {
 			return NotFound
 		}
 		return json.Unmarshal(v, g)
 	})
+}
+
+type DataPoint struct {
+	Time  time.Time `json:"time"`
+	Value float64   `json:"value"`
+}
+
+func (g *Gadget) SaveDataPoint(name string, dp DataPoint) error {
+	return g.DB.Update(func(tx *bolt.Tx) error {
+		b, err := tx.Bucket([]byte(g.Id)).Bucket(_stats).CreateBucketIfNotExists([]byte(name))
+		if err != nil {
+			return nil
+		}
+		buf := new(bytes.Buffer)
+		if err := binary.Write(buf, binary.LittleEndian, dp.Value); err != nil {
+			return err
+		}
+		return b.Put([]byte(dp.Time.Format(time.RFC3339Nano)), buf.Bytes())
+	})
+}
+
+func (g *Gadget) GetDataPoints(name string, start, end time.Time) ([]DataPoint, error) {
+	var points []DataPoint
+	err := g.DB.View(func(tx *bolt.Tx) error {
+		c := tx.Bucket([]byte(g.Id)).Bucket(_stats).Bucket([]byte(name)).Cursor()
+		min := []byte(start.Format(time.RFC3339Nano))
+		max := []byte(end.Format(time.RFC3339Nano))
+		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
+			var val float64
+			buf := bytes.NewReader(v)
+			if err := binary.Read(buf, binary.LittleEndian, &val); err != nil {
+				return err
+			}
+			ts, _ := time.Parse(time.RFC3339Nano, string(k))
+			points = append(points, DataPoint{Time: ts, Value: val})
+		}
+		return nil
+	})
+	return points, err
 }
 
 func (g *Gadget) Save() error {

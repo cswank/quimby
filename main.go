@@ -128,10 +128,10 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/gadgets/{id}/status", GetStatus).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/notes", AddNote).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}/notes", GetNotes).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}/stats", AddStat).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}/stats", GetStats).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/dataPoint", AddDataPoint).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/dataPoint", GetDataPoints).Methods("GET")
 	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
@@ -210,12 +210,12 @@ func GetNotes(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.GetNotes, controllers.Read)
 }
 
-func AddStat(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.AddStat, controllers.Write)
+func AddDataPoint(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.AddDataPoint, controllers.Write)
 }
 
-func GetStats(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetStats, controllers.Read)
+func GetDataPoints(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.GetDataPoints, controllers.Read)
 }
 
 func GetValues(w http.ResponseWriter, r *http.Request) {
