@@ -119,7 +119,6 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
 	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
 	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
-	r.HandleFunc("/api/gadgets/sms", SendSMSCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}", GetGadget).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}", DeleteGadget).Methods("DELETE")
@@ -130,8 +129,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/gadgets/{id}/notes", GetNotes).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/dataPoint", AddDataPoint).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/dataPoint", GetDataPoints).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/datapoints", AddDataPoint).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/datapoints", GetDataPoints).Methods("GET")
 	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
@@ -184,10 +183,6 @@ func GetGadget(w http.ResponseWriter, r *http.Request) {
 
 func AddGadget(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.AddGadget, controllers.Write)
-}
-
-func AddGadget(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.SendSMSCommand, controllers.Twillo)
 }
 
 func SendCommand(w http.ResponseWriter, r *http.Request) {

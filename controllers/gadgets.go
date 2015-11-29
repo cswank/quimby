@@ -3,16 +3,18 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"math/rand"
 	"net/http"
 	"net/url"
-	"os"
 	"time"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/websocket"
+)
+
+var (
+	beginning = time.Time{}
 )
 
 func Ping(args *Args) error {
@@ -78,20 +80,43 @@ func AddDataPoint(args *Args) error {
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
-	return args.Gadget.SaveDataPoint(args.Vars["device"], time.Now(), m["value"])
+	name := fmt.Sprintf("%s %s", args.Vars["location"], args.Vars["name"])
+	return args.Gadget.SaveDataPoint(name, models.DataPoint{time.Now(), m["value"]})
 }
 
 func GetDataPoints(args *Args) error {
-	return nil
+	name := fmt.Sprintf("%s %s", args.Vars["location"], args.Vars["name"])
+	start := beginning
+	end := time.Now()
+	if args.Args.Get("start") != "" {
+		var err error
+		start, err = time.Parse(time.RFC3339Nano, args.Args.Get("start"))
+		if err != nil {
+			return err
+		}
+	}
+
+	if args.Args.Get("end") != "" {
+		var err error
+		end, err = time.Parse(time.RFC3339Nano, args.Args.Get("end"))
+		if err != nil {
+			return err
+		}
+	}
+	points, err := args.Gadget.GetDataPoints(name, start, end)
+	if err != nil {
+		return err
+	}
+	a := make([][]interface{}, len(points))
+	for i, v := range points {
+		a[i] = []interface{}{v.Time.Unix(), v.Value}
+	}
+	enc := json.NewEncoder(args.W)
+	return enc.Encode(a)
 }
 
 func GetValues(args *Args) error {
 	return args.Gadget.ReadValues(args.W)
-}
-
-func SendSMSCommand(args *Args) error {
-	io.Copy(os.Stdout, args.R.Body)
-	args.W.Write([]byte(`<Response></Response>`))
 }
 
 func SendCommand(args *Args) error {

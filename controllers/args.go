@@ -3,6 +3,7 @@ package controllers
 import (
 	"errors"
 	"net/http"
+	"net/url"
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/models"
@@ -19,6 +20,7 @@ type Args struct {
 	User   *models.User
 	Gadget *models.Gadget
 	Vars   map[string]string
+	Args   url.Values
 	LG     models.Logger
 	acl    ACL
 	ctrl   Controller
