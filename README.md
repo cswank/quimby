@@ -8,7 +8,7 @@ the binary.  Do this by calling
 
     $ ./bin/build.sh
 
-from the root of quimby.  
+from the root of quimby.
 
 Secure Websockets on IOS
 ========================

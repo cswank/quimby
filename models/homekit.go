@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"time"
 
 	"github.com/boltdb/bolt"
 	"github.com/brutella/hc/hap"
@@ -67,7 +66,7 @@ func (h *HomeKit) getSwitches() {
 	h.cmds = []cmd{}
 	h.accessories = []*accessory.Accessory{}
 	for _, g := range gadgets {
-		h.register(g) //TODO register all gadgets somewhere else
+		Register(g)
 		if err := g.Fetch(); err != nil {
 			log.Println("not adding %s to homekit: %s", g.Name, err)
 			continue
@@ -91,15 +90,6 @@ func (h *HomeKit) getSwitches() {
 			}
 		}
 	}
-}
-
-func (h *HomeKit) register(g Gadget) error {
-	token, err := GenerateToken(user, time.Duration(24*365*time.Hour))
-	if err != nil {
-		return err
-	}
-	_, err = g.Register(GetAddr(), token)
-	return err
 }
 
 type cmd struct {

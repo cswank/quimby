@@ -69,6 +69,14 @@ func GetNotes(args *Args) error {
 	return enc.Encode(notes)
 }
 
+func AddStat(args *Args) error {
+	return nil
+}
+
+func GetStats(args *Args) error {
+	return nil
+}
+
 func GetValues(args *Args) error {
 	return args.Gadget.ReadValues(args.W)
 }
@@ -117,7 +125,9 @@ func randString(n int) string {
 //a websocket.  It pushes new messages from the
 //instance to the websocket and vice versa.
 func Connect(args *Args) error {
-
+	if err := models.Register(*args.Gadget); err != nil {
+		return err
+	}
 	ws := make(chan gogadgets.Message)
 	q := make(chan bool)
 

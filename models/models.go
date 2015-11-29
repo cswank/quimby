@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"os"
+	"time"
 )
 
 type Logger interface {
@@ -28,4 +29,13 @@ func GetAddr() string {
 		addr = fmt.Sprintf("%s:%s/internal/updates", os.Getenv("QUIMBY_HOST"), os.Getenv("QUIMBY_INTERNAL_PORT"))
 	}
 	return addr
+}
+
+func Register(g Gadget) error {
+	token, err := GenerateToken(user, time.Duration(24*365*time.Hour))
+	if err != nil {
+		return err
+	}
+	_, err = g.Register(GetAddr(), token)
+	return err
 }
