@@ -552,6 +552,56 @@ var _ = Describe("Quimby", func() {
 				Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
 			})
 
+			It("saves and gets stats", func() {
+				v := map[string]float64{"value": 33.3}
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				enc.Encode(v)
+				u := fmt.Sprintf(
+					addr,
+					"gadgets/",
+					sprinklers.Id,
+					"/locations/front%20yard/devices/temperature/datapoints",
+				)
+				req, err := http.NewRequest("POST", u, &buf)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				time.Sleep(10 * time.Millisecond)
+
+				v = map[string]float64{"value": 33.5}
+				buf = bytes.Buffer{}
+				enc = json.NewEncoder(&buf)
+				enc.Encode(v)
+				req, err = http.NewRequest("POST", u, &buf)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+
+				req, err = http.NewRequest("GET", u, nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+
+				var points [][]interface{}
+				dec := json.NewDecoder(r.Body)
+				err = dec.Decode(&points)
+				Expect(err).To(BeNil())
+				Expect(len(points)).To(Equal(2))
+
+				p1 := points[0]
+				Expect(p1[1].(float64)).To(Equal(33.3))
+
+				p2 := points[1]
+				Expect(p2[1].(float64)).To(Equal(33.5))
+			})
+
 			Describe("websockets", func() {
 				var (
 					ws *websocket.Conn
@@ -1003,6 +1053,55 @@ var _ = Describe("Quimby", func() {
 				msg := msgs[0]
 				Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
 			})
+			It("saves and gets stats", func() {
+				v := map[string]float64{"value": 33.3}
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				enc.Encode(v)
+				u := fmt.Sprintf(
+					addr,
+					"gadgets/",
+					sprinklers.Id,
+					"/locations/front%20yard/devices/temperature/datapoints",
+				)
+				req, err := http.NewRequest("POST", u, &buf)
+				Expect(err).To(BeNil())
+				req.AddCookie(cookies[0])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				time.Sleep(10 * time.Millisecond)
+
+				v = map[string]float64{"value": 33.5}
+				buf = bytes.Buffer{}
+				enc = json.NewEncoder(&buf)
+				enc.Encode(v)
+				req, err = http.NewRequest("POST", u, &buf)
+				Expect(err).To(BeNil())
+				req.AddCookie(cookies[0])
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+
+				req, err = http.NewRequest("GET", u, nil)
+				Expect(err).To(BeNil())
+				req.AddCookie(cookies[0])
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+
+				var points [][]interface{}
+				dec := json.NewDecoder(r.Body)
+				err = dec.Decode(&points)
+				Expect(err).To(BeNil())
+				Expect(len(points)).To(Equal(2))
+
+				p1 := points[0]
+				Expect(p1[1].(float64)).To(Equal(33.3))
+
+				p2 := points[1]
+				Expect(p2[1].(float64)).To(Equal(33.5))
+			})
 
 			Describe("websockets", func() {
 				var (
@@ -1235,7 +1334,7 @@ var _ = Describe("Quimby", func() {
 				Expect(ws).To(BeNil())
 			})
 
-			It(" turn on a device", func() {
+			It("does not turn on a device", func() {
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
 				v := gogadgets.Value{
@@ -1256,6 +1355,7 @@ var _ = Describe("Quimby", func() {
 				r.Body.Close()
 				Expect(len(msgs)).To(Equal(0))
 			})
+
 		})
 	})
 })
