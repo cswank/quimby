@@ -107,12 +107,12 @@ func GetDataPoints(args *Args) error {
 	if err != nil {
 		return err
 	}
-	a := make([][]interface{}, len(points))
-	for i, v := range points {
-		a[i] = []interface{}{v.Time.Unix(), v.Value}
-	}
+	// a := make([][]interface{}, len(points))
+	// for i, v := range points {
+	// 	a[i] = []interface{}{v.Time.Unix(), v.Value}
+	// }
 	enc := json.NewEncoder(args.W)
-	return enc.Encode(a)
+	return enc.Encode(points[0:10])
 }
 
 func GetValues(args *Args) error {

@@ -1,6 +1,6 @@
 <div>
-  <div ng-show="direction=='output'" ng-click="toggle()">
-    <a>{{name}}: {{value.value | onoff }}</a>
+  <div ng-show="direction=='output'">
+    <a ng-click="showGraph(location, name)">{{name}}:</a> <a ng-click="toggle()">{{value.value | onoff }}</a>
   </div>
   <div ng-show="direction=='input'">
     <a>{{name}}: {{value.value}}</a>

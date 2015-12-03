@@ -589,17 +589,17 @@ var _ = Describe("Quimby", func() {
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
 
-				var points [][]interface{}
+				var points []models.DataPoint
 				dec := json.NewDecoder(r.Body)
 				err = dec.Decode(&points)
 				Expect(err).To(BeNil())
 				Expect(len(points)).To(Equal(2))
 
 				p1 := points[0]
-				Expect(p1[1].(float64)).To(Equal(33.3))
+				Expect(p1.Value).To(Equal(33.3))
 
 				p2 := points[1]
-				Expect(p2[1].(float64)).To(Equal(33.5))
+				Expect(p2.Value).To(Equal(33.5))
 			})
 
 			Describe("websockets", func() {
@@ -1090,17 +1090,17 @@ var _ = Describe("Quimby", func() {
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
 
-				var points [][]interface{}
+				var points []models.DataPoint
 				dec := json.NewDecoder(r.Body)
 				err = dec.Decode(&points)
 				Expect(err).To(BeNil())
 				Expect(len(points)).To(Equal(2))
 
 				p1 := points[0]
-				Expect(p1[1].(float64)).To(Equal(33.3))
+				Expect(p1.Value).To(Equal(33.3))
 
 				p2 := points[1]
-				Expect(p2[1].(float64)).To(Equal(33.5))
+				Expect(p2.Value).To(Equal(33.5))
 			})
 
 			Describe("websockets", func() {

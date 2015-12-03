@@ -26,8 +26,9 @@ var (
 	_gadgets = []byte("gadgets")
 	_notes   = []byte("notes")
 	_stats   = []byte("stats")
-	epoch    = []byte(time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339Nano))
-	century  = (100 * 24 * 365 * time.Hour)
+
+	epoch   = []byte(time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339Nano))
+	century = (100 * 24 * 365 * time.Hour)
 )
 
 func GetGadgets(db *bolt.DB) ([]Gadget, error) {
@@ -60,8 +61,8 @@ func (g *Gadget) Fetch() error {
 }
 
 type DataPoint struct {
-	Time  time.Time `json:"time"`
-	Value float64   `json:"value"`
+	Time  time.Time `json:"x"`
+	Value float64   `json:"y"`
 }
 
 func (g *Gadget) SaveDataPoint(name string, dp DataPoint) error {

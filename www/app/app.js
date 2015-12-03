@@ -6,8 +6,10 @@ angular.module('quimby', [
     'ngMaterial',
     'ngAnimate',
     'ngStorage',
+    'chart.js',
     'quimby.gadgets',
-    'quimby.gadget',    
+    'quimby.gadget',
+    'quimby.graph',
     'quimby.directives',
     'quimby.services',
     'quimby.filters'
