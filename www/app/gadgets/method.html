@@ -1,0 +1,8 @@
+<div>
+  <ul>
+    <li ng-repeat="step in method.steps track by $index">
+      <a ng-class="{'step-complete': method.step>$index}">{{step}}</a>
+      <a ng-if="method.time>0 && method.step==$index">{{method.time | countdown}}</a>
+    </li>
+  </ul>
+</div>
