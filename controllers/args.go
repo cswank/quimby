@@ -35,6 +35,7 @@ func Handle(w http.ResponseWriter, r *http.Request, ctrl Controller, acl ACL) {
 		W:    w,
 		R:    r,
 		Vars: mux.Vars(r),
+		Args: r.URL.Query(),
 		DB:   DB,
 		acl:  acl,
 		ctrl: ctrl,
@@ -114,6 +115,7 @@ func (a *Args) callCtrl() {
 
 func (a *Args) finish() {
 	if a.err != nil {
+		LG.Println("error", a.err)
 		a.W.WriteHeader(a.status)
 		a.W.Write([]byte(a.msg))
 	}

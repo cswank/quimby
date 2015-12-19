@@ -107,12 +107,8 @@ func GetDataPoints(args *Args) error {
 	if err != nil {
 		return err
 	}
-	// a := make([][]interface{}, len(points))
-	// for i, v := range points {
-	// 	a[i] = []interface{}{v.Time.Unix(), v.Value}
-	// }
 	enc := json.NewEncoder(args.W)
-	return enc.Encode(points[0:10])
+	return enc.Encode(points)
 }
 
 func GetValues(args *Args) error {
@@ -126,6 +122,15 @@ func SendCommand(args *Args) error {
 		return err
 	}
 	return args.Gadget.Update(m["command"])
+}
+
+func SendMethod(args *Args) error {
+	var m map[string][]string
+	dec := json.NewDecoder(args.R.Body)
+	if err := dec.Decode(&m); err != nil {
+		return err
+	}
+	return args.Gadget.Method(m["method"])
 }
 
 func AddGadget(args *Args) error {

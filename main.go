@@ -25,7 +25,8 @@ var (
 	domain       = cert.Flag("domain", "The domain for the tls cert.").Required().Short('d').String()
 	pth          = cert.Flag("path", "The directory where the cert files will be written").Required().Short('p').String()
 	serve        = app.Command("serve", "Start the server.")
-	command      = app.Command("command", "Start the server.")
+	command      = app.Command("command", "Send a command.")
+	method       = app.Command("method", "Send a method.")
 	gadgets      = app.Command("gadgets", "Commands for managing gadgets")
 	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
@@ -122,6 +123,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/gadgets/{id}", GetGadget).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}", SendCommand).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}", DeleteGadget).Methods("DELETE")
+	r.HandleFunc("/api/gadgets/{id}/method", SendMethod).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}/websocket", Connect).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/values", GetValues).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/status", GetStatus).Methods("GET")
@@ -189,6 +191,10 @@ func SendCommand(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.SendCommand, controllers.Write)
 }
 
+func SendMethod(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.SendMethod, controllers.Write)
+}
+
 func DeleteGadget(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.DeleteGadget, controllers.Write)
 }
@@ -224,7 +230,6 @@ func Connect(w http.ResponseWriter, r *http.Request) {
 func Relay(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.RelayMessage, controllers.Write)
 }
-
 func UpdateDevice(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.UpdateDevice, controllers.Write)
 }

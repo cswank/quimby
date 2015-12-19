@@ -16,6 +16,8 @@
       "underscore": "~1.8.3",
       "Chart.Scatter.js": "latest",
       "Chart.js": "latest",
-      "angular-chart.js": "latest"
+      "angular-chart.js": "latest",
+      "angular-moment": "latest",
+      "angular": "latest"
   }
 }

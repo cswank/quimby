@@ -1,8 +1,20 @@
-<div class="page" ng-show="gadgets">
-  <p>Gadgets</p>
-  <ul>
-    <li ng-repeat="gadget in gadgets">
-      <a href="#/gadgets/{{gadget.id}}">{{gadget.name}}</a>
-    </li>
-  </ul>
+<div class="page">
+  <p><a href="#/gadgets">Gadgets</a> {{gadget.name}}</p>
+  <div layout="row">
+    <div flex>
+      <ul>
+        <li ng-repeat="(name, location) in locations">
+          <a>{{name}}</a>
+          <ul>
+            <li ng-repeat="(device, value) in location">
+              <device location="name" name="device" value="value" direction="directions[name + ' ' + device]"></device>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <div flex>
+      <method method="method"></method>
+    </div>
+  </div>
 </div>

@@ -190,6 +190,18 @@ func (g *Gadget) Update(cmd string) error {
 	return g.UpdateMessage(m)
 }
 
+func (g *Gadget) Method(steps []string) error {
+	m := gogadgets.Message{
+		UUID:   gogadgets.GetUUID(),
+		Sender: "quimby",
+		Type:   gogadgets.METHOD,
+		Method: gogadgets.Method{
+			Steps: steps,
+		},
+	}
+	return g.UpdateMessage(m)
+}
+
 func (g *Gadget) ReadDevice(w io.Writer, location, device string) error {
 	r, err := http.Get(fmt.Sprintf("%s/gadgets/locations/%s/devices/%s/status", g.Host, location, device))
 	if err != nil {
@@ -305,6 +317,7 @@ func (g *Gadget) Register(addr, token string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	r.Body.Close()
 	if r.StatusCode != http.StatusOK {
 		return "", fmt.Errorf("unexpected response from %s: %d", g.Host, r.StatusCode)
