@@ -14,9 +14,6 @@
       "html5-boilerplate": "~5.2.0",
       "angular-material": "~0.11.1",
       "underscore": "~1.8.3",
-      "Chart.Scatter.js": "latest",
-      "Chart.js": "latest",
-      "angular-chart.js": "latest",
       "angular-moment": "latest",
       "angular": "latest"
   }
