@@ -32,6 +32,7 @@ var (
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
 	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
 	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
+	token        = app.Command("token", "generate a jwt token")
 
 	keyPath  = os.Getenv("QUIMBY_TLS_KEY")
 	certPath = os.Getenv("QUIMBY_TLS_CERT")
@@ -58,6 +59,8 @@ func main() {
 		addDB(utils.DeleteGadget)
 	case command.FullCommand():
 		addDB(utils.SendCommand)
+	case token.FullCommand():
+		addDB(utils.GetToken)
 	case serve.FullCommand():
 		addDB(startServer)
 	}
