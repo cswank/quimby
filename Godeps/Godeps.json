@@ -49,6 +49,10 @@
 			"Rev": "f15e0c49460fd49eebe2bcc8486b05d1bef68d3a"
 		},
 		{
+			"ImportPath": "github.com/gorilla/securecookie",
+			"Rev": "ba5126409e0340d53e989ad07501a14949889a0d"
+		},
+		{
 			"ImportPath": "github.com/gorilla/websocket",
 			"Rev": "6eb6ad425a89d9da7a5549bc6da8f79ba5c17844"
 		},
@@ -95,11 +99,6 @@
 			"ImportPath": "gopkg.in/alecthomas/kingpin.v2",
 			"Comment": "v2.1.0",
 			"Rev": "72bf19f454c6822cfb2cf128c77ef8d70667df35"
-		},
-		{
-			"ImportPath": "labix.org/v2/mgo",
-			"Comment": "287",
-			"Rev": "gustavo@niemeyer.net-20140501184651-975yyw9ipld92pji"
 		}
 	]
 }
