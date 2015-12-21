@@ -96,16 +96,6 @@ func startServer(db *bolt.DB) {
 	start(db, port, internalPort, "/", "/api", lg, clients)
 }
 
-func startHomeKit(db *bolt.DB, lg models.Logger) {
-	key := os.Getenv("QUIMBY_HOMEKIT")
-	if key == "" {
-		lg.Println("QUIMBY_HOMEKIT not set, not starting homekit")
-		return
-	}
-	hk := models.NewHomeKit(key, db)
-	go hk.Start()
-}
-
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models.Logger, clients *models.ClientHolder) {
 	models.Clients = clients
 	models.DB = db
@@ -114,7 +104,6 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	controllers.LG = lg
 
 	go startInternal(iRoot, lg, internalPort)
-	go startHomeKit(db, lg)
 
 	r := mux.NewRouter()
 	r.HandleFunc("/api/login", controllers.Login).Methods("POST")

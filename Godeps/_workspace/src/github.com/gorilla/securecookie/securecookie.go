@@ -126,10 +126,6 @@ type Codec interface {
 // of the encryption algorithm. For AES, used by default, valid lengths are
 // 16, 24, or 32 bytes to select AES-128, AES-192, or AES-256.
 // The default encoder used for cookie serialization is encoding/gob.
-//
-// Note that keys created using GenerateRandomKey() are not automatically
-// persisted. New keys will be created when the application is restarted, and
-// previously issued cookies will not be able to be decoded.
 func New(hashKey, blockKey []byte) *SecureCookie {
 	s := &SecureCookie{
 		hashKey:   hashKey,
@@ -372,9 +368,7 @@ func createMac(h hash.Hash, value []byte) []byte {
 // verifyMac verifies that a message authentication code (MAC) is valid.
 func verifyMac(h hash.Hash, value []byte, mac []byte) error {
 	mac2 := createMac(h, value)
-	// Check that both MACs are of equal length, as subtle.ConstantTimeCompare
-	// does not do this prior to Go 1.4.
-	if len(mac) == len(mac2) && subtle.ConstantTimeCompare(mac, mac2) == 1 {
+	if subtle.ConstantTimeCompare(mac, mac2) == 1 {
 		return nil
 	}
 	return ErrMacInvalid
@@ -480,9 +474,6 @@ func decode(value []byte) ([]byte, error) {
 
 // GenerateRandomKey creates a random key with the given length in bytes.
 // On failure, returns nil.
-//
-// Callers should explicitly check for the possibility of a nil return, treat
-// it as a failure of the system random number generator, and not continue.
 func GenerateRandomKey(length int) []byte {
 	k := make([]byte, length)
 	if _, err := io.ReadFull(rand.Reader, k); err != nil {
@@ -493,29 +484,7 @@ func GenerateRandomKey(length int) []byte {
 
 // CodecsFromPairs returns a slice of SecureCookie instances.
 //
-// It is a convenience function to create a list of codecs for key rotation. Note
-// that the generated Codecs will have the default options applied: callers
-// should iterate over each Codec and type-assert the underlying *SecureCookie to
-// change these.
-//
-// Example:
-//
-//      codecs := securecookie.CodecsFromPairs(
-//           []byte("new-hash-key"),
-//           []byte("new-block-key"),
-//           []byte("old-hash-key"),
-//           []byte("old-block-key"),
-//       )
-//
-//      // Modify each instance.
-//      for _, s := range codecs {
-//             if cookie, ok := s.(*securecookie.SecureCookie); ok {
-//                 cookie.MaxAge(86400 * 7)
-//                 cookie.SetSerializer(securecookie.JSONEncoder{})
-//                 cookie.HashFunc(sha512.New512_256)
-//             }
-//         }
-//
+// It is a convenience function to create a list of codecs for key rotation.
 func CodecsFromPairs(keyPairs ...[]byte) []Codec {
 	codecs := make([]Codec, len(keyPairs)/2+len(keyPairs)%2)
 	for i := 0; i < len(keyPairs); i += 2 {
