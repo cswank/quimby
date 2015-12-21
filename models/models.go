@@ -18,12 +18,17 @@ var (
 	LG      Logger
 	addr    string
 	host    string
+	user    string
 )
 
 func GetAddr() string {
 	host = os.Getenv("QUIMBY_HOST")
 	if host == "" {
 		LG.Println("please set QUIMBY_HOST")
+	}
+	user = os.Getenv("QUIMBY_USER")
+	if user == "" {
+		LG.Println("please set QUIMBY_USER")
 	}
 	if addr == "" {
 		addr = fmt.Sprintf("%s:%s/internal/updates", os.Getenv("QUIMBY_HOST"), os.Getenv("QUIMBY_INTERNAL_PORT"))

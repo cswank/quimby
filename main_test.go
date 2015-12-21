@@ -557,13 +557,19 @@ var _ = Describe("Quimby", func() {
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
 				enc.Encode(v)
-				u := fmt.Sprintf(
+				in := fmt.Sprintf(
+					addr2,
+					"internal/",
+					sprinklers.Id,
+					"/locations/front%20yard/devices/temperature/datapoints",
+				)
+				out := fmt.Sprintf(
 					addr,
 					"gadgets/",
 					sprinklers.Id,
 					"/locations/front%20yard/devices/temperature/datapoints",
 				)
-				req, err := http.NewRequest("POST", u, &buf)
+				req, err := http.NewRequest("POST", in, &buf)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
 				r, err := http.DefaultClient.Do(req)
@@ -575,14 +581,14 @@ var _ = Describe("Quimby", func() {
 				buf = bytes.Buffer{}
 				enc = json.NewEncoder(&buf)
 				enc.Encode(v)
-				req, err = http.NewRequest("POST", u, &buf)
+				req, err = http.NewRequest("POST", in, &buf)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
 				r, err = http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
 
-				req, err = http.NewRequest("GET", u, nil)
+				req, err = http.NewRequest("GET", out, nil)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
 				r, err = http.DefaultClient.Do(req)
@@ -1058,13 +1064,19 @@ var _ = Describe("Quimby", func() {
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
 				enc.Encode(v)
-				u := fmt.Sprintf(
+				in := fmt.Sprintf(
+					addr2,
+					"internal/",
+					sprinklers.Id,
+					"/locations/front%20yard/devices/temperature/datapoints",
+				)
+				out := fmt.Sprintf(
 					addr,
 					"gadgets/",
 					sprinklers.Id,
 					"/locations/front%20yard/devices/temperature/datapoints",
 				)
-				req, err := http.NewRequest("POST", u, &buf)
+				req, err := http.NewRequest("POST", in, &buf)
 				Expect(err).To(BeNil())
 				req.AddCookie(cookies[0])
 				r, err := http.DefaultClient.Do(req)
@@ -1076,14 +1088,14 @@ var _ = Describe("Quimby", func() {
 				buf = bytes.Buffer{}
 				enc = json.NewEncoder(&buf)
 				enc.Encode(v)
-				req, err = http.NewRequest("POST", u, &buf)
+				req, err = http.NewRequest("POST", in, &buf)
 				Expect(err).To(BeNil())
 				req.AddCookie(cookies[0])
 				r, err = http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
 
-				req, err = http.NewRequest("GET", u, nil)
+				req, err = http.NewRequest("GET", out, nil)
 				Expect(err).To(BeNil())
 				req.AddCookie(cookies[0])
 				r, err = http.DefaultClient.Do(req)
