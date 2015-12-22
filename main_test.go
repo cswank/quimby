@@ -559,7 +559,7 @@ var _ = Describe("Quimby", func() {
 				enc.Encode(v)
 				in := fmt.Sprintf(
 					addr2,
-					"internal/",
+					"internal/gadgets/",
 					sprinklers.Id,
 					"/locations/front%20yard/devices/temperature/datapoints",
 				)
@@ -1066,7 +1066,7 @@ var _ = Describe("Quimby", func() {
 				enc.Encode(v)
 				in := fmt.Sprintf(
 					addr2,
-					"internal/",
+					"internal/gadgets/",
 					sprinklers.Id,
 					"/locations/front%20yard/devices/temperature/datapoints",
 				)
