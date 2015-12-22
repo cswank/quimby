@@ -1,0 +1,15 @@
+<div class="page">
+  <h3>{{label}}</h3>
+  <nvd3-line-chart
+     data="data"
+     id="stats"
+     width="550"
+     height="400"
+     showXAxis="true"
+     showYAxis="true"
+     tooltips="true"
+     margin="{left:50,top:50,bottom:50,right:50}"
+     xAxisTickFormat="getDate()">
+    <svg></svg>
+  </nvd3-line-chart>
+</div>

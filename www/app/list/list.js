@@ -1,8 +1,8 @@
 'use strict';
 
-angular.module('quimby.gadgets', ['ngRoute'])
+angular.module('quimby.list', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/gadgets', {
+        $routeProvider.when('/', {
             templateUrl: 'list/list.html',
             controller: 'ListCtrl'
         });

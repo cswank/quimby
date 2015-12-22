@@ -19,7 +19,6 @@ angular.module('quimby.services')
                 }
                 $scope.showGraph = function(location, device) {
                     var url = "/graphs/" + $routeParams.id;
-                    console.log(url);
                     $location.path(url).search({location: location, device: device});
                 }
             }
