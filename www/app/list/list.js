@@ -2,7 +2,7 @@
 
 angular.module('quimby.list', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/', {
+        $routeProvider.when('/list', {
             templateUrl: 'list/list.html',
             controller: 'ListCtrl'
         });

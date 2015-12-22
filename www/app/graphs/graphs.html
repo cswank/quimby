@@ -1,5 +1,5 @@
 <div class="page">
-  <h3>{{label}}</h3>
+  <h3>{{label}} <a href="/#/gadgets/{{id}}">back</a></h3>
   <nvd3-line-chart
      data="data"
      id="stats"
@@ -12,4 +12,10 @@
      xAxisTickFormat="getDate()">
     <svg></svg>
   </nvd3-line-chart>
+  <div layout="row">
+    <span flex></span>
+    <span>
+      <a ng-repeat="span in spans track by $index" ng-click="getData($index)" class="timespan" ng-style="getSelectedStyle($index)">{{span.name}}</a>
+    </span>
+    <span flex></span>
 </div>

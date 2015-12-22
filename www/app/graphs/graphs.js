@@ -15,6 +15,8 @@ angular.module('quimby.graphs', ['ngRoute'])
             {name: "month", value: 7 * 24 * 30}
         ]
         
+        $scope.selected = 3;
+        
         $scope.id = $routeParams.id;
         $scope.label = $routeParams.location + " " + $routeParams.device;
         
@@ -23,23 +25,32 @@ angular.module('quimby.graphs', ['ngRoute'])
                 return d3.time.format('%x %X')(new Date(d));  //uncomment for date format
             }
         }
+
+        $scope.getSelectedStyle = function(index) {
+            if (index == $scope.selected) {
+                return {color: '#3F51B5'};
+            } 
+            return {};
+        }
         
-        $scope.getSpan = function(span) {
-            $stats.getStats($scope.id, $routeParams.location, $routeParams.device, span, function(data) {                
+        $scope.getData = function(i) {
+            console.log("index", i);
+            $scope.selected = i;
+            $stats.getStats($scope.id, $routeParams.location, $routeParams.device, $scope.spans[i], function(data) {
                 $scope.data = [{
                     key: $scope.label,
                     values: data
                 }]
             })
         }
-        $scope.getSpan($scope.spans[3]);
+        $scope.getData($scope.selected);
     }]);
 
 angular.module('quimby.services')
     .service('$stats', ['$http', function ($http) {
         this.getStats = function(id, location, name, span, callback) {
             var end = moment().utc().format();
-            var start = moment().utc().subtract(span, "hours").format();
+            var start = moment().utc().subtract(span.value, "hours").format();
             var url = "/api/gadgets/" + id + "/locations/" + location + "/devices/" + name + "/datapoints"
             $http.get(
                 url,
@@ -56,7 +67,7 @@ angular.module('quimby.services')
                 }
                 callback(_.map(data, function (value) {
                     return [new Date(value.x), value.y];
-                });
+                }));
             })
         }
     }]);
