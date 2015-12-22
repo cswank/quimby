@@ -7,10 +7,8 @@ angular.module('quimby', [
     'ngAnimate',
     "angularMoment",
     'ngStorage',
-    'chart.js',
     'quimby.gadgets',
     'quimby.gadget',
-    'quimby.graph',
     'quimby.directives',
     'quimby.services',
     'quimby.filters'

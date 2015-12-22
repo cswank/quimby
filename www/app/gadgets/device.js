@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('quimby.services')
-    .directive("device", ['$gadgets', '$sockets', '$mdDialog', '$routeParams', '$stats', '$location', function($gadgets, $sockets, $mdDialog, $routeParams, $stats, $location) {
+    .directive("device", ['$gadgets', '$sockets', '$mdDialog', '$routeParams', '$location', function($gadgets, $sockets, $mdDialog, $routeParams, $location) {
         return {
             restrict: "E",
             replace: true,
