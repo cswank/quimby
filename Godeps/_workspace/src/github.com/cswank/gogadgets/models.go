@@ -21,7 +21,7 @@ type Logger interface {
 	Fatal(...interface{})
 }
 
-type GoGadger interface {
+type GoGadgeter interface {
 	GetUID() string
 	Start(input <-chan Message, output chan<- Message)
 }

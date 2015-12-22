@@ -26,17 +26,17 @@ type Server struct {
 	statusLock  sync.Mutex
 	seenLock    sync.Mutex
 	clientsLock sync.Mutex
-	clients     map[string]bool
+	clients     map[string]string
 }
 
 func NewServer(host, master string, port int, lg Logger) *Server {
 	var isMaster bool
-	clients := map[string]bool{}
+	clients := map[string]string{}
 	if master == "" {
 		isMaster = true
 	} else {
-		clients = map[string]bool{
-			master: true,
+		clients = map[string]string{
+			master: "",
 		}
 	}
 	return &Server{
@@ -83,19 +83,23 @@ func (s *Server) Start(i <-chan Message, o chan<- Message) {
 
 func (s *Server) send(msg Message) {
 	s.clientsLock.Lock()
-	for host := range s.clients {
-		go s.doSend(host, msg)
+	for host, token := range s.clients {
+		go s.doSend(host, msg, token)
 	}
 	s.clientsLock.Unlock()
 }
 
-func (s *Server) doSend(host string, msg Message) {
+func (s *Server) doSend(host string, msg Message, token string) {
 	msg.Host = s.host
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.Encode(msg)
-	addr := fmt.Sprintf("%s/gadgets", host)
-	r, err := http.Post(addr, "application/json", &buf)
+	req, _ := http.NewRequest("POST", host, &buf)
+	if len(token) > 0 {
+		req.Header.Add("Authorization", "Bearer "+token)
+	}
+	r, err := http.DefaultClient.Do(req)
+
 	if err != nil || r.StatusCode != http.StatusOK {
 		s.clientsLock.Lock()
 		delete(s.clients, host)
@@ -134,10 +138,15 @@ func (s *Server) GetUID() string {
 	return s.id
 }
 
+func (s *Server) GetDirection() string {
+	return "na"
+}
+
 func (s *Server) startServer() {
 	r := mux.NewRouter()
 	r.HandleFunc("/gadgets", s.status).Methods("GET")
 	r.HandleFunc("/gadgets/values", s.values).Methods("GET")
+	r.HandleFunc("/gadgets/locations/{location}/devices/{device}/status", s.deviceValue).Methods("GET")
 	r.HandleFunc("/gadgets", s.update).Methods("PUT", "POST")
 	if s.isMaster {
 		r.HandleFunc("/clients", s.setClient).Methods("POST")
@@ -165,12 +174,12 @@ func (s *Server) setClient(w http.ResponseWriter, r *http.Request) {
 	var a map[string]string
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(&a)
-	if err != nil || len(a["address"]) == 0 {
+	if err != nil || len(a["address"]) == 0 || len(a["token"]) == 0 {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	s.clientsLock.Lock()
-	s.clients[a["address"]] = true
+	s.clients[a["address"]] = a["token"]
 	s.clientsLock.Unlock()
 }
 
@@ -190,6 +199,22 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 	s.statusLock.Unlock()
 }
 
+func (s *Server) deviceValue(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	k := fmt.Sprintf("%s %s", vars["location"], vars["device"])
+	s.statusLock.Lock()
+	m, ok := s.updates[k]
+	s.statusLock.Unlock()
+	if !ok {
+		w.WriteHeader(http.StatusNotFound)
+		return
+	}
+	enc := json.NewEncoder(w)
+	if err := enc.Encode(m.Value); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
 func (s *Server) values(w http.ResponseWriter, r *http.Request) {
 	enc := json.NewEncoder(w)
 	s.statusLock.Lock()
@@ -203,12 +228,12 @@ func (s *Server) values(w http.ResponseWriter, r *http.Request) {
 		l[msg.Name] = msg.Value
 		v[msg.Location] = l
 	}
-
+	s.statusLock.Unlock()
 	if err := enc.Encode(v); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		lg.Println(err)
 	}
-	s.statusLock.Unlock()
+
 }
 
 func (s *Server) update(w http.ResponseWriter, r *http.Request) {
@@ -224,11 +249,11 @@ func (s *Server) update(w http.ResponseWriter, r *http.Request) {
 	s.external <- msg
 }
 
+//
 func (s *Server) register() {
 	var tries int
-
 	addr := fmt.Sprintf("%s/clients", s.master)
-	a := map[string]string{"address": s.host}
+	a := map[string]string{"address": fmt.Sprintf("%s/gadgets", s.host), "token": "n/a"}
 	for {
 		buf := &bytes.Buffer{}
 		enc := json.NewEncoder(buf)

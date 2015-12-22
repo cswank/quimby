@@ -11,11 +11,12 @@ import (
 //to change value (1 to 0 or 0 to 1).  When that change
 //happens it sends an update to the rest of the system.
 type Switch struct {
-	GPIO      Poller
-	Value     interface{}
-	TrueValue interface{}
-	Units     string
-	out       chan<- Value
+	GPIO       Poller
+	Value      interface{}
+	TrueValue  interface{}
+	FalseValue interface{}
+	Units      string
+	out        chan<- Value
 }
 
 func NewSwitch(pin *Pin) (InputDevice, error) {
@@ -27,20 +28,23 @@ func NewSwitch(pin *Pin) (InputDevice, error) {
 	if !ok {
 		return nil, errors.New(fmt.Sprintf("couldn't create a poller: %s", pin))
 	}
-	if err == nil {
-		s = &Switch{
-			GPIO:      poller,
-			TrueValue: pin.Value,
-			Units:     pin.Units,
-		}
-		switch s.TrueValue.(type) {
-		case bool:
-			s.Value = false
-		default:
-			s.Value = float64(0.0)
-		}
+	if err != nil {
+		return nil, err
 	}
-	return s, err
+	s = &Switch{
+		GPIO:      poller,
+		TrueValue: pin.Value,
+		Units:     pin.Units,
+	}
+	switch s.TrueValue.(type) {
+	case bool:
+		s.Value = false
+		s.FalseValue = false
+	default:
+		s.Value = float64(0.0)
+		s.FalseValue = float64(0.0)
+	}
+	return s, nil
 }
 
 func (s *Switch) Config() ConfigHelper {
@@ -77,6 +81,15 @@ func (s *Switch) wait(out chan<- interface{}, err chan<- error) {
 	}
 }
 
+func (s *Switch) readValue() {
+	v := s.GPIO.Status()
+	if v.(bool) {
+		s.Value = s.TrueValue
+	} else {
+		s.Value = s.FalseValue
+	}
+}
+
 func (s *Switch) SendValue() {
 	s.out <- Value{
 		Value: s.Value,
@@ -95,6 +108,8 @@ func (s *Switch) Start(in <-chan Message, out chan<- Value) {
 	s.out = out
 	value := make(chan interface{})
 	err := make(chan error)
+	s.readValue()
+	s.SendValue()
 	keepGoing := true
 	go s.wait(value, err)
 	for keepGoing {

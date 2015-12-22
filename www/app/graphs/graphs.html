@@ -1,0 +1,36 @@
+<div class="page">
+  <h3>{{label}} <a href="/#/gadgets/{{id}}">back</a></h3>
+  <nvd3-line-chart
+     data="data"
+     id="stats"
+     height="400"
+     showXAxis="true"
+     showYAxis="true"
+     tooltips="true"
+     xAxisStaggerLabels="true"
+     objectEquality="true"
+     margin="{left:50,top:50,bottom:50,right:50}"
+     xAxisTickFormat="getDate()">
+    <svg></svg>
+  </nvd3-line-chart>
+  <hr></hr>
+  <div layout="column">
+    <div layout="row">
+      <div flex></div>
+      <div>
+        <a ng-repeat="choice in choices" ng-click="addSource(choice)" class="timespan" ng-style="getSourceStyle(choice)">{{choice}}</a>
+      </div>
+      <div flex></div>
+    </div>
+    <div>
+      <hr></hr>
+    </div>
+    <div layout="row">
+      <div flex></div>
+      <div>
+        <a ng-repeat="name in spanLabels" ng-click="setSpan(name)" class="timespan" ng-style="getSpanStyle(name)">{{name}}</a>
+      </div>
+      <div flex></div>
+    </div>
+  </div>
+</div>

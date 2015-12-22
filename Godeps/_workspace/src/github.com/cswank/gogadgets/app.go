@@ -75,6 +75,7 @@ func (a *App) GoStart(input <-chan Message) {
 	srv := NewServer(a.Host, a.Master, a.Port, lg)
 
 	a.Gadgets = append(a.Gadgets, srv)
+
 	collect := make(chan Message)
 	channels := make(map[string]chan Message)
 	for _, gadget := range a.Gadgets {

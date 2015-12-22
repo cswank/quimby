@@ -47,6 +47,10 @@ func (m *MethodRunner) GetUID() string {
 	return "method runner"
 }
 
+func (m *MethodRunner) GetDirection() string {
+	return "na"
+}
+
 func (m *MethodRunner) Start(in <-chan Message, out chan<- Message) {
 	m.uid = m.GetUID()
 	m.out = out
@@ -109,12 +113,11 @@ func (m *MethodRunner) clear() {
 
 func (m *MethodRunner) runNextStep() {
 	m.step += 1
+	m.method.Step = m.step
 	m.out <- Message{
 		Sender: m.uid,
 		Type:   METHODUPDATE,
-		Method: Method{
-			Step: m.step,
-		},
+		Method: m.method,
 	}
 	if len(m.method.Steps) <= m.step {
 		m.clear()
@@ -248,8 +251,9 @@ func (m *MethodRunner) doCountdown(waitTime time.Duration) {
 		Sender: m.uid,
 		Type:   METHODUPDATE,
 		Method: Method{
-			Time: int(waitTime.Seconds()),
-			Step: m.step,
+			Time:  int(waitTime.Seconds()),
+			Step:  m.step,
+			Steps: m.method.Steps,
 		},
 	}
 	for {
@@ -262,8 +266,9 @@ func (m *MethodRunner) doCountdown(waitTime time.Duration) {
 			Sender: m.uid,
 			Type:   METHODUPDATE,
 			Method: Method{
-				Time: int(1 + waitTime.Seconds() - d.Seconds()),
-				Step: m.step,
+				Time:  int(1 + waitTime.Seconds() - d.Seconds()),
+				Step:  m.step,
+				Steps: m.method.Steps,
 			},
 		}
 		if d > waitTime {

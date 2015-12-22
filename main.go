@@ -123,7 +123,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/gadgets/{id}/notes", GetNotes).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/datapoints", GetDataPoints).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/sources/{name}", GetDataPoints).Methods("GET")
 	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
@@ -145,7 +145,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 func startInternal(iRoot string, lg models.Logger, port string) {
 	r := mux.NewRouter()
 	r.HandleFunc("/internal/updates", Relay).Methods("POST")
-	r.HandleFunc("/internal/gadgets/{id}/locations/{location}/devices/{device}/datapoints", AddDataPoint).Methods("POST")
+	r.HandleFunc("/internal/gadgets/{id}/sources/{name}", AddDataPoint).Methods("POST")
 	http.Handle(iRoot, r)
 	a := fmt.Sprintf(":%s", port)
 	lg.Printf("listening on %s", a)

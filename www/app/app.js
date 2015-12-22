@@ -7,12 +7,14 @@ angular.module('quimby', [
     'ngAnimate',
     "angularMoment",
     'ngStorage',
-    'quimby.gadgets',
+    'nvd3ChartDirectives',
     'quimby.gadget',
+    'quimby.list',
+    'quimby.graphs',
     'quimby.directives',
     'quimby.services',
     'quimby.filters'
 ]).
     config(['$routeProvider', function($routeProvider) {
-        $routeProvider.otherwise({redirectTo: '/gadgets'});
+        $routeProvider.otherwise({redirectTo: '/list'});
     }]);
