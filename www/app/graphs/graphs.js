@@ -20,18 +20,15 @@ angular.module('quimby.graphs', ['ngRoute'])
         
         $scope.getDate = function(){
             return function(d){
-                return d3.time.format('%c')(new Date(d));  //uncomment for date format
+                return d3.time.format('%x %X')(new Date(d));  //uncomment for date format
             }
         }
         
         $scope.getSpan = function(span) {
-            $stats.getStats($scope.id, $routeParams.location, $routeParams.device, span, function(data) {
-                var transformed = _.map(data, function (value) {
-                    return [new Date(value.x), value.y];
-                });
+            $stats.getStats($scope.id, $routeParams.location, $routeParams.device, span, function(data) {                
                 $scope.data = [{
                     key: $scope.label,
-                    values: transformed
+                    values: data
                 }]
             })
         }
@@ -44,27 +41,22 @@ angular.module('quimby.services')
             var end = moment().utc().format();
             var start = moment().utc().subtract(span, "hours").format();
             var url = "/api/gadgets/" + id + "/locations/" + location + "/devices/" + name + "/datapoints"
-            console.log(url, start, end);
-            $http.get(url).success(function(data) {
+            $http.get(
+                url,
+                {
+                    params:
+                    {
+                        start: start,
+                        end:end
+                    }
+                }
+            ).success(function(data) {
                 if (data == null) {
                     data = [];
                 }
-                callback(data);
+                callback(_.map(data, function (value) {
+                    return [new Date(value.x), value.y];
+                });
             })
-            // $http.get(
-            //     url,
-            //     {
-            //         params:
-            //         {
-            //             start: start,
-            //             end:end
-            //         }
-            //     }
-            // ).success(function(data) {
-            //     if (data == null) {
-            //         data = [];
-            //     }
-            //     callback(data);
-            // })
         }
     }]);
