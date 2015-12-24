@@ -82,7 +82,11 @@ func (g *Gadget) SaveDataPoint(name string, dp DataPoint) error {
 func (g *Gadget) GetDataPoints(name string, start, end time.Time) ([]DataPoint, error) {
 	var points []DataPoint
 	err := g.DB.View(func(tx *bolt.Tx) error {
-		c := tx.Bucket([]byte(g.Id)).Bucket(_stats).Bucket([]byte(name)).Cursor()
+		b := tx.Bucket([]byte(g.Id)).Bucket(_stats).Bucket([]byte(name))
+		if b == nil {
+			return nil
+		}
+		c := b.Cursor()
 		min := []byte(start.Format(time.RFC3339Nano))
 		max := []byte(end.Format(time.RFC3339Nano))
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {

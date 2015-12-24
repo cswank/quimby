@@ -80,12 +80,10 @@ func AddDataPoint(args *Args) error {
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
-	name := fmt.Sprintf("%s %s", args.Vars["location"], args.Vars["name"])
-	return args.Gadget.SaveDataPoint(name, models.DataPoint{time.Now(), m["value"]})
+	return args.Gadget.SaveDataPoint(args.Vars["name"], models.DataPoint{time.Now(), m["value"]})
 }
 
 func GetDataPoints(args *Args) error {
-	name := fmt.Sprintf("%s %s", args.Vars["location"], args.Vars["name"])
 	start := beginning
 	end := time.Now()
 	if args.Args.Get("start") != "" {
@@ -103,7 +101,7 @@ func GetDataPoints(args *Args) error {
 			return err
 		}
 	}
-	points, err := args.Gadget.GetDataPoints(name, start, end)
+	points, err := args.Gadget.GetDataPoints(args.Vars["name"], start, end)
 	if err != nil {
 		return err
 	}
