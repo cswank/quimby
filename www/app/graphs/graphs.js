@@ -81,6 +81,7 @@ angular.module('quimby.services')
             var vals = [];
             _.each(names, function(value, name) {
                 var url = "/api/gadgets/" + id + "/sources/" + name;
+                console.log("url", url, start, end);
                 $http.get(
                     url,
                     {
