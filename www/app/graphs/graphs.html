@@ -8,6 +8,7 @@
      showYAxis="true"
      tooltips="true"
      xAxisStaggerLabels="true"
+     objectEquality="true"
      margin="{left:50,top:50,bottom:50,right:50}"
      xAxisTickFormat="getDate()">
     <svg></svg>
@@ -27,7 +28,7 @@
     <div layout="row">
       <div flex></div>
       <div>
-        <a ng-repeat="name in spanLabels" ng-click="getData(name)" class="timespan" ng-style="getSelectedStyle(name)">{{name}}</a>
+        <a ng-repeat="name in spanLabels" ng-click="setSpan(name)" class="timespan" ng-style="getSelectedStyle(name)">{{name}}</a>
       </div>
       <div flex></div>
     </div>

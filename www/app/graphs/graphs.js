@@ -20,9 +20,8 @@ angular.module('quimby.graphs', ['ngRoute'])
         
         $scope.id = $routeParams.id;
         $scope.label = $routeParams.location + " " + $routeParams.device;
-        
-        $scope.sources = {}
-        $scope.sources[$scope.label] = true;
+
+        $scope.data = [];
         
         $scope.getDate = function(){
             return function(d){
@@ -30,12 +29,19 @@ angular.module('quimby.graphs', ['ngRoute'])
             }
         };
 
+        function isSelected (key) {
+            return _.findIndex($scope.data, function(item) {
+                return item.key == key;
+            }) > -1;
+
+        };
+
         $scope.getSelectedSourceStyle = function(key) {
-            if ($scope.sources[key]) {
+            if (isSelected(key)) {
                 return {color: '#3F51B5'};
             }
             return {};
-        };
+        }
 
         $scope.getSelectedStyle = function(name) {
             if (name == $scope.selected) {
@@ -44,12 +50,17 @@ angular.module('quimby.graphs', ['ngRoute'])
             return {};
         };
         
-        $scope.getData = function(name) {
-            $scope.selected = name;
-            $stats.getStats($scope.id, $scope.sources, $scope.spans[name], function(data) {
-                console.log("getData", data);
-                $scope.data = data;
-            })
+        $scope.getData = function(key) {
+            $stats.getStats($scope.id, key, $scope.spans[$scope.selected], function(data) {
+                var i = _.findIndex($scope.data, function(item) {
+                    return item.key == key;
+                })
+                if (i == -1) {
+                    $scope.data.push(data);
+                } else {
+                    $scope.data[i] = data
+                }
+            });
         };
         
         $gadgets.getDevices($scope.id, function(locations, directions) {
@@ -58,53 +69,52 @@ angular.module('quimby.graphs', ['ngRoute'])
                 if (value == "input") {
                     $scope.choices.push(key);
                 }
-            })
+            });
         });
 
-        $scope.addSource = function(key) {
-            if ($scope.sources[key]) {
-                delete $scope.sources[key];
-            } else {
-                $scope.sources[key] = true;
-            }
-            $scope.getData($scope.selected);
+        $scope.setSpan = function(name) {
+            $scope.selected = name;
+            var keys = _.map($scope.data, function(item) {
+                return item.key;
+            });
+            _.each(keys, function(key) {
+                $scope.getData(key);
+            });
         };
         
-        $scope.getData($scope.selected);
+        $scope.addSource = function(key) {
+            if (isSelected(key)) {
+                $scope.data = _.without($scope.data, _.findWhere($scope.data, {key: key}));
+            } else {
+                $scope.getData(key);
+            }
+        };
+        $scope.getData($scope.label);
     }]);
 
 angular.module('quimby.services')
     .service('$stats', ['$http', function ($http) {
-        this.getStats = function(id, names, span, callback) {
+        this.getStats = function(id, name, span, callback) {
             var end = moment().utc().format();
             var start = moment().utc().subtract(span, "hours").format();
             var vals = [];
-            _.each(names, function(value, name) {
-                var url = "/api/gadgets/" + id + "/sources/" + name;
-                console.log("url", url, start, end);
-                $http.get(
-                    url,
+            var url = "/api/gadgets/" + id + "/sources/" + name;
+            $http.get(
+                url,
+                {
+                    params:
                     {
-                        params:
-                        {
-                            start: start,
-                            end:end
-                        }
+                        start: start,
+                        end:end
                     }
-                ).success(function(data) {
-                    if (!Array.isArray(data)) {
-                        data = [];
-                    }
-                    vals.push({
-                        key: name,
-                        values: _.map(data, function (value) {
-                            return [new Date(value.x), value.y];
-                        })
+                }
+            ).success(function(data) {
+                callback({
+                    key: name,
+                    values: _.map(data, function (value) {
+                        return [new Date(value.x), value.y];
                     })
-                    if (vals.length == _.size(names)) {
-                        callback(vals);
-                    }
                 })
             })
-                }
+        }
     }]);
