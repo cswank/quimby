@@ -36,17 +36,17 @@ angular.module('quimby.graphs', ['ngRoute'])
 
         };
 
-        $scope.getSelectedSourceStyle = function(key) {
+        $scope.getSourceStyle = function(key) {
             if (isSelected(key)) {
                 return {color: '#3F51B5'};
             }
             return {};
         }
 
-        $scope.getSelectedStyle = function(name) {
+        $scope.getSpanStyle = function(name) {
             if (name == $scope.selected) {
                 return {color: '#3F51B5'};
-            } 
+            }
             return {};
         };
         
