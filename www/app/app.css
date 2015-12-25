@@ -72,3 +72,7 @@ md-dialog md-content {
     text-decoration: line-through;
     color:red;
 }
+
+.graph-link {
+    color:#3F51B5;
+}

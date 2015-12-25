@@ -3,6 +3,6 @@
     <a>{{name}}:</a> <a ng-click="toggle()">{{value.value | onoff }}</a>
   </div>
   <div ng-show="direction=='input'">
-    <a ng-click="showGraph(location, name)">{{name}}: {{value.value}}</a>
+    <a ng-click="showGraph(location, name)" class="graph-link">{{name}}: {{value.value}}</a>
   </div>
 </div>
