@@ -26,7 +26,7 @@ var (
 	_gadgets = []byte("gadgets")
 	_notes   = []byte("notes")
 	_stats   = []byte("stats")
-	
+
 	epoch   = []byte(time.Date(1900, 1, 1, 0, 0, 0, 0, time.UTC).Format(time.RFC3339Nano))
 	century = (100 * 24 * 365 * time.Hour)
 )
@@ -100,7 +100,6 @@ func (g *Gadget) GetDataPoints(name string, start, end time.Time) ([]DataPoint, 
 		}
 		return nil
 	})
-	fmt.Println("got", points)
 	return points, err
 }
 
