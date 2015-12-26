@@ -73,6 +73,6 @@ md-dialog md-content {
     color:red;
 }
 
-.graph-link {
+a.graph-link:hover {
     color:#3F51B5;
 }

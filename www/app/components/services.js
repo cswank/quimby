@@ -90,6 +90,9 @@ angular.module('quimby.services', [])
                 });
                 ws.send(msg);
             },
+            update: function(msg) {
+                ws.send(JSON.stringify(msg));
+            },
             close: function() {
                 if (ws != undefined) {
                     ws.close();

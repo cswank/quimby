@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('quimby.services')
-    .directive("method", [function() {
+    .directive("method", ["$sockets", function($sockets) {
         return {
             restrict: "E",
             replace: true,
@@ -9,8 +9,23 @@ angular.module('quimby.services')
             templateUrl: "/gadgets/method.html?t=" + new Date().getTime(),
             scope: {
                 method: '=',
+                socket: '='
             },
-            controller: function($scope) {}
+            controller: function($scope) {
+
+                $scope.confirm = function(step) {
+                    var msg = {
+                        type: 'method update',
+                        sender: 'client',
+                        body:step
+                    };
+                    $sockets.update(msg);
+                };
+                $scope.checkUserPrompt = function(i) {
+                    var step = $scope.method.steps[i];
+                    return step != undefined && step.indexOf("wait for user") == 0 && i == $scope.method.step;
+                };
+            }
         }
     }]);
 
