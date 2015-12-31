@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/gogadgets"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"
@@ -561,13 +561,13 @@ var _ = Describe("Quimby", func() {
 					addr2,
 					"internal/gadgets/",
 					sprinklers.Id,
-					"/locations/front%20yard/devices/temperature/datapoints",
+					"/sources/front%20yard%20temperature",
 				)
 				out := fmt.Sprintf(
 					addr,
 					"gadgets/",
 					sprinklers.Id,
-					"/locations/front%20yard/devices/temperature/datapoints",
+					"/sources/front%20yard%20temperature",
 				)
 				req, err := http.NewRequest("POST", in, &buf)
 				Expect(err).To(BeNil())
@@ -575,6 +575,7 @@ var _ = Describe("Quimby", func() {
 				r, err := http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
 				time.Sleep(10 * time.Millisecond)
 
 				v = map[string]float64{"value": 33.5}
@@ -1068,13 +1069,13 @@ var _ = Describe("Quimby", func() {
 					addr2,
 					"internal/gadgets/",
 					sprinklers.Id,
-					"/locations/front%20yard/devices/temperature/datapoints",
+					"/sources/front%20yard%20temperature",
 				)
 				out := fmt.Sprintf(
 					addr,
 					"gadgets/",
 					sprinklers.Id,
-					"/locations/front%20yard/devices/temperature/datapoints",
+					"/sources/front%20yard%20temperature",
 				)
 				req, err := http.NewRequest("POST", in, &buf)
 				Expect(err).To(BeNil())

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/gogadgets"
 )
 
 type Gadget struct {
@@ -80,7 +80,7 @@ func (g *Gadget) SaveDataPoint(name string, dp DataPoint) error {
 }
 
 func (g *Gadget) GetDataPoints(name string, start, end time.Time) ([]DataPoint, error) {
-	var points []DataPoint
+	points := []DataPoint{}
 	err := g.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(g.Id)).Bucket(_stats).Bucket([]byte(name))
 		if b == nil {

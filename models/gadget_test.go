@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/gogadgets"
 	. "github.com/cswank/quimby/models"
 
 	. "github.com/onsi/ginkgo"
