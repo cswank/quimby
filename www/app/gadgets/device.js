@@ -17,8 +17,8 @@ angular.module('quimby.services')
                 $scope.toggle = function() {
                     $gadgets.send($scope.location, $scope.name, $sockets.send);
                 }
-                $scope.showGraph = function(location, device) {
-                    var url = "/graphs/" + $routeParams.id;
+                $scope.showHistory = function(location, device) {
+                    var url = "/gadgets/" + $routeParams.id + "/history/";
                     $location.path(url).search({location: location, device: device});
                 }
             }

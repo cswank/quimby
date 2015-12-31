@@ -38,7 +38,7 @@ func EditUser(db *bolt.DB) {
 	u.DB = db
 
 	var p int
-	fmt.Printf("permission (%s):\n  1: read\n  2: write\n  3: admin\n", u.Permission)
+	fmt.Printf("permission (%s):\n  1: read\n  2: write\n  3: admin\n ", u.Permission)
 	fmt.Scanf("%d", &p)
 	perm, ok := permissions[p]
 	if !ok {
@@ -80,7 +80,7 @@ func AddUser(db *bolt.DB) {
 	}
 	fmt.Print("username: ")
 	fmt.Scanf("%s", &u.Username)
-	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin")
+	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n")
 	var x int
 	fmt.Scanf("%d", &x)
 

@@ -1,5 +1,9 @@
 <div class="page">
-  <h3>{{label}} <a href="/#/gadgets/{{id}}">back</a></h3>
+  <p>
+    <a href="#/gadgets">gadgets</a>
+    <a href="#/gadgets/{{id}}">{{gadget.name}}</a>
+    <a>history</a>
+  </p>
   <nvd3-line-chart
      data="data"
      id="stats"

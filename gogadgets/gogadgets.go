@@ -1,6 +1,9 @@
 package gogadgets
 
 import (
+	"crypto/rand"
+	"fmt"
+	"io"
 	"sync"
 	"time"
 )
@@ -14,17 +17,6 @@ var (
 	STATUS       = "status"
 	METHODUPDATE = "method update"
 )
-
-type Logger interface {
-	Println(...interface{})
-	Printf(string, ...interface{})
-	Fatal(...interface{})
-}
-
-type GoGadgeter interface {
-	GetUID() string
-	Start(input <-chan Message, output chan<- Message)
-}
 
 type Value struct {
 	Value  interface{} `json:"value,omitempty"`
@@ -49,20 +41,6 @@ func (v *Value) ToFloat() (f float64, ok bool) {
 	return f, ok
 }
 
-type Info struct {
-	Direction string `json:"direction,omitempty"`
-	On        string `json:"on,omitempty"`
-	Off       string `json:"off,omitempty"`
-}
-
-type Method struct {
-	Step  int      `json:"step,omitempty"`
-	Steps []string `json:"steps,omitempty"`
-	Time  int      `json:"time,omitempty"`
-}
-
-//Message is what all Gadgets pass around to each
-//other.
 type Message struct {
 	UUID        string    `json:"uuid"`
 	From        string    `json:"from,omitempty"`
@@ -81,23 +59,16 @@ type Message struct {
 	Config      Config    `json:"config,omitempty"`
 }
 
-type Pin struct {
-	Type        string                 `json:"type,omitempty"`
-	Port        string                 `json:"port,omitempty"`
-	Pin         string                 `json:"pin,omitempty"`
-	Direction   string                 `json:"direction,omitempty"`
-	Edge        string                 `json:"edge,omitempty"`
-	ActiveLow   string                 `json:"active_low,omitempty"`
-	OneWirePath string                 `json:"onewirePath,omitempty"`
-	OneWireId   string                 `json:"onewireId,omitempty"`
-	Sleep       time.Duration          `json:"sleep,omitempty"`
-	Value       interface{}            `json:"value,omitempty"`
-	Units       string                 `json:"units,omitempty"`
-	Platform    string                 `json:"platform,omitempty"`
-	Frequency   int                    `json:"frequency,omitempty"`
-	Args        map[string]interface{} `json:"args,omitempty"`
-	Pins        map[string]Pin         `json:"pins,omitempty"`
-	Lock        sync.Mutex             `json:"-"`
+type Method struct {
+	Step  int      `json:"step,omitempty"`
+	Steps []string `json:"steps,omitempty"`
+	Time  int      `json:"time,omitempty"`
+}
+
+type Info struct {
+	Direction string `json:"direction,omitempty"`
+	On        string `json:"on,omitempty"`
+	Off       string `json:"off,omitempty"`
 }
 
 type GadgetConfig struct {
@@ -119,10 +90,40 @@ type Config struct {
 	Logger  Logger         `json:"-"`
 }
 
-type ConfigHelper struct {
-	Fields  map[string][]string          `json:"fields"`
-	Units   []string                     `json:"units,omitempty"`
-	Args    map[string]interface{}       `json:"args,omitempty"`
-	Pins    map[string]map[string]string `json:"pins,omitempty"`
-	PinType string                       `json:"pinType"`
+type Logger interface {
+	Println(...interface{})
+	Printf(string, ...interface{})
+	Fatal(...interface{})
+}
+
+type Pin struct {
+	Type        string                 `json:"type,omitempty"`
+	Port        string                 `json:"port,omitempty"`
+	Pin         string                 `json:"pin,omitempty"`
+	Direction   string                 `json:"direction,omitempty"`
+	Edge        string                 `json:"edge,omitempty"`
+	ActiveLow   string                 `json:"active_low,omitempty"`
+	OneWirePath string                 `json:"onewirePath,omitempty"`
+	OneWireId   string                 `json:"onewireId,omitempty"`
+	Sleep       time.Duration          `json:"sleep,omitempty"`
+	Value       interface{}            `json:"value,omitempty"`
+	Units       string                 `json:"units,omitempty"`
+	Platform    string                 `json:"platform,omitempty"`
+	Frequency   int                    `json:"frequency,omitempty"`
+	Args        map[string]interface{} `json:"args,omitempty"`
+	Pins        map[string]Pin         `json:"pins,omitempty"`
+	Lock        sync.Mutex             `json:"-"`
+}
+
+func GetUUID() string {
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		return ""
+	}
+	// variant bits; see section 4.1.1
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+	// version 4 (pseudo-random); see section 4.1.3
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
 }

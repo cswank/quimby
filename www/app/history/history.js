@@ -1,13 +1,13 @@
 'use strict';
 
-angular.module('quimby.graphs', ['ngRoute'])
+angular.module('quimby.history', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/graphs/:id', {
-            templateUrl: 'graphs/graphs.html',
-            controller: 'GraphsCtrl'
+        $routeProvider.when('/gadgets/:id/history', {
+            templateUrl: 'history/history.html',
+            controller: 'HistoryCtrl'
         });
     }])
-    .controller('GraphsCtrl', ['$scope', '$routeParams', '$stats', '$gadgets', function($scope, $routeParams, $stats, $gadgets) {
+    .controller('HistoryCtrl', ['$scope', '$routeParams', '$stats', '$gadgets', function($scope, $routeParams, $stats, $gadgets) {
         $scope.spans = {
             hour: 1,
             day: 24,
@@ -17,9 +17,11 @@ angular.module('quimby.graphs', ['ngRoute'])
         $scope.spanLabels = ["hour", "day", "week", "month"];
         
         $scope.selected = "hour";
-        
         $scope.id = $routeParams.id;
-        $scope.label = $routeParams.location + " " + $routeParams.device;
+
+        $gadgets.getGadget($scope.id, function(data) {
+            $scope.gadget = data;
+        });
 
         $scope.data = [];
         

@@ -21,7 +21,7 @@ var (
 	userAdd      = users.Command("add", "Add a new user.")
 	userList     = users.Command("list", "List users.")
 	userEdit     = users.Command("edit", "Update a user.")
-	cert         = app.Command("cert", "Make an ssl cert.")
+	cert         = app.Command("cert", "Make an tls cert.")
 	domain       = cert.Flag("domain", "The domain for the tls cert.").Required().Short('d').String()
 	pth          = cert.Flag("path", "The directory where the cert files will be written").Required().Short('p').String()
 	serve        = app.Command("serve", "Start the server.")
@@ -32,7 +32,8 @@ var (
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
 	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
 	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
-	token        = app.Command("token", "generate a jwt token")
+	token        = app.Command("token", "Generate a jwt token")
+	bootstrap    = app.Command("bootstrap", "Set up a bunch of stuff")
 
 	keyPath  = os.Getenv("QUIMBY_TLS_KEY")
 	certPath = os.Getenv("QUIMBY_TLS_CERT")
@@ -61,9 +62,12 @@ func main() {
 		addDB(utils.SendCommand)
 	case token.FullCommand():
 		addDB(utils.GetToken)
+	case bootstrap.FullCommand():
+		utils.Bootstrap()
 	case serve.FullCommand():
 		addDB(startServer)
 	}
+
 }
 
 type dbNeeder func(*bolt.DB)
