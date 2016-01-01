@@ -7,7 +7,7 @@ angular.module('quimby.history', ['ngRoute'])
             controller: 'HistoryCtrl'
         });
     }])
-    .controller('HistoryCtrl', ['$scope', '$routeParams', '$stats', '$gadgets', function($scope, $routeParams, $stats, $gadgets) {
+    .controller('HistoryCtrl', ['$scope', '$routeParams', '$stats', '$gadgets', '$window', function($scope, $routeParams, $stats, $gadgets, $window) {
         $scope.spans = {
             hour: 1,
             day: 24,
@@ -17,6 +17,7 @@ angular.module('quimby.history', ['ngRoute'])
         $scope.spanLabels = ["hour", "day", "week", "month"];
         
         $scope.selected = "hour";
+        $scope.label = $routeParams.location + " " + $routeParams.device;
         $scope.id = $routeParams.id;
 
         $gadgets.getGadget($scope.id, function(data) {
@@ -37,6 +38,10 @@ angular.module('quimby.history', ['ngRoute'])
             }) > -1;
 
         };
+
+        $scope.getHeight = function() {
+            return 2 * $window.innerHeight / 3;
+        }
 
         $scope.getSourceStyle = function(key) {
             if (isSelected(key)) {
