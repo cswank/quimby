@@ -58,7 +58,7 @@ func Bootstrap() {
 
 func addIP(b *bootstrap) {
 	fmt.Printf("local ip address of server: ")
-	fmt.Scanf("%s", &b.IP)
+	fmt.Scanf("%s\n", &b.IP)
 }
 
 func addCert(b *bootstrap, db *bolt.DB) {
@@ -71,7 +71,7 @@ func addCert(b *bootstrap, db *bolt.DB) {
 	}
 	var dom string
 	fmt.Printf("public web domain (like example.com): ")
-	fmt.Scanf("%s", &dom)
+	fmt.Scanf("%s\n", &dom)
 	GenerateCert(dom, pth)
 	writeEnv(b)
 }
@@ -109,7 +109,7 @@ func saveQuimbyUser(db *bolt.DB) {
 
 func getDB(b *bootstrap) *bolt.DB {
 	fmt.Printf("data directory path: ")
-	fmt.Scanf("%s", &b.Home)
+	fmt.Scanf("%s\n", &b.Home)
 
 	if err := os.MkdirAll(b.Home, 0777); err != nil {
 		log.Fatal(err)

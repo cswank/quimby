@@ -33,13 +33,13 @@ func EditUser(db *bolt.DB) {
 	listUsers(users)
 
 	var i int
-	fmt.Scanf("%d", &i)
+	fmt.Scanf("%d\n", &i)
 	u := users[i-1]
 	u.DB = db
 
 	var p int
 	fmt.Printf("permission (%s):\n  1: read\n  2: write\n  3: admin\n ", u.Permission)
-	fmt.Scanf("%d", &p)
+	fmt.Scanf("%d\n", &p)
 	perm, ok := permissions[p]
 	if !ok {
 		log.Fatal("select 1, 2, or 3")
@@ -48,7 +48,7 @@ func EditUser(db *bolt.DB) {
 
 	var c string
 	fmt.Print("change password? (y/N) ")
-	fmt.Scanf("%s", &c)
+	fmt.Scanf("%s\n", &c)
 	if c == "y" || c == "Y" {
 		getPasswd(&u)
 	}
@@ -79,10 +79,10 @@ func AddUser(db *bolt.DB) {
 		DB: db,
 	}
 	fmt.Print("username: ")
-	fmt.Scanf("%s", &u.Username)
+	fmt.Scanf("%s\n", &u.Username)
 	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n")
 	var x int
-	fmt.Scanf("%d", &x)
+	fmt.Scanf("%d\n", &x)
 
 	perm, ok := permissions[x]
 	if !ok {
@@ -98,12 +98,12 @@ func AddGadget(db *bolt.DB) {
 		DB: db,
 	}
 	fmt.Print("name: ")
-	fmt.Scanf("%s", &g.Name)
+	fmt.Scanf("%s\n", &g.Name)
 	fmt.Print("host: ")
-	fmt.Scanf("%s", &g.Host)
+	fmt.Scanf("%s\n", &g.Host)
 	fmt.Print(fmt.Sprintf("really save gadget (name: %s, host: %s)? (Y/n) ", g.Name, g.Host))
 	var save string
-	fmt.Scanf("%s", &save)
+	fmt.Scanf("%s\n", &save)
 	if save == "y" || save == "Y" || save == "" {
 		fmt.Println(g.Save())
 	} else {
@@ -119,7 +119,7 @@ func DeleteGadget(db *bolt.DB) {
 	fmt.Println("pick a number")
 	listGadgets(gadgets)
 	var n int
-	fmt.Scanf("%d", &n)
+	fmt.Scanf("%d\n", &n)
 	g := gadgets[n-1]
 	g.DB = db
 	fmt.Println(g.Delete())
@@ -132,15 +132,15 @@ func EditGadget(db *bolt.DB) {
 	}
 	listGadgets(gadgets)
 	var i int
-	fmt.Scanf("%d", &i)
+	fmt.Scanf("%d\n", &i)
 	g := gadgets[i-1]
 	g.DB = db
 
 	var n string
 	fmt.Printf("name (%s): ", g.Name)
-	fmt.Scanf("%s", &n)
+	fmt.Scanf("%s\n", &n)
 	fmt.Printf("host (%s): ", g.Host)
-	fmt.Scanf("%s", &g.Host)
+	fmt.Scanf("%s\n", &g.Host)
 	if n != g.Name && n != "" {
 		g.Delete()
 		g.Name = n
