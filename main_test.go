@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -607,6 +608,29 @@ var _ = Describe("Quimby", func() {
 
 				p2 := points[1]
 				Expect(p2.Value).To(Equal(33.5))
+
+				//Get them as csv
+				req, err = http.NewRequest("GET", out, nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				req.Header.Add("Accept", "application/csv")
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				c := csv.NewReader(r.Body)
+				rows, err := c.ReadAll()
+				Expect(err).To(BeNil())
+				Expect(len(rows)).To(Equal(3))
+
+				h := rows[0]
+				Expect(h[0]).To(Equal("time"))
+				Expect(h[1]).To(Equal("value"))
+
+				r1 := rows[1]
+				Expect(r1[1]).To(Equal("33.300000"))
+
+				r2 := rows[2]
+				Expect(r2[1]).To(Equal("33.500000"))
 			})
 
 			Describe("websockets", func() {
@@ -1114,6 +1138,29 @@ var _ = Describe("Quimby", func() {
 
 				p2 := points[1]
 				Expect(p2.Value).To(Equal(33.5))
+
+				//Get them as csv
+				req, err = http.NewRequest("GET", out, nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				req.Header.Add("Accept", "application/csv")
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				c := csv.NewReader(r.Body)
+				rows, err := c.ReadAll()
+				Expect(err).To(BeNil())
+				Expect(len(rows)).To(Equal(3))
+
+				h := rows[0]
+				Expect(h[0]).To(Equal("time"))
+				Expect(h[1]).To(Equal("value"))
+
+				r1 := rows[1]
+				Expect(r1[1]).To(Equal("33.300000"))
+
+				r2 := rows[2]
+				Expect(r2[1]).To(Equal("33.500000"))
 			})
 
 			Describe("websockets", func() {

@@ -127,6 +127,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/gadgets/{id}/notes", GetNotes).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
+	r.HandleFunc("/api/gadgets/{id}/sources", GetDataPoints).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/sources/{name}", GetDataPoints).Methods("GET")
 	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
 

@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -101,12 +102,31 @@ func GetDataPoints(args *Args) error {
 			return err
 		}
 	}
+
 	points, err := args.Gadget.GetDataPoints(args.Vars["name"], start, end)
 	if err != nil {
 		return err
 	}
+	if args.R.Header.Get("accept") == "application/csv" {
+		return getCSV(args, points, args.Vars["name"])
+	}
 	enc := json.NewEncoder(args.W)
 	return enc.Encode(points)
+}
+
+func getCSV(args *Args, points []models.DataPoint, name string) error {
+	args.W.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s.csv", name))
+	args.W.Header().Set("Content-Type", "application/csv")
+	w := csv.NewWriter(args.W)
+	w.Write([]string{"time", "value"})
+	for _, p := range points {
+		w.Write([]string{
+			p.Time.Format(time.RFC3339Nano),
+			fmt.Sprintf("%f", p.Value),
+		})
+	}
+	w.Flush()
+	return nil
 }
 
 func GetValues(args *Args) error {
