@@ -76,3 +76,8 @@ md-dialog md-content {
 a.graph-link:hover {
     color:#3F51B5;
 }
+
+a.chart-link {
+    font-size:small;
+    margin-left: 1em;
+}

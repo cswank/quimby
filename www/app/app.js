@@ -16,5 +16,5 @@ angular.module('quimby', [
     'quimby.filters'
 ]).
     config(['$routeProvider', function($routeProvider) {
-        $routeProvider.otherwise({redirectTo: '/list'});
+        $routeProvider.otherwise({redirectTo: '/gadgets'});
     }]);
