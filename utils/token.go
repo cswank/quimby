@@ -5,11 +5,10 @@ import (
 	"log"
 	"math"
 
-	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/models"
 )
 
-func GetToken(db *bolt.DB) {
+func GetToken() {
 	var n string
 	fmt.Printf("username: ")
 	fmt.Scanf("%s", &n)
