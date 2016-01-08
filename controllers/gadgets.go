@@ -84,26 +84,16 @@ func AddDataPoint(args *Args) error {
 	return args.Gadget.SaveDataPoint(args.Vars["name"], models.DataPoint{time.Now(), m["value"]})
 }
 
+func GetDataPointsCSV(args *Args) error {
+	points, err := getDataPoints(args)
+	if err != nil {
+		return err
+	}
+	return getCSV(args, points, args.Vars["name"])
+}
+
 func GetDataPoints(args *Args) error {
-	start := beginning
-	end := time.Now()
-	if args.Args.Get("start") != "" {
-		var err error
-		start, err = time.Parse(time.RFC3339Nano, args.Args.Get("start"))
-		if err != nil {
-			return err
-		}
-	}
-
-	if args.Args.Get("end") != "" {
-		var err error
-		end, err = time.Parse(time.RFC3339Nano, args.Args.Get("end"))
-		if err != nil {
-			return err
-		}
-	}
-
-	points, err := args.Gadget.GetDataPoints(args.Vars["name"], start, end)
+	points, err := getDataPoints(args)
 	if err != nil {
 		return err
 	}
@@ -112,6 +102,28 @@ func GetDataPoints(args *Args) error {
 	}
 	enc := json.NewEncoder(args.W)
 	return enc.Encode(points)
+}
+
+func getDataPoints(args *Args) ([]models.DataPoint, error) {
+	start := beginning
+	end := time.Now()
+	if args.Args.Get("start") != "" {
+		var err error
+		start, err = time.Parse(time.RFC3339Nano, args.Args.Get("start"))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if args.Args.Get("end") != "" {
+		var err error
+		end, err = time.Parse(time.RFC3339Nano, args.Args.Get("end"))
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return args.Gadget.GetDataPoints(args.Vars["name"], start, end)
 }
 
 func getCSV(args *Args, points []models.DataPoint, name string) error {

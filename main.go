@@ -128,6 +128,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
 	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
 	r.HandleFunc("/api/gadgets/{id}/sources/{name}", GetDataPoints).Methods("GET")
+	r.HandleFunc("/api/gadgets/{id}/sources/{name}/csv", GetDataPointsCSV).Methods("GET")
 	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
 
 	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
@@ -213,6 +214,10 @@ func AddDataPoint(w http.ResponseWriter, r *http.Request) {
 
 func GetDataPoints(w http.ResponseWriter, r *http.Request) {
 	controllers.Handle(w, r, controllers.GetDataPoints, controllers.Read)
+}
+
+func GetDataPointsCSV(w http.ResponseWriter, r *http.Request) {
+	controllers.Handle(w, r, controllers.GetDataPointsCSV, controllers.Read)
 }
 
 func GetValues(w http.ResponseWriter, r *http.Request) {

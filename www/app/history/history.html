@@ -23,7 +23,10 @@
     <div layout="row">
       <div flex></div>
       <div>
-        <a class="chart-link" ng-repeat="choice in choices" ng-click="addSource(choice)" class="timespan" ng-style="getSourceStyle(choice)">{{choice}}</a>
+        <span ng-repeat="choice in choices" ng-click="addSource(choice)" class="timespan" ng-style="getSourceStyle(choice)">
+          <a class="chart-link" ng-click="addSource(choice)" class="timespan" ng-style="getSourceStyle(choice)">{{choice}}</a>
+          <a class="chart-link" href="/api/gadgets/{id}/sources/{{choice}}/csv?start={{start}}&end={{end}}">csv</a>
+        </span>
       </div>
       <div flex></div>
     </div>

@@ -24,6 +24,14 @@ angular.module('quimby.history', ['ngRoute'])
             $scope.gadget = data;
         });
 
+        function getStart() {
+            return moment().utc().format();
+        }
+
+        function getEnd() {
+            return moment().utc().subtract($scope.spans[$scope.selected], "hours").format();
+        }
+
         $scope.data = [];
         
         $scope.getDate = function(){
@@ -78,9 +86,11 @@ angular.module('quimby.history', ['ngRoute'])
                 }
             });
         });
-
+        
         $scope.setSpan = function(name) {
             $scope.selected = name;
+            $scope.start = getStart();
+            $scope.end = getEnd();
             var keys = _.map($scope.data, function(item) {
                 return item.key;
             });
@@ -96,7 +106,8 @@ angular.module('quimby.history', ['ngRoute'])
                 $scope.getData(key);
             }
         };
-        $scope.getData($scope.label);
+        
+        $scope.setSpan($scope.label);
     }]);
 
 angular.module('quimby.services')
