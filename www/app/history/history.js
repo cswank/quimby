@@ -24,12 +24,12 @@ angular.module('quimby.history', ['ngRoute'])
             $scope.gadget = data;
         });
 
-        function getStart() {
-            return moment().utc().format();
+        function getEnd() {
+            return encodeURIComponent(moment().utc().format());
         }
 
-        function getEnd() {
-            return moment().utc().subtract($scope.spans[$scope.selected], "hours").format();
+        function getStart() {
+            return encodeURIComponent(moment().utc().subtract($scope.spans[$scope.selected], "hours").format());
         }
 
         $scope.data = [];
@@ -107,7 +107,9 @@ angular.module('quimby.history', ['ngRoute'])
             }
         };
         
-        $scope.setSpan($scope.label);
+        $scope.start = getStart();
+        $scope.end = getEnd();
+        $scope.getData($scope.label);
     }]);
 
 angular.module('quimby.services')

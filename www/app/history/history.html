@@ -23,9 +23,9 @@
     <div layout="row">
       <div flex></div>
       <div>
-        <span ng-repeat="choice in choices" ng-click="addSource(choice)" class="timespan" ng-style="getSourceStyle(choice)">
-          <a class="chart-link" ng-click="addSource(choice)" class="timespan" ng-style="getSourceStyle(choice)">{{choice}}</a>
-          <a class="chart-link" href="/api/gadgets/{id}/sources/{{choice}}/csv?start={{start}}&end={{end}}">csv</a>
+        <span ng-repeat="choice in choices">
+          <a class="chart-link timespan" ng-click="addSource(choice)" ng-style="getSourceStyle(choice)">{{choice}}</a>
+          <a class="chart-link" href="/api/gadgets/{{id}}/sources/{{choice}}/csv?start={{start}}&end={{end}}">csv</a>
         </span>
       </div>
       <div flex></div>

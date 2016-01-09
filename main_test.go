@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"os"
 	"path"
 	"strings"
@@ -553,7 +554,7 @@ var _ = Describe("Quimby", func() {
 				Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
 			})
 
-			It("saves and gets stats", func() {
+			FIt("saves and gets stats", func() {
 				v := map[string]float64{"value": 33.3}
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
@@ -564,12 +565,19 @@ var _ = Describe("Quimby", func() {
 					sprinklers.Id,
 					"/sources/front%20yard%20temperature",
 				)
+				n := time.Now()
+
 				out := fmt.Sprintf(
 					addr,
 					"gadgets/",
 					sprinklers.Id,
-					"/sources/front%20yard%20temperature",
+					fmt.Sprintf(
+						"/sources/front%%20yard%%20temperature?start=%s&end=%s",
+						url.QueryEscape(n.Add(-60*time.Second).Format(time.RFC3339)),
+						url.QueryEscape(n.Format(time.RFC3339)),
+					),
 				)
+
 				req, err := http.NewRequest("POST", in, &buf)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
