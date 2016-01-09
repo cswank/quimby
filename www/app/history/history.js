@@ -7,7 +7,7 @@ angular.module('quimby.history', ['ngRoute'])
             controller: 'HistoryCtrl'
         });
     }])
-    .controller('HistoryCtrl', ['$scope', '$routeParams', '$stats', '$gadgets', '$window', function($scope, $routeParams, $stats, $gadgets, $window) {
+    .controller('HistoryCtrl', ['$scope', '$routeParams', '$stats', '$gadgets', '$window', '$mdSidenav', function($scope, $routeParams, $stats, $gadgets, $window, $mdSidenav) {
         $scope.spans = {
             hour: 1,
             day: 24,
@@ -16,7 +16,9 @@ angular.module('quimby.history', ['ngRoute'])
         };
         $scope.spanLabels = ["hour", "day", "week", "month"];
         
-        $scope.selected = "hour";
+        $scope.selectedSpan = "hour";
+        
+        
         $scope.label = $routeParams.location + " " + $routeParams.device;
         $scope.id = $routeParams.id;
 
@@ -29,7 +31,7 @@ angular.module('quimby.history', ['ngRoute'])
         }
 
         function getStart() {
-            return encodeURIComponent(moment().utc().subtract($scope.spans[$scope.selected], "hours").format());
+            return encodeURIComponent(moment().utc().subtract($scope.spans[$scope.selectedSpan], "hours").format());
         }
 
         $scope.data = [];
@@ -40,33 +42,26 @@ angular.module('quimby.history', ['ngRoute'])
             }
         };
 
-        function isSelected (key) {
+        $scope.isSelected = function(key, x) {
             return _.findIndex($scope.data, function(item) {
                 return item.key == key;
             }) > -1;
-
         };
 
         $scope.getHeight = function() {
             return 2 * $window.innerHeight / 3;
         }
 
-        $scope.getSourceStyle = function(key) {
-            if (isSelected(key)) {
-                return {color: '#3F51B5'};
-            }
-            return {};
-        }
-
         $scope.getSpanStyle = function(name) {
-            if (name == $scope.selected) {
+            if (name == $scope.selectedSpan) {
                 return {color: '#3F51B5'};
             }
             return {};
         };
+                
         
         $scope.getData = function(key) {
-            $stats.getStats($scope.id, key, $scope.spans[$scope.selected], function(data) {
+            $stats.getStats($scope.id, key, $scope.spans[$scope.selectedSpan], function(data) {
                 var i = _.findIndex($scope.data, function(item) {
                     return item.key == key;
                 })
@@ -79,16 +74,16 @@ angular.module('quimby.history', ['ngRoute'])
         };
         
         $gadgets.getDevices($scope.id, function(locations, directions) {
-            $scope.choices = [];
+            $scope.sources = {};
             angular.forEach(directions, function(value, key) {
                 if (value == "input") {
-                    $scope.choices.push(key);
+                    $scope.sources[key] = key == $scope.label;
                 }
             });
+            console.log($scope.sources);
         });
         
-        $scope.setSpan = function(name) {
-            $scope.selected = name;
+        $scope.setSpan = function() {
             $scope.start = getStart();
             $scope.end = getEnd();
             var keys = _.map($scope.data, function(item) {
@@ -98,13 +93,24 @@ angular.module('quimby.history', ['ngRoute'])
                 $scope.getData(key);
             });
         };
-        
+                
         $scope.addSource = function(key) {
-            if (isSelected(key)) {
+            if ($scope.sources[key]) {
+                $scope.sources[key] = false;
                 $scope.data = _.without($scope.data, _.findWhere($scope.data, {key: key}));
             } else {
+                $scope.sources[key] = true;
                 $scope.getData(key);
             }
+            console.log($scope.sources);
+        };
+        
+        $scope.toggle = function() {
+            $mdSidenav('left').toggle();
+        }
+
+        $scope.close = function () {
+            $mdSidenav('left').close();
         };
         
         $scope.start = getStart();

@@ -4,41 +4,58 @@
     <a href="#/gadgets/{{id}}">{{gadget.name}}</a>
     <a>history</a>
   </p>
-  <nvd3-line-chart
-     data="data"
-     id="stats"
-     showXAxis="true"
-     showYAxis="true"
-     tooltips="true"
-     interactive="true"
-     height="{{getHeight()}}"
-     xAxisStaggerLabels="true"
-     objectEquality="true"
-     margin="{left:50,top:50,bottom:50,right:50}"
-     xAxisTickFormat="getDate()">
-    <svg></svg>
-  </nvd3-line-chart>
-  <hr></hr>
-  <div layout="column">
-    <div layout="row">
-      <div flex></div>
-      <div>
-        <span ng-repeat="choice in choices">
-          <a class="chart-link timespan" ng-click="addSource(choice)" ng-style="getSourceStyle(choice)">{{choice}}</a>
-          <a class="chart-link" href="/api/gadgets/{{id}}/sources/{{choice}}/csv?start={{start}}&end={{end}}">csv</a>
-        </span>
-      </div>
-      <div flex></div>
+  <div>
+    <md-button
+       ng-click="toggle()"
+       class="md-primary">Select
+    </md-button>
+  </div>
+  <section layout="row" flex>
+    <div>
+      <md-sidenav class="md-sidenav-left md-whiteframe-z2" md-component-id="left">
+        <md-content>
+          <md-button ng-click="close()" class="md-primary">
+            Close
+          </md-button>
+          <hr></hr>
+          <md-radio-group ng-model="selectedSpan" ng-change="setSpan()" >
+            <md-radio-button ng-value="name" ng-repeat="name in spanLabels">{{name}}</md-radio-button>
+          </md-radio-group>
+          <hr></hr>
+          <span ng-repeat="(item, value) in sources">
+            <div layout="row">
+              <span>
+                <md-checkbox ng-checked="sources[item]" ng-click="addSource(item)">
+                  {{ item }}
+                </md-checkbox>
+              </span>
+              <span>
+                <a class="chart-link" href="/api/gadgets/{{id}}/sources/{{choice}}/csv?start={{start}}&end={{end}}">csv</a>
+              </span>
+            </div>
+          </span>
+        </md-content>
+      </md-sidenav>        
     </div>
     <div>
-      <hr></hr>
+      <md-content>
+        <nvd3-line-chart
+           data="data"
+           id="stats"
+           showXAxis="true"
+           showYAxis="true"
+           tooltips="true"
+           interactive="true"
+           height="{{getHeight()}}"
+           xAxisStaggerLabels="true"
+           objectEquality="true"
+           margin="{left:50,top:50,bottom:50,right:50}"
+           xAxisTickFormat="getDate()">
+          <svg></svg>
+        </nvd3-line-chart>
+      </md-content>
     </div>
-    <div layout="row">
-      <div flex></div>
-      <div>
-        <a ng-repeat="name in spanLabels" ng-click="setSpan(name)" class="timespan" ng-style="getSpanStyle(name)">{{name}}</a>
-      </div>
-      <div flex></div>
-    </div>
-  </div>
+  </section>
 </div>
+
+
