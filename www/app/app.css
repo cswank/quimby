@@ -64,20 +64,6 @@ md-dialog md-content {
     margin-left: 30px;
 }
 
-.timespan {
-    padding: 20px;
-}
-
-.step-complete {
-    text-decoration: line-through;
-    color:red;
-}
-
-a.graph-link:hover {
-    color:#3F51B5;
-}
-
-a.chart-link {
-    font-size:small;
-    margin-left: 1em;
+md-sidenav.nav {
+    min-width: 460px;
 }
