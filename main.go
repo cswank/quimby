@@ -16,7 +16,7 @@ import (
 )
 
 const (
-	version = "0.0.1"
+	v = "0.0.1"
 )
 
 var (
@@ -68,7 +68,7 @@ func main() {
 	case token.FullCommand():
 		utils.GetToken()
 	case version.FullCommand():
-		fmt.Println("quimby", version)
+		fmt.Println("quimby", v)
 	case bootstrap.FullCommand():
 		utils.Bootstrap()
 	case serve.FullCommand():
