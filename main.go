@@ -15,6 +15,10 @@ import (
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
+const (
+	version = "0.0.1"
+)
+
 var (
 	app          = kingpin.New("quimby", "An interface to gogadets")
 	users        = app.Command("users", "User management")
@@ -33,6 +37,7 @@ var (
 	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
 	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
 	token        = app.Command("token", "Generate a jwt token")
+	version      = app.Command("version", "Quimby version")
 	bootstrap    = app.Command("bootstrap", "Set up a bunch of stuff")
 
 	keyPath  = os.Getenv("QUIMBY_TLS_KEY")
@@ -62,6 +67,8 @@ func main() {
 		addDB(utils.SendCommand)
 	case token.FullCommand():
 		utils.GetToken()
+	case version.FullCommand():
+		fmt.Println("quimby", version)
 	case bootstrap.FullCommand():
 		utils.Bootstrap()
 	case serve.FullCommand():
