@@ -16,29 +16,27 @@ import (
 )
 
 const (
-	v = "0.0.1"
+	version = "0.0.1"
 )
 
 var (
-	app          = kingpin.New("quimby", "An interface to gogadets")
-	users        = app.Command("users", "User management")
+	users        = kingpin.Command("users", "User management")
 	userAdd      = users.Command("add", "Add a new user.")
 	userList     = users.Command("list", "List users.")
 	userEdit     = users.Command("edit", "Update a user.")
-	cert         = app.Command("cert", "Make an tls cert.")
+	cert         = kingpin.Command("cert", "Make an tls cert.")
 	domain       = cert.Flag("domain", "The domain for the tls cert.").Required().Short('d').String()
 	pth          = cert.Flag("path", "The directory where the cert files will be written").Required().Short('p').String()
-	serve        = app.Command("serve", "Start the server.")
-	command      = app.Command("command", "Send a command.")
-	method       = app.Command("method", "Send a method.")
-	gadgets      = app.Command("gadgets", "Commands for managing gadgets")
+	serve        = kingpin.Command("serve", "Start the server.")
+	command      = kingpin.Command("command", "Send a command.")
+	method       = kingpin.Command("method", "Send a method.")
+	gadgets      = kingpin.Command("gadgets", "Commands for managing gadgets")
 	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
 	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
 	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
-	token        = app.Command("token", "Generate a jwt token")
-	version      = app.Command("version", "Quimby version")
-	bootstrap    = app.Command("bootstrap", "Set up a bunch of stuff")
+	token        = kingpin.Command("token", "Generate a jwt token")
+	bootstrap    = kingpin.Command("bootstrap", "Set up a bunch of stuff")
 
 	keyPath  = os.Getenv("QUIMBY_TLS_KEY")
 	certPath = os.Getenv("QUIMBY_TLS_CERT")
@@ -46,35 +44,33 @@ var (
 )
 
 func main() {
-	switch kingpin.MustParse(app.Parse(os.Args[1:])) {
-	case cert.FullCommand():
+	kingpin.UsageTemplate(kingpin.CompactUsageTemplate).Version(version).Author("Craig Swank")
+	switch kingpin.Parse() {
+	case "cert":
 		utils.GenerateCert(*domain, *pth)
-	case userAdd.FullCommand():
+	case "users add":
 		addDB(utils.AddUser)
-	case userList.FullCommand():
+	case "users list":
 		addDB(utils.ListUsers)
-	case userEdit.FullCommand():
+	case "users edit":
 		addDB(utils.EditUser)
-	case gadgetAdd.FullCommand():
+	case "gadgets add":
 		addDB(utils.AddGadget)
-	case gadgetList.FullCommand():
+	case "gadgets list":
 		addDB(utils.ListGadgets)
-	case gadgetEdit.FullCommand():
+	case "gadgets edit":
 		addDB(utils.EditGadget)
-	case gadgetDelete.FullCommand():
+	case "gadgets delete":
 		addDB(utils.DeleteGadget)
-	case command.FullCommand():
+	case "command":
 		addDB(utils.SendCommand)
-	case token.FullCommand():
+	case "token":
 		utils.GetToken()
-	case version.FullCommand():
-		fmt.Println("quimby", v)
-	case bootstrap.FullCommand():
+	case "bootstrap":
 		utils.Bootstrap()
-	case serve.FullCommand():
+	case "serve":
 		addDB(startServer)
 	}
-
 }
 
 type dbNeeder func(*bolt.DB)
