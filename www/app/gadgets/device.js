@@ -11,7 +11,8 @@ angular.module('quimby.services')
                 name: '=',
                 value: '=',
                 location: '=',
-                direction: '='
+                direction: '=',
+                decimals: '='
             },
             controller: function($scope) {
                 $scope.toggle = function() {

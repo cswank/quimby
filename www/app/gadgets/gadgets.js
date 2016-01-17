@@ -8,9 +8,10 @@ angular.module('quimby.gadget', ['ngRoute'])
         });
     }])
 
-    .controller('GadgetsCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', function($scope, $gadgets, $sockets, $routeParams) {
+    .controller('GadgetsCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', '$mdSidenav', function($scope, $gadgets, $sockets, $routeParams, $mdSidenav) {
         $scope.method = {};
         $scope.id = $routeParams.id;
+        $scope.decimals = 1;
 
         $gadgets.getGadget($scope.id, function(data) {
             $scope.gadget = data;
@@ -36,5 +37,13 @@ angular.module('quimby.gadget', ['ngRoute'])
         $scope.$on('$locationChangeStart', function( event ) {
             $sockets.close();
         });
+
+        $scope.toggle = function() {
+            $mdSidenav('left').toggle();
+        }
+
+        $scope.close = function () {
+            $mdSidenav('left').close();
+        };
 
     }]);

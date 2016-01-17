@@ -1,5 +1,24 @@
 <div class="page">
-  <p><a href="#/gadgets">gadgets</a> {{gadget.name}}</p>
+  <p>
+    <a href="#/gadgets">gadgets</a> {{gadget.name}}
+    <a ng-click="toggle()">
+      <md-icon class="settings" md-svg-src="img/icons/ic_settings_black_18px.svg"
+               aria-label="Settings">
+      </md-icon>
+    </a>
+  </p>
+  <div>
+    <md-sidenav class="md-sidenav-left md-whiteframe-z2 nav" md-component-id="left">
+      <md-content>
+        <md-button ng-click="close()" class="md-primary">
+          Close
+        </md-button>
+        <hr></hr>
+        <a> Decimal Places: {{decimals}}</a>
+        <md-slider flex min="0" max="16" ng-model="decimals" id="decimals--slider"></md-slider>
+      </md-content>
+    </md-sidenav>
+  </div>
   <div layout="row">
     <div flex>
       <ul>
@@ -7,7 +26,7 @@
           <a>{{name}}</a>
           <ul>
             <li ng-repeat="(device, value) in location">
-              <device location="name" name="device" value="value" direction="directions[name + ' ' + device]"></device>
+              <device location="name" name="device" value="value" decimals="decimals" direction="directions[name + ' ' + device]"></device>
             </li>
           </ul>
         </li>
