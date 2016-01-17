@@ -38,7 +38,8 @@ type Router struct {
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	n, ok := r.methods[req.Method]
 	if !ok {
-		h, ok := r.handlers[req.URL.Path]
+		pth := strings.Trim(req.URL.Path, "/")
+		h, ok := r.handlers[pth]
 		if !ok {
 			notFound(w)
 		} else {
@@ -61,7 +62,7 @@ func Vars(r *http.Request, name string) map[string]string {
 }
 
 func (r *Router) PathPrefix(pth string, h http.Handler) {
-	r.handlers[pth] = h
+	r.handlers[strings.Trim(pth, "/")] = h
 }
 
 func (r *Router) Get(pth string, h handler) *node {
