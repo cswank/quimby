@@ -17,7 +17,6 @@ func init() {
 
 func New(name string) *Router {
 	r := &Router{
-		handlers: map[string]http.Handler{},
 		methods: map[string]*node{
 			"GET":    newNode(),
 			"POST":   newNode(),
@@ -31,22 +30,19 @@ func New(name string) *Router {
 }
 
 type Router struct {
-	handlers map[string]http.Handler
-	methods  map[string]*node
+	fileServer http.Handler
+	methods    map[string]*node
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	n, ok := r.methods[req.Method]
-	if !ok {
-		pth := strings.Trim(req.URL.Path, "/")
-		h, ok := r.handlers[pth]
-		if !ok {
+	if ok {
+		found := n.handle(strings.Split(strings.Trim(req.URL.Path, "/"), "/"), w, req)
+		if !found && r.fileServer != nil {
+			r.fileServer.ServeHTTP(w, req)
+		} else if !found {
 			notFound(w)
-		} else {
-			h.ServeHTTP(w, req)
 		}
-	} else {
-		n.handle(strings.Split(strings.Trim(req.URL.Path, "/"), "/"), w, req)
 	}
 }
 
@@ -61,8 +57,8 @@ func Vars(r *http.Request, name string) map[string]string {
 	return m
 }
 
-func (r *Router) PathPrefix(pth string, h http.Handler) {
-	r.handlers[strings.Trim(pth, "/")] = h
+func (r *Router) ServeFiles(h http.Handler) {
+	r.fileServer = h
 }
 
 func (r *Router) Get(pth string, h handler) *node {
@@ -152,10 +148,10 @@ func (n *node) isResource(s string) (bool, string, string) {
 	return r, id, strings.Trim(id, "{}")
 }
 
-func (n *node) handle(pth []string, w http.ResponseWriter, r *http.Request) {
+func (n *node) handle(pth []string, w http.ResponseWriter, r *http.Request) bool {
 	if len(pth) == 0 {
 		n.handler(w, r)
-		return
+		return true
 	}
 	var x string
 	if n.resource {
@@ -166,8 +162,9 @@ func (n *node) handle(pth []string, w http.ResponseWriter, r *http.Request) {
 	if c, ok := n.children[x]; ok {
 		c.handle(pth[1:], w, r)
 	} else {
-		notFound(w)
+		return false
 	}
+	return true
 }
 
 func notFound(w http.ResponseWriter) {

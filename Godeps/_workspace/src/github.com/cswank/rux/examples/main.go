@@ -4,14 +4,16 @@ import (
 	"log"
 	"net/http"
 
-	"bitbucket.org/cswank/rtree"
+	"github.com/cswank/rux"
 )
 
 func main() {
-	r := rtree.New()
+	r := rux.New("example")
 	r.Get("/api/login", Login)
+	r.ServeFiles(http.FileServer(http.Dir("./www")))
 
 	http.Handle("/", r)
+
 	log.Println(http.ListenAndServe(":8888", r))
 }
 

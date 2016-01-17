@@ -21,183 +21,215 @@ var _ = Describe("Gadgets", func() {
 		data   string
 	)
 
-	BeforeEach(func() {
-		method = ""
-		data = ""
-		root := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			ww.Write([]byte("root"))
-		}
+	Context("fileserver", func() {
+		BeforeEach(func() {
+			method = ""
+			data = ""
 
-		pals := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			ww.Write([]byte("pals"))
-		}
+			pals := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("pals"))
+			}
 
-		post := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			d, _ := ioutil.ReadAll(rr.Body)
-			data = string(d)
-		}
+			r = rux.New("my other router")
+			r.Get("/pals", pals)
 
-		delete := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-		}
+			r.ServeFiles(http.FileServer(http.Dir("./fixtures")))
+			http.Handle("/", r)
 
-		pal := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			ww.Write([]byte("pal"))
-		}
+			w = httptest.NewRecorder()
+		})
 
-		pets := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			ww.Write([]byte("pets"))
-		}
+		It("gets a file", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/hello.html", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("hello, world!"))
+		})
 
-		pet := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			ww.Write([]byte("pet"))
-		}
-
-		colors := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			ww.Write([]byte("colors"))
-		}
-
-		color := func(ww http.ResponseWriter, rr *http.Request) {
-			method = rr.Method
-			ww.Write([]byte("color"))
-		}
-
-		r = rux.New("my router")
-		r.Get("/", root)
-		r.Get("/pals", pals)
-		r.Post("/pals", post)
-		r.Get("/pals/{id}", pal)
-		r.Get("/pals/{id}/pets", pets)
-		r.Get("/pals/{id}/pets/{pet}", pet)
-		r.Get("/pals/{id}/colors", colors)
-		r.Post("/pals/{id}/colors", post)
-		r.Get("/pals/{id}/colors/{color}", color)
-		r.Delete("/pals/{id}/colors/{color}", delete)
-
-		w = httptest.NewRecorder()
 	})
 
-	AfterEach(func() {
-	})
+	Context("routes", func() {
+		BeforeEach(func() {
+			method = ""
+			data = ""
+			root := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("root"))
+			}
 
-	It("gets root", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("root"))
-	})
+			pals := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("pals"))
+			}
 
-	It("gets the first collection", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/pals", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("pals"))
-	})
+			post := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				d, _ := ioutil.ReadAll(rr.Body)
+				data = string(d)
+			}
 
-	It("gets the first resource", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/pals/1", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("pal"))
-	})
+			delete := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+			}
 
-	It("gets the pets collection", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/pals/1/pets", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("pets"))
-	})
+			pal := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("pal"))
+			}
 
-	It("gets a pet resource", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/pals/1/pets/5", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("pet"))
-	})
+			pets := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("pets"))
+			}
 
-	It("gets a pet resource with params", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/pals/1/pets/5?alive=true", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("pet"))
-	})
+			pet := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("pet"))
+			}
 
-	It("gets the colors collection", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/pals/1/colors", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("colors"))
-		vars := rux.Vars(req, "my router")
-		Expect(vars["id"]).To(Equal("1"))
-	})
+			colors := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("colors"))
+			}
 
-	It("gets a colors resource", func() {
-		var err error
-		req, err = http.NewRequest("GET", "/pals/3/colors/red", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal("color"))
-		vars := rux.Vars(req, "my router")
-		Expect(vars["id"]).To(Equal("3"))
-		Expect(vars["color"]).To(Equal("red"))
-	})
+			color := func(ww http.ResponseWriter, rr *http.Request) {
+				method = rr.Method
+				ww.Write([]byte("color"))
+			}
 
-	It("POSTS to pals", func() {
-		var err error
-		buf := bytes.NewBuffer([]byte("stu"))
-		req, err = http.NewRequest("POST", "/pals", buf)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(method).To(Equal("POST"))
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal(""))
-		Expect(data).To(Equal("stu"))
-	})
+			r = rux.New("my router")
+			r.Get("/", root)
+			r.Get("/pals", pals)
+			r.Post("/pals", post)
+			r.Get("/pals/{id}", pal)
+			r.Get("/pals/{id}/pets", pets)
+			r.Get("/pals/{id}/pets/{pet}", pet)
+			r.Get("/pals/{id}/colors", colors)
+			r.Post("/pals/{id}/colors", post)
+			r.Get("/pals/{id}/colors/{color}", color)
+			r.Delete("/pals/{id}/colors/{color}", delete)
 
-	It("POSTS to colors", func() {
-		var err error
-		buf := bytes.NewBuffer([]byte("green"))
-		req, err = http.NewRequest("POST", "/pals/55/colors", buf)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(method).To(Equal("POST"))
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal(""))
-		Expect(data).To(Equal("green"))
-	})
+			w = httptest.NewRecorder()
+		})
 
-	It("DELETES a color", func() {
-		var err error
-		req, err = http.NewRequest("DELETE", "/pals/55/colors/red", nil)
-		Expect(err).To(BeNil())
-		r.ServeHTTP(w, req)
-		Expect(method).To(Equal("DELETE"))
-		Expect(w.Code).To(Equal(http.StatusOK))
-		Expect(w.Body.String()).To(Equal(""))
-		vars := rux.Vars(req, "my router")
-		Expect(vars["id"]).To(Equal("55"))
-		Expect(vars["color"]).To(Equal("red"))
+		AfterEach(func() {
+		})
+
+		It("gets root", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("root"))
+		})
+
+		It("gets the first collection", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/pals", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("pals"))
+		})
+
+		It("gets the first resource", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/pals/1", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("pal"))
+		})
+
+		It("gets the pets collection", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/pals/1/pets", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("pets"))
+		})
+
+		It("gets a pet resource", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/pals/1/pets/5", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("pet"))
+		})
+
+		It("gets a pet resource with params", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/pals/1/pets/5?alive=true", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("pet"))
+		})
+
+		It("gets the colors collection", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/pals/1/colors", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("colors"))
+			vars := rux.Vars(req, "my router")
+			Expect(vars["id"]).To(Equal("1"))
+		})
+
+		It("gets a colors resource", func() {
+			var err error
+			req, err = http.NewRequest("GET", "/pals/3/colors/red", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal("color"))
+			vars := rux.Vars(req, "my router")
+			Expect(vars["id"]).To(Equal("3"))
+			Expect(vars["color"]).To(Equal("red"))
+		})
+
+		It("POSTS to pals", func() {
+			var err error
+			buf := bytes.NewBuffer([]byte("stu"))
+			req, err = http.NewRequest("POST", "/pals", buf)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(method).To(Equal("POST"))
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal(""))
+			Expect(data).To(Equal("stu"))
+		})
+
+		It("POSTS to colors", func() {
+			var err error
+			buf := bytes.NewBuffer([]byte("green"))
+			req, err = http.NewRequest("POST", "/pals/55/colors", buf)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(method).To(Equal("POST"))
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal(""))
+			Expect(data).To(Equal("green"))
+		})
+
+		It("DELETES a color", func() {
+			var err error
+			req, err = http.NewRequest("DELETE", "/pals/55/colors/red", nil)
+			Expect(err).To(BeNil())
+			r.ServeHTTP(w, req)
+			Expect(method).To(Equal("DELETE"))
+			Expect(w.Code).To(Equal(http.StatusOK))
+			Expect(w.Body.String()).To(Equal(""))
+			vars := rux.Vars(req, "my router")
+			Expect(vars["id"]).To(Equal("55"))
+			Expect(vars["color"]).To(Equal("red"))
+		})
 	})
 })
