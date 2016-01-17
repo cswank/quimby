@@ -7,7 +7,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/models"
-	"github.com/gorilla/mux"
+	"github.com/cswank/rux"
 )
 
 type Controller func(args *Args) error
@@ -29,12 +29,12 @@ type Args struct {
 	msg    string
 }
 
-func Handle(w http.ResponseWriter, r *http.Request, ctrl Controller, acl ACL) {
+func Handle(w http.ResponseWriter, r *http.Request, ctrl Controller, acl ACL, name string) {
 	LG.Println(r.URL.Path)
 	a := &Args{
 		W:    w,
 		R:    r,
-		Vars: mux.Vars(r),
+		Vars: rux.Vars(r, name),
 		Args: r.URL.Query(),
 		DB:   DB,
 		acl:  acl,

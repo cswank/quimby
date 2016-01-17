@@ -554,7 +554,7 @@ var _ = Describe("Quimby", func() {
 				Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
 			})
 
-			FIt("saves and gets stats", func() {
+			It("saves and gets stats", func() {
 				v := map[string]float64{"value": 33.3}
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)

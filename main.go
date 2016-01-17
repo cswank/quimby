@@ -11,7 +11,7 @@ import (
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/cswank/quimby/utils"
-	"github.com/gorilla/mux"
+	"github.com/cswank/rux"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -112,29 +112,29 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 
 	go startInternal(iRoot, lg, internalPort)
 
-	r := mux.NewRouter()
-	r.HandleFunc("/api/login", controllers.Login).Methods("POST")
-	r.HandleFunc("/api/logout", controllers.Logout).Methods("POST")
-	r.HandleFunc("/api/ping", Ping).Methods("GET")
-	r.HandleFunc("/api/users/current", GetUser).Methods("GET")
-	r.HandleFunc("/api/gadgets", GetGadgets).Methods("GET")
-	r.HandleFunc("/api/gadgets", AddGadget).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}", GetGadget).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}", SendCommand).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}", DeleteGadget).Methods("DELETE")
-	r.HandleFunc("/api/gadgets/{id}/method", SendMethod).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}/websocket", Connect).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}/values", GetValues).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}/status", GetStatus).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}/notes", AddNote).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}/notes", GetNotes).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice).Methods("POST")
-	r.HandleFunc("/api/gadgets/{id}/sources/{name}", GetDataPoints).Methods("GET")
-	r.HandleFunc("/api/gadgets/{id}/sources/{name}/csv", GetDataPointsCSV).Methods("GET")
-	r.HandleFunc("/admin/clients", GetClients).Methods("GET")
+	r := rux.New("main")
+	r.Post("/api/login", controllers.Login)
+	r.Post("/api/logout", controllers.Logout)
+	r.Get("/api/ping", Ping)
+	r.Get("/api/users/current", GetUser)
+	r.Get("/api/gadgets", GetGadgets)
+	r.Post("/api/gadgets", AddGadget)
+	r.Get("/api/gadgets/{id}", GetGadget)
+	r.Post("/api/gadgets/{id}", SendCommand)
+	r.Delete("/api/gadgets/{id}", DeleteGadget)
+	r.Post("/api/gadgets/{id}/method", SendMethod)
+	r.Get("/api/gadgets/{id}/websocket", Connect)
+	r.Get("/api/gadgets/{id}/values", GetValues)
+	r.Get("/api/gadgets/{id}/status", GetStatus)
+	r.Post("/api/gadgets/{id}/notes", AddNote)
+	r.Get("/api/gadgets/{id}/notes", GetNotes)
+	r.Get("/api/gadgets/{id}/locations/{location}/devices/{device}/status", GetDevice)
+	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", UpdateDevice)
+	r.Get("/api/gadgets/{id}/sources/{name}", GetDataPoints)
+	r.Get("/api/gadgets/{id}/sources/{name}/csv", GetDataPointsCSV)
+	r.Get("/admin/clients", GetClients)
 
-	r.PathPrefix("/").Handler(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
+	r.PathPrefix("/", http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
 	http.Handle(root, r)
 
@@ -151,9 +151,9 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 //served on a separate port so it doesn't have to be exposed
 //publicly if the main port is exposed.
 func startInternal(iRoot string, lg models.Logger, port string) {
-	r := mux.NewRouter()
-	r.HandleFunc("/internal/updates", Relay).Methods("POST")
-	r.HandleFunc("/internal/gadgets/{id}/sources/{name}", AddDataPoint).Methods("POST")
+	r := rux.New("internal")
+	r.Post("/internal/updates", Relay)
+	r.Post("/internal/gadgets/{id}/sources/{name}", AddDataPoint)
 	http.Handle(iRoot, r)
 	a := fmt.Sprintf(":%s", port)
 	lg.Printf("listening on %s", a)
@@ -164,84 +164,84 @@ func startInternal(iRoot string, lg models.Logger, port string) {
 }
 
 func Ping(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.Ping, controllers.Read)
+	controllers.Handle(w, r, controllers.Ping, controllers.Read, "main")
 }
 
 func GetUser(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetUser, controllers.Read)
+	controllers.Handle(w, r, controllers.GetUser, controllers.Read, "main")
 }
 
 func GetGadgets(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetGadgets, controllers.Read)
+	controllers.Handle(w, r, controllers.GetGadgets, controllers.Read, "main")
 }
 
 func GadgetOptions(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GadgetOptions, controllers.Read)
+	controllers.Handle(w, r, controllers.GadgetOptions, controllers.Read, "main")
 }
 
 func GetGadget(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetGadget, controllers.Read)
+	controllers.Handle(w, r, controllers.GetGadget, controllers.Read, "main")
 }
 
 func AddGadget(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.AddGadget, controllers.Write)
+	controllers.Handle(w, r, controllers.AddGadget, controllers.Write, "main")
 }
 
 func SendCommand(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.SendCommand, controllers.Write)
+	controllers.Handle(w, r, controllers.SendCommand, controllers.Write, "main")
 }
 
 func SendMethod(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.SendMethod, controllers.Write)
+	controllers.Handle(w, r, controllers.SendMethod, controllers.Write, "main")
 }
 
 func DeleteGadget(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.DeleteGadget, controllers.Write)
+	controllers.Handle(w, r, controllers.DeleteGadget, controllers.Write, "main")
 }
 
 func GetStatus(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetStatus, controllers.Read)
+	controllers.Handle(w, r, controllers.GetStatus, controllers.Read, "main")
 }
 
 func AddNote(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.AddNote, controllers.Write)
+	controllers.Handle(w, r, controllers.AddNote, controllers.Write, "main")
 }
 
 func GetNotes(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetNotes, controllers.Read)
+	controllers.Handle(w, r, controllers.GetNotes, controllers.Read, "main")
 }
 
 func AddDataPoint(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.AddDataPoint, controllers.Write)
+	controllers.Handle(w, r, controllers.AddDataPoint, controllers.Write, "internal")
 }
 
 func GetDataPoints(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetDataPoints, controllers.Read)
+	controllers.Handle(w, r, controllers.GetDataPoints, controllers.Read, "main")
 }
 
 func GetDataPointsCSV(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetDataPointsCSV, controllers.Read)
+	controllers.Handle(w, r, controllers.GetDataPointsCSV, controllers.Read, "main")
 }
 
 func GetValues(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetValues, controllers.Read)
+	controllers.Handle(w, r, controllers.GetValues, controllers.Read, "main")
 }
 
 func Connect(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.Connect, controllers.Read)
+	controllers.Handle(w, r, controllers.Connect, controllers.Read, "main")
 }
 
 func Relay(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.RelayMessage, controllers.Write)
+	controllers.Handle(w, r, controllers.RelayMessage, controllers.Write, "internal")
 }
 func UpdateDevice(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.UpdateDevice, controllers.Write)
+	controllers.Handle(w, r, controllers.UpdateDevice, controllers.Write, "main")
 }
 
 func GetDevice(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetDevice, controllers.Write)
+	controllers.Handle(w, r, controllers.GetDevice, controllers.Write, "main")
 }
 
 func GetClients(w http.ResponseWriter, r *http.Request) {
-	controllers.Handle(w, r, controllers.GetClients, controllers.Admin)
+	controllers.Handle(w, r, controllers.GetClients, controllers.Admin, "main")
 }

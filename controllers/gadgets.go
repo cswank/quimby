@@ -122,7 +122,6 @@ func getDataPoints(args *Args) ([]models.DataPoint, error) {
 			return nil, err
 		}
 	}
-
 	return args.Gadget.GetDataPoints(args.Vars["name"], start, end)
 }
 
