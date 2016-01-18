@@ -1,14 +1,14 @@
-package rux_test
+package rex_test
 
 import (
 	"net/http"
 	"testing"
 
-	"github.com/cswank/rux"
+	"github.com/cswank/rex"
 )
 
 func BenchmarkMux(b *testing.B) {
-	r := rux.New("bench")
+	r := rex.New("bench")
 	handler := func(w http.ResponseWriter, r *http.Request) {}
 	r.Get("/v1/{v1}", handler)
 

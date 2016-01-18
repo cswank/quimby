@@ -11,7 +11,7 @@ import (
 	"github.com/cswank/quimby/controllers"
 	"github.com/cswank/quimby/models"
 	"github.com/cswank/quimby/utils"
-	"github.com/cswank/rux"
+	"github.com/cswank/rex"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -112,7 +112,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 
 	go startInternal(iRoot, lg, internalPort)
 
-	r := rux.New("main")
+	r := rex.New("main")
 	r.Post("/api/login", controllers.Login)
 	r.Post("/api/logout", controllers.Logout)
 	r.Get("/api/ping", Ping)
@@ -134,7 +134,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 	r.Get("/api/gadgets/{id}/sources/{name}/csv", GetDataPointsCSV)
 	r.Get("/admin/clients", GetClients)
 
-	r.PathPrefix("/", http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
+	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
 	http.Handle(root, r)
 
@@ -151,7 +151,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg models
 //served on a separate port so it doesn't have to be exposed
 //publicly if the main port is exposed.
 func startInternal(iRoot string, lg models.Logger, port string) {
-	r := rux.New("internal")
+	r := rex.New("internal")
 	r.Post("/internal/updates", Relay)
 	r.Post("/internal/gadgets/{id}/sources/{name}", AddDataPoint)
 	http.Handle(iRoot, r)

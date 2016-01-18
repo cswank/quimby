@@ -4,11 +4,11 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/cswank/rux"
+	"github.com/cswank/rex"
 )
 
 func main() {
-	r := rux.New("example")
+	r := rex.New("example")
 	r.Get("/api/login", Login)
 	r.ServeFiles(http.FileServer(http.Dir("./www")))
 

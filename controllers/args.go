@@ -7,7 +7,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby/models"
-	"github.com/cswank/rux"
+	"github.com/cswank/rex"
 )
 
 type Controller func(args *Args) error
@@ -34,7 +34,7 @@ func Handle(w http.ResponseWriter, r *http.Request, ctrl Controller, acl ACL, na
 	a := &Args{
 		W:    w,
 		R:    r,
-		Vars: rux.Vars(r, name),
+		Vars: rex.Vars(r, name),
 		Args: r.URL.Query(),
 		DB:   DB,
 		acl:  acl,

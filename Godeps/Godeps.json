@@ -23,8 +23,8 @@
 			"Rev": "51f99c862475898df9773747d3accd05a7ca33c1"
 		},
 		{
-			"ImportPath": "github.com/cswank/rux",
-			"Rev": "50530333ee72c3d1a9b440b61d3d5b1840dc91f8"
+			"ImportPath": "github.com/cswank/rex",
+			"Rev": "9bd585b34a42e5d62be91809e1f358ea64051cd5"
 		},
 		{
 			"ImportPath": "github.com/daaku/go.zipexe",

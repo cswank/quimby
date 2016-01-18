@@ -1,4 +1,4 @@
-package rux
+package rex
 
 import (
 	"net/http"
