@@ -7,7 +7,7 @@ import (
 	"github.com/cswank/rex"
 )
 
-func BenchmarkMux(b *testing.B) {
+func BenchmarkRex(b *testing.B) {
 	r := rex.New("bench")
 	handler := func(w http.ResponseWriter, r *http.Request) {}
 	r.Get("/v1/{v1}", handler)

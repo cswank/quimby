@@ -23,6 +23,7 @@ func New(name string) *Router {
 			"PUT":    newNode(),
 			"DELETE": newNode(),
 			"PATCH":  newNode(),
+			"HEAD":   newNode(),
 		},
 	}
 	routers[name] = r
@@ -41,8 +42,10 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 		if !found && r.fileServer != nil {
 			r.fileServer.ServeHTTP(w, req)
 		} else if !found {
-			notFound(w)
+			w.WriteHeader(http.StatusNotFound)
 		}
+	} else {
+		w.WriteHeader(http.StatusMethodNotAllowed)
 	}
 }
 
@@ -165,8 +168,4 @@ func (n *node) handle(pth []string, w http.ResponseWriter, r *http.Request) bool
 		return false
 	}
 	return true
-}
-
-func notFound(w http.ResponseWriter) {
-	w.WriteHeader(http.StatusNotFound)
 }

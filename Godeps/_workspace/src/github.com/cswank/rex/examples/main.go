@@ -9,7 +9,8 @@ import (
 
 func main() {
 	r := rex.New("example")
-	r.Get("/api/login", Login)
+	r.Get("/things", getThings)
+	r.Get("/things/{thing}", getThing)
 	r.ServeFiles(http.FileServer(http.Dir("./www")))
 
 	http.Handle("/", r)
@@ -17,6 +18,10 @@ func main() {
 	log.Println(http.ListenAndServe(":8888", r))
 }
 
-func Login(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("Hello, world!"))
+func getThings(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("things"))
+}
+
+func getThing(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("thing"))
 }
