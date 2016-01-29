@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/cswank/quimby/gogadgets"
+	"github.com/cswank/gogadgets"
 )
 
 type Gadget struct {

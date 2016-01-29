@@ -17,7 +17,7 @@ import (
 	"time"
 
 	"github.com/boltdb/bolt"
-	"github.com/cswank/quimby/gogadgets"
+	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/websocket"
 	. "github.com/onsi/ginkgo"

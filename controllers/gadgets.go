@@ -9,7 +9,7 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/cswank/quimby/gogadgets"
+	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/models"
 	"github.com/gorilla/websocket"
 )

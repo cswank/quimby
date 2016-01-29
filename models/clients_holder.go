@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 
-	"github.com/cswank/quimby/gogadgets"
+	"github.com/cswank/gogadgets"
 )
 
 //ClientHolder keeps track of the connected websocket clients.  It holds the chans
