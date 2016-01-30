@@ -71,3 +71,8 @@ md-sidenav.nav {
 md-icon.settings {
     font-size: 12px;
 }
+
+.step-complete {
+    text-decoration: line-through;
+    color:red;
+}
