@@ -4,6 +4,7 @@ angular.module('quimby.services', [])
     .service('$gadgets', ['$http', function ($http) {
         var commands = {};
         var locations = {};
+        var method = {};
         this.getGadgets = function(callback) {
             $http.get("/api/gadgets").success(function(data) {
                 callback(data);
@@ -24,12 +25,16 @@ angular.module('quimby.services', [])
                 $http.get("/api/gadgets/" +  id + "/status").success(function(statuses) {
                     var directions = {};
                     angular.forEach(statuses, function(value, key) {
-                        directions[key] = value.info.direction;
-                        if (value.info.direction == "output") {
+                        if (value.info.direction != undefined) {
+                            directions[key] = value.info.direction;
+                        }
+                        if (key == "method runner") {
+                            method = value.method;
+                        } else if (value.info.direction == "output") {
                             commands[key] = {on: value.info.on, off: value.info.off};
                         }
                     });
-                    callback(locations, directions);
+                    callback(locations, directions, method);
                 });
             }).error(function() {
               
