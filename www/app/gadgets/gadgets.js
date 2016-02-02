@@ -17,9 +17,10 @@ angular.module('quimby.gadget', ['ngRoute'])
             $scope.gadget = data;
         });
         
-        $gadgets.getDevices($scope.id, function(locations, directions) {
+        $gadgets.getDevices($scope.id, function(locations, directions, method) {
             $scope.directions = directions;
             $scope.locations = locations;
+            $scope.method = method;
         });
         
         $sockets.connect(function(msg) {

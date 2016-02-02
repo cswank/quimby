@@ -76,7 +76,7 @@ angular.module('quimby.history', ['ngRoute'])
             });
         };
         
-        $gadgets.getDevices($scope.id, function(locations, directions) {
+        $gadgets.getDevices($scope.id, function(locations, directions, method) {
             $scope.sources = {};
             angular.forEach(directions, function(value, key) {
                 if (value == "input") {
