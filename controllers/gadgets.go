@@ -112,7 +112,7 @@ func getDataPoints(args *Args) ([]models.DataPoint, error) {
 	s := args.Args.Get("summarize")
 	if s != "" {
 		i, err := strconv.ParseInt(s, 10, 64)
-		if err != nil {
+		if err == nil {
 			d = time.Duration(i)
 		}
 	}
