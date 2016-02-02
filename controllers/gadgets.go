@@ -113,7 +113,7 @@ func getDataPoints(args *Args) ([]models.DataPoint, error) {
 	if s != "" {
 		i, err := strconv.ParseInt(s, 10, 64)
 		if err == nil {
-			d = time.Duration(i)
+			d = time.Duration(i) * time.Minute
 		}
 	}
 	if args.Args.Get("start") != "" {
