@@ -2,7 +2,6 @@ package models_test
 
 import (
 	"bytes"
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -14,7 +13,7 @@ import (
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/gogadgets"
-	. "github.com/cswank/quimby/models"
+	"github.com/cswank/quimby/models"
 
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
@@ -22,7 +21,7 @@ import (
 
 var _ = Describe("Gadgets", func() {
 	var (
-		g       *Gadget
+		g       *models.Gadget
 		dir     string
 		pth     string
 		db      *bolt.DB
@@ -94,10 +93,10 @@ var _ = Describe("Gadgets", func() {
 		pth = path.Join(dir, "db")
 		Expect(err).To(BeNil())
 
-		db, err = GetDB(pth)
+		db, err = models.GetDB(pth)
 		Expect(err).To(BeNil())
 
-		g = &Gadget{
+		g = &models.Gadget{
 			Name: "lights",
 			Host: ts.URL,
 			DB:   db,
@@ -113,7 +112,7 @@ var _ = Describe("Gadgets", func() {
 	})
 
 	It("can save", func() {
-		g2 := &Gadget{
+		g2 := &models.Gadget{
 			Id:   g.Id,
 			Name: "lights",
 			DB:   db,
@@ -127,7 +126,7 @@ var _ = Describe("Gadgets", func() {
 		err := g.Delete()
 		Expect(err).To(BeNil())
 
-		g2 := &Gadget{
+		g2 := &models.Gadget{
 			Name: "lights",
 			DB:   db,
 		}
@@ -137,7 +136,7 @@ var _ = Describe("Gadgets", func() {
 	})
 
 	It("gets all gadgets", func() {
-		gadgets, err := GetGadgets(db)
+		gadgets, err := models.GetGadgets(db)
 		Expect(err).To(BeNil())
 		Expect(len(gadgets)).To(Equal(1))
 		g2 := gadgets[0]
@@ -185,31 +184,13 @@ var _ = Describe("Gadgets", func() {
 		Expect(c["address"]).To(Equal(ts.URL))
 	})
 
-	It("saves a datapoint", func() {
-		ts := time.Now()
-		err := g.SaveDataPoint("kitchen temperature", DataPoint{Time: ts, Value: 23.2})
-		Expect(err).To(BeNil())
-		err = g.DB.View(func(tx *bolt.Tx) error {
-			v := tx.Bucket([]byte(g.Id)).Bucket([]byte("stats")).Bucket([]byte("kitchen temperature")).Get([]byte(ts.Format(time.RFC3339)))
-			Expect(len(v)).ToNot(Equal(0))
-			var val float64
-			buf := bytes.NewReader(v)
-			if err := binary.Read(buf, binary.LittleEndian, &val); err != nil {
-				return err
-			}
-			Expect(val).To(Equal(23.2))
-			return nil
-		})
-		Expect(err).To(BeNil())
-	})
-
 	It("gets datapoints", func() {
 		ts := time.Now()
-		g.SaveDataPoint("kitchen temperature", DataPoint{ts, 23.2})
+		g.SaveDataPoint("kitchen temperature", models.DataPoint{ts, 23.2})
 		time.Sleep(10 * time.Millisecond)
 		ts2 := time.Now()
-		g.SaveDataPoint("kitchen temperature", DataPoint{ts2, 23.4})
-		points, err := g.GetDataPoints("kitchen temperature", ts, ts2)
+		g.SaveDataPoint("kitchen temperature", models.DataPoint{ts2, 23.4})
+		points, err := g.GetDataPoints("kitchen temperature", ts, ts2, 0)
 		Expect(err).To(BeNil())
 		Expect(len(points)).To(Equal(2))
 
@@ -220,5 +201,31 @@ var _ = Describe("Gadgets", func() {
 		p2 := points[1]
 		Expect(p2.Time.Format(time.RFC3339)).To(Equal(ts2.Format(time.RFC3339)))
 		Expect(p2.Value).To(Equal(23.4))
+	})
+
+	It("gets summarized datapoints", func() {
+		l := 100
+
+		points := make([]models.DataPoint, l)
+		ts := time.Date(2016, 2, 2, 8, 12, 0, 0, time.UTC)
+		var ts2 time.Time
+		for i := 0; i < l; i++ {
+			ts2 = ts.Add(time.Duration(i) * time.Minute)
+			g.SaveDataPoint("kitchen temperature", models.DataPoint{ts2, float64(i)})
+		}
+
+		span := time.Duration(10 * time.Minute)
+		points, err := g.GetDataPoints("kitchen temperature", ts, ts2, span)
+		Expect(err).To(BeNil())
+		Expect(len(points)).To(Equal(10))
+
+		p1 := points[0]
+		Expect(p1.Time.Format(time.RFC3339)).To(Equal("2016-02-02T08:22:00Z"))
+		Expect(p1.Value).To(Equal(5.0))
+
+		p2 := points[8]
+		Expect(p2.Time.Format(time.RFC3339)).To(Equal("2016-02-02T09:50:00Z"))
+		expected := (98.0 + 97.0 + 96.0 + 95.0 + 94.0 + 93.0 + 92.0 + 91.0 + 90.0 + 89.0 + 88.0) / 11.0
+		Expect(p2.Value).To(Equal(expected))
 	})
 })

@@ -79,8 +79,51 @@ func (g *Gadget) SaveDataPoint(name string, dp DataPoint) error {
 	})
 }
 
-func (g *Gadget) GetDataPoints(name string, start, end time.Time) ([]DataPoint, error) {
-	points := []DataPoint{}
+type summary struct {
+	span   time.Duration
+	t1     time.Time
+	tmp    []DataPoint
+	points []DataPoint
+}
+
+func (s *summary) append(p DataPoint) {
+	if s.span == 0 {
+		s.points = append(s.points, p)
+	} else {
+		s.tmp = append(s.tmp, p)
+		l := len(s.tmp)
+		if l == 1 {
+			s.t1 = s.tmp[0].Time
+		} else if s.next(l) {
+			s.points = append(s.points, s.mean())
+		}
+	}
+}
+
+func (s *summary) next(l int) bool {
+	return s.tmp[l-1].Time.Sub(s.t1) >= s.span
+}
+
+func (s *summary) mean() DataPoint {
+	var sum float64
+	var p DataPoint
+	var i int
+	for i, p = range s.tmp {
+		sum += p.Value
+	}
+	s.tmp = []DataPoint{}
+	return DataPoint{Value: sum / float64(i+1), Time: p.Time}
+}
+
+func (s *summary) summary() []DataPoint {
+	if len(s.tmp) > 0 {
+		s.points = append(s.points, s.mean())
+	}
+	return s.points
+}
+
+func (g *Gadget) GetDataPoints(name string, start, end time.Time, span time.Duration) ([]DataPoint, error) {
+	points := summary{span: span}
 	err := g.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(g.Id)).Bucket(_stats).Bucket([]byte(name))
 		if b == nil {
@@ -89,6 +132,7 @@ func (g *Gadget) GetDataPoints(name string, start, end time.Time) ([]DataPoint, 
 		c := b.Cursor()
 		min := []byte(start.Format(time.RFC3339Nano))
 		max := []byte(end.Format(time.RFC3339Nano))
+
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			var val float64
 			buf := bytes.NewReader(v)
@@ -96,11 +140,11 @@ func (g *Gadget) GetDataPoints(name string, start, end time.Time) ([]DataPoint, 
 				return err
 			}
 			ts, _ := time.Parse(time.RFC3339Nano, string(k))
-			points = append(points, DataPoint{Time: ts, Value: val})
+			points.append(DataPoint{Time: ts, Value: val})
 		}
 		return nil
 	})
-	return points, err
+	return points.summary(), err
 }
 
 func (g *Gadget) Save() error {

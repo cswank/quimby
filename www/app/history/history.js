@@ -14,6 +14,9 @@ angular.module('quimby.history', ['ngRoute'])
             week: 7 * 24,
             month: 7 * 24 * 30
         };
+
+        $scope.summarize = 0;
+        
         $scope.spanLabels = ["hour", "day", "week", "month"];
         
         $scope.selectedSpan = "hour";
@@ -61,7 +64,7 @@ angular.module('quimby.history', ['ngRoute'])
                 
         
         $scope.getData = function(key) {
-            $stats.getStats($scope.id, key, $scope.spans[$scope.selectedSpan], function(data) {
+            $stats.getStats($scope.id, key, $scope.spans[$scope.selectedSpan], $scope.summarize, function(data) {
                 var i = _.findIndex($scope.data, function(item) {
                     return item.key == key;
                 })
@@ -120,7 +123,7 @@ angular.module('quimby.history', ['ngRoute'])
 
 angular.module('quimby.services')
     .service('$stats', ['$http', function ($http) {
-        this.getStats = function(id, name, span, callback) {
+        this.getStats = function(id, name, span, summarize, callback) {
             var end = moment().utc().format();
             var start = moment().utc().subtract(span, "hours").format();
             var vals = [];
@@ -131,7 +134,8 @@ angular.module('quimby.services')
                     params:
                     {
                         start: start,
-                        end:end
+                        end:end,
+                        summarize: summarize
                     }
                 }
             ).success(function(data) {

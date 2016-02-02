@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/cswank/gogadgets"
@@ -107,6 +108,14 @@ func GetDataPoints(args *Args) error {
 func getDataPoints(args *Args) ([]models.DataPoint, error) {
 	start := beginning
 	end := time.Now()
+	var d time.Duration
+	s := args.Args.Get("summarize")
+	if s != "" {
+		i, err := strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			d = time.Duration(i)
+		}
+	}
 	if args.Args.Get("start") != "" {
 		var err error
 		start, err = time.Parse(time.RFC3339Nano, args.Args.Get("start"))
@@ -122,7 +131,7 @@ func getDataPoints(args *Args) ([]models.DataPoint, error) {
 			return nil, err
 		}
 	}
-	return args.Gadget.GetDataPoints(args.Vars["name"], start, end)
+	return args.Gadget.GetDataPoints(args.Vars["name"], start, end, d)
 }
 
 func getCSV(args *Args, points []models.DataPoint, name string) error {

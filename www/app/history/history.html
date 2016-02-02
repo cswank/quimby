@@ -21,6 +21,9 @@
           Close
         </md-button>
         <hr></hr>
+        <a> Summarize: {{summarize}}</a>
+        <md-slider flex min="0" max="60" ng-model="summarize" id="summarized--slider"></md-slider>
+        <hr></hr>
         <md-radio-group ng-model="selectedSpan" ng-change="setSpan()" >
           <md-radio-button ng-value="name" ng-repeat="name in spanLabels">{{name}}</md-radio-button>
         </md-radio-group>
