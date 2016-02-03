@@ -28,13 +28,13 @@
           </span>
           <span flex></span>
         </span>
-        <span layout="row">
-          <span flex="10"></span>
-          <span>
-            <md-slider flex min="0" max="60" ng-model="summarize" id="summarized--slider"></md-slider>
-          </span>
-          <span flex="10"></span>
-        </span>
+        <div layout="row">
+          <div flex="10"></div>
+          <div flex>
+            <md-slider min="0" max="60" ng-model="summarize" id="summarized--slider"></md-slider>
+          </div>
+          <div flex="10"></div>
+        </div>
         <hr></hr>
         <md-radio-group ng-model="selectedSpan" ng-change="setSpan()" >
           <md-radio-button ng-value="name" ng-repeat="name in spanLabels">{{name}}</md-radio-button>
