@@ -96,6 +96,14 @@ angular.module('quimby.history', ['ngRoute'])
                 $scope.getData(key);
             });
         };
+
+        $scope.getAll = function() {
+            _.each($scope.sources, function(val, key) {
+                if (val) {
+                    $scope.getData(key);
+                }
+            });
+        }
                 
         $scope.addSource = function(key) {
             if ($scope.sources[key]) {
@@ -105,7 +113,6 @@ angular.module('quimby.history', ['ngRoute'])
                 $scope.sources[key] = true;
                 $scope.getData(key);
             }
-            console.log($scope.sources);
         };
         
         $scope.toggle = function() {
