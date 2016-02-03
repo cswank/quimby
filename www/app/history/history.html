@@ -28,8 +28,12 @@
           </span>
           <span flex></span>
         </span>
-        <span class="slider">
-          <md-slider flex min="0" max="60" ng-model="summarize" id="summarized--slider"></md-slider>
+        <span layout="row">
+          <span flex="10"></span>
+          <span>
+            <md-slider flex min="0" max="60" ng-model="summarize" id="summarized--slider"></md-slider>
+          </span>
+          <span flex="10"></span>
         </span>
         <hr></hr>
         <md-radio-group ng-model="selectedSpan" ng-change="setSpan()" >
