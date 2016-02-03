@@ -76,3 +76,8 @@ md-icon.settings {
     text-decoration: line-through;
     color:red;
 }
+
+.slider {
+    margin-left: 10px;
+    margin-right: 10px;
+}
