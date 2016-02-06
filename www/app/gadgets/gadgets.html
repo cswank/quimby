@@ -12,10 +12,22 @@
       <md-content>
         <md-button ng-click="close()" class="md-primary">
           Close
-        </md-button>
+        </md-buttpppon>
         <hr></hr>
-        <a> Decimal Places: {{decimals}}</a>
-        <md-slider aria-label="decimals" flex min="0" max="16" ng-model="decimals" id="decimals--slider"></md-slider>
+        <span layout="row">
+          <span flex></span>
+          <span>
+            <a> Decimal Places: {{decimals}}</a>
+          </span>
+          <span flex></span>
+        </span>
+        <div layout="row">
+          <div flex="10"></div>
+          <div flex>
+            <md-slider aria-label="decimals" flex min="0" max="16" ng-model="decimals" id="decimals--slider"></md-slider>
+          </div>
+          <div flex="10"></div>
+        </div>
       </md-content>
     </md-sidenav>
   </div>
@@ -33,7 +45,7 @@
       </ul>
     </div>
     <div flex>
-      <method method="method"></method>
+      <method uuid="id" method="method"></method>
     </div>
   </div>
 </div>

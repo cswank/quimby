@@ -1,4 +1,31 @@
 <div>
+  <md-sidenav class="md-sidenav-right md-whiteframe-z2 nav" md-component-id="new-method">
+    <md-content>
+      <div layout="row">
+        <div>
+          <md-button ng-click="run()" class="md-primary">
+            Run
+          </md-button>
+        </div>
+        <div flex></div>
+        <div>
+          <md-button ng-click="close()" class="md-primary">
+            Cancel
+          </md-button>
+        </div>
+      </div>
+      <hr></hr>
+      <md-input-container>
+        <label>New Method</label>
+        <textarea name="new-method" ng-model="newMethod"></textarea>
+      </md-input-container>
+    </md-content>
+  </md-sidenav>
+  <a ng-click="toggle()">
+    <md-icon class="settings" md-svg-src="img/icons/ic_add_black_18px.svg"
+             aria-label="New Method">
+    </md-icon>
+  </a>
   <ul>
     <li ng-repeat="step in method.steps track by $index">
       <a ng-class="{'step-complete': method.step>$index}">{{step}}</a>
