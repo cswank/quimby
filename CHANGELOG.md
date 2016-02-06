@@ -1,5 +1,8 @@
 # CHANGELOG
 
+## 0.3.0
+ - can run and save methods
+ 
 ## 0.2.1
  - switch routing to cswank/rex
 

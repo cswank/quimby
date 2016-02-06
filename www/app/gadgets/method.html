@@ -18,22 +18,26 @@
       <md-input-container>
         <label>Run a Method From the Past</label>
         <md-select ng-model="selected" ng-change="runStoredMethod()">
-          <md-option ng-repeat="method in $storage.methods" value="{{$index}}">
-            {{method[0]}}
+          <md-option ng-repeat="(title, method) in $storage.methods[uuid]" value="{{title}}">
+            {{title}}
           </md-option>
         </md-select>
       </md-input-container>
       <hr></hr>
       <md-input-container>
+        <label>Title</label>
+        <input type="text" ng-model="newMethod.title">
+      </md-input-container>
+      <md-input-container>
         <label>New Method</label>
-        <textarea name="new-method" ng-model="newMethod"></textarea>
+        <textarea name="new-method" ng-model="newMethod.steps"></textarea>
       </md-input-container>
       <hr></hr>
       <md-input-container>
         <label>Delete a Method From the Past</label>
         <md-select ng-model="selected" ng-change="deleteStoredMethod()">
-          <md-option ng-repeat="method in $storage.methods" value="{{$index}}">
-            {{method[0]}}
+          <md-option ng-repeat="(title, method) in $storage.methods[uuid]" value="{{title}}">
+            {{title}}
           </md-option>
         </md-select>
       </md-input-container>

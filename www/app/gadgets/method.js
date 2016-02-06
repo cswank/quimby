@@ -13,7 +13,7 @@ angular.module('quimby.services')
                 socket: '='
             },
             controller: function($scope) {
-                $scope.$storage = $localStorage.$default({methods:[]});
+                $scope.$storage = $localStorage.$default({methods:{}});
                 $scope.confirm = function(step) {
                     var msg = {
                         type: 'method update',
@@ -37,22 +37,30 @@ angular.module('quimby.services')
 
                 
                 $scope.runStoredMethod = function () {
-                    $mdSidenav('new-method').close();
-                    $methods.runMethod($scope.uuid, $scope.$storage.methods[$scope.selected]);
-                    $scope.selected = -1;
+                    $scope.newMethod = {
+                        title: $scope.selected,
+                        steps: $scope.$storage.methods[$scope.uuid][$scope.selected].join("\n")
+                    };
+                    $scope.selected = "";
                 }
 
                 $scope.deleteStoredMethod = function () {
                     $mdSidenav('new-method').close();
-                    $scope.$storage.methods.splice($scope.selected, 1);
-                    $scope.selected = -1;
+                    delete $scope.$storage.methods[$scope.uuid][$scope.selected];
+                    $scope.selected = "";
                 }
 
                 $scope.run = function () {
                     $mdSidenav('new-method').close();
-                    var method = $scope.newMethod.split("\n")
-                    $methods.runMethod($scope.uuid, method);
-                    $scope.$storage.methods.push(method);
+                    var steps = $scope.newMethod.steps.split("\n");
+                    $methods.runMethod($scope.uuid, steps);
+                    if ($scope.$storage.methods[$scope.uuid] == undefined) {
+                        $scope.$storage.methods[$scope.uuid] = {};
+                    }
+                    if ($scope.newMethod.title != undefined) {
+                        $scope.$storage.methods[$scope.uuid][$scope.newMethod.title] = steps;
+                    }
+                    $scope.newMethod = {};
                 };
             }
         }
