@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('quimby.services')
-    .directive("method", ["$sockets", "$methods", "$mdSidenav", function($sockets, $methods, $mdSidenav) {
+    .directive("method", ["$sockets", "$methods", "$mdSidenav", "$localStorage", function($sockets, $methods, $mdSidenav, $localStorage) {
         return {
             restrict: "E",
             replace: true,
@@ -13,7 +13,7 @@ angular.module('quimby.services')
                 socket: '='
             },
             controller: function($scope) {
-
+                $scope.$storage = $localStorage.$default({methods:[]});
                 $scope.confirm = function(step) {
                     var msg = {
                         type: 'method update',
@@ -35,9 +35,24 @@ angular.module('quimby.services')
                     $mdSidenav('new-method').close();
                 };
 
+                
+                $scope.runStoredMethod = function () {
+                    $mdSidenav('new-method').close();
+                    $methods.runMethod($scope.uuid, $scope.$storage.methods[$scope.selected]);
+                    $scope.selected = -1;
+                }
+
+                $scope.deleteStoredMethod = function () {
+                    $mdSidenav('new-method').close();
+                    $scope.$storage.methods.splice($scope.selected, 1);
+                    $scope.selected = -1;
+                }
+
                 $scope.run = function () {
                     $mdSidenav('new-method').close();
-                    $methods.runMethod($scope.uuid, $scope.newMethod);
+                    var method = $scope.newMethod.split("\n")
+                    $methods.runMethod($scope.uuid, method);
+                    $scope.$storage.methods.push(method);
                 };
             }
         }
@@ -46,10 +61,9 @@ angular.module('quimby.services')
 angular.module('quimby.services')
     .service('$methods', ['$http', function ($http) {
         this.runMethod = function(id, method) {
-            
             $http.post(
                 "/api/gadgets/" + id + "/method",
-                {method: method.split("\n")}
+                {method: method}
             )
         }
     }]);

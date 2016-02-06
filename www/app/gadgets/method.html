@@ -16,10 +16,29 @@
       </div>
       <hr></hr>
       <md-input-container>
+        <label>Run a Method From the Past</label>
+        <md-select ng-model="selected" ng-change="runStoredMethod()">
+          <md-option ng-repeat="method in $storage.methods" value="{{$index}}">
+            {{method[0]}}
+          </md-option>
+        </md-select>
+      </md-input-container>
+      <hr></hr>
+      <md-input-container>
         <label>New Method</label>
         <textarea name="new-method" ng-model="newMethod"></textarea>
       </md-input-container>
+      <hr></hr>
+      <md-input-container>
+        <label>Delete a Method From the Past</label>
+        <md-select ng-model="selected" ng-change="deleteStoredMethod()">
+          <md-option ng-repeat="method in $storage.methods" value="{{$index}}">
+            {{method[0]}}
+          </md-option>
+        </md-select>
+      </md-input-container>
     </md-content>
+    
   </md-sidenav>
   <a ng-click="toggle()">
     <md-icon class="settings" md-svg-src="img/icons/ic_add_black_18px.svg"
