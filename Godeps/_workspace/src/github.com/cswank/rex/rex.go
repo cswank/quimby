@@ -163,9 +163,7 @@ func (n *node) handle(pth []string, w http.ResponseWriter, r *http.Request) bool
 		x = pth[0]
 	}
 	if c, ok := n.children[x]; ok {
-		c.handle(pth[1:], w, r)
-	} else {
-		return false
+		return c.handle(pth[1:], w, r)
 	}
-	return true
+	return false
 }
