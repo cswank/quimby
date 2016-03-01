@@ -132,6 +132,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", updateDevice)
 	r.Get("/api/gadgets/{id}/sources/{name}", getDataPoints)
 	r.Get("/api/gadgets/{id}/sources/{name}/csv", getDataPointsCSV)
+	r.Get("/beer/{name}", getRecipe)
 	r.Get("/admin/clients", getClients)
 
 	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
@@ -240,6 +241,10 @@ func updateDevice(w http.ResponseWriter, r *http.Request) {
 
 func getDevice(w http.ResponseWriter, r *http.Request) {
 	handlers.Handle(w, r, handlers.GetDevice, handlers.Write, "main")
+}
+
+func getRecipe(w http.ResponseWriter, r *http.Request) {
+	handlers.Handle(w, r, handlers.GetRecipe, handlers.Read, "main")
 }
 
 func getClients(w http.ResponseWriter, r *http.Request) {

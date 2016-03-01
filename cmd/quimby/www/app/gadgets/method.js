@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('quimby.services')
-    .directive("method", ["$sockets", "$methods", "$mdSidenav", "$localStorage", function($sockets, $methods, $mdSidenav, $localStorage) {
+    .directive("method", ["$sockets", "$methods", "$brew", "$mdSidenav", "$localStorage", function($sockets, $methods, $brew, $mdSidenav, $localStorage) {
         return {
             restrict: "E",
             replace: true,
@@ -50,6 +50,15 @@ angular.module('quimby.services')
                     $scope.selected = "";
                 }
 
+                $scope.fetchBrewMethod = function() {
+                    $brew.fetchMethod($scope.brew, function(data) {
+                        $scope.newMethod = {
+                            title: $scope.brew.name,
+                            steps: data.join("\n")
+                        };
+                    })
+                }
+
                 $scope.run = function () {
                     $mdSidenav('new-method').close();
                     var steps = $scope.newMethod.steps.split("\n");
@@ -67,6 +76,16 @@ angular.module('quimby.services')
     }]);
 
 angular.module('quimby.services')
+    .service('$brew', ['$http', function ($http) {
+        this.fetchMethod = function(brew, callback) {
+            $http.get(
+                "/beer/" + brew.name,
+                {grain_temperature: brew.temperature}
+            ).success(function(data) {
+                callback(data);
+            })
+        }
+    }])
     .service('$methods', ['$http', function ($http) {
         this.runMethod = function(id, method) {
             $http.post(

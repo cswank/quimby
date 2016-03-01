@@ -41,8 +41,19 @@
           </md-option>
         </md-select>
       </md-input-container>
+      <hr></hr>
+      <md-input-container>
+        <label>Brewtoad recipe name</label>
+        <input ng-model="brew.name" type="text"/>
+      </md-input-container>
+      <md-input-container>
+        <label>Grain temperature</label>
+        <input ng-model="brew.temperature" type="number"/>
+      </md-input-container>
+      <md-button ng-click="fetchBrewMethod()" class="md-primary">
+        Fetch
+      </md-button>
     </md-content>
-    
   </md-sidenav>
   <a ng-click="toggle()">
     <md-icon class="settings" md-svg-src="img/icons/ic_add_black_18px.svg"

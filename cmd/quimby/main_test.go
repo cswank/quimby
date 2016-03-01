@@ -71,6 +71,7 @@ var _ = Describe("Quimby", func() {
 		u3         *quimby.User
 		addr       string
 		addr2      string
+		beerAddr   string
 		adminAddr  string
 		db         *bolt.DB
 		token      string
@@ -141,6 +142,7 @@ var _ = Describe("Quimby", func() {
 		os.Setenv("QUIMBY_HOST", "http://localhost")
 		addr = fmt.Sprintf("http://localhost:%s/api/%%s%%s%%s", port)
 		addr2 = fmt.Sprintf("http://localhost:%s/%%s%%s%%s", port2)
+		beerAddr = fmt.Sprintf("http://localhost:%s/beer/%%s", port)
 		adminAddr = fmt.Sprintf("http://localhost:%s/admin/%%s", port)
 
 		dir, _ = ioutil.TempDir("", "")
@@ -1092,6 +1094,28 @@ var _ = Describe("Quimby", func() {
 				msg := msgs[0]
 				Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
 			})
+
+			It("lets you get a brewtoad method", func() {
+
+				u := fmt.Sprintf(
+					beerAddr,
+					"3-floyds-zombie-dust-clone?grain_temperature=70.0",
+				)
+				req, err := http.NewRequest("GET", u, nil)
+				Expect(err).To(BeNil())
+				req.AddCookie(cookies[0])
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+
+				dec := json.NewDecoder(r.Body)
+				var method []string
+				Expect(dec.Decode(&method)).To(BeNil())
+				Expect(len(method)).To(Equal(37))
+				Expect(method[0]).To(Equal("fill hlt to 7.0 gallons"))
+				Expect(method[36]).To(Equal("stop filling carboy"))
+			})
+
 			It("saves and gets stats", func() {
 				v := map[string]float64{"value": 33.3}
 				var buf bytes.Buffer
