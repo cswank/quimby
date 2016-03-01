@@ -1,0 +1,83 @@
+/* app css stylesheet */
+/* app css stylesheet */
+body {
+    min-height: 100%;
+    height: auto !important;
+    height: 100%;
+}
+
+.navlinks a {
+    text-decoration: none;
+    color: gray;
+}
+
+.md-toolbar-tools {
+    color:white;
+}
+
+md-toolbar md-select:not([disabled]):focus .md-select-label {
+    color:white;
+}
+
+md-toolbar md-select-label.md-select-label {
+    color:white;
+}
+
+.logout {
+    font-size: small;
+}
+
+.login-modal .modal-dialog {
+    width: 220px;
+}
+
+input.ng-invalid {
+    border: 1px solid red;
+}
+
+input.ng-valid {
+    border: 1px solid green;
+}
+
+.error-message {
+    color: red;
+}
+
+.md-button.md-fab {
+    width: 24px;
+    height: 24px;
+}
+
+.title {
+    color: #900000;
+}
+
+md-dialog md-content {
+    margin: 10px;
+}
+
+.user-info {
+    min-width: 220px;
+}
+
+.page {
+    margin-left: 30px;
+}
+
+md-sidenav.nav {
+    min-width: 460px;
+}
+
+md-icon.settings {
+    font-size: 12px;
+}
+
+.step-complete {
+    text-decoration: line-through;
+    color:red;
+}
+
+.slider {
+    margin-left: 10px;
+    margin-right: 10px;
+}

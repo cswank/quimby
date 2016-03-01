@@ -1,0 +1,16 @@
+<div>
+  <md-toolbar>
+    <div layout="row">
+      <div flex></div>
+      <div class="md-toolbar-tools user-info" flex="20">
+        <span ng-show="loggedIn">
+          <a>Welcome {{user.username}}</a>
+          <a class="logout" ng-click="showLogout()"> log out</a>
+        </span>
+        <span ng-hide="loggedIn">
+          <md-button ng-click="showLogin()">Login</md-button>
+        </span>
+      </div>
+    </div>
+  </md-toolbar>
+</div>
