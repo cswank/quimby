@@ -1,9 +1,13 @@
 package handlers
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
-func GadgetOptions(args *Args) error {
-	args.W.Write(
+func GadgetOptions(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	w.Write(
 		[]byte(
 			fmt.Sprintf(`{
   "POST": {
@@ -22,5 +26,4 @@ func GadgetOptions(args *Args) error {
 			),
 		),
 	)
-	return nil
 }

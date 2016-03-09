@@ -2,20 +2,21 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
 	"strconv"
 
 	"github.com/cswank/brewery/recipes"
 )
 
-func GetRecipe(args *Args) error {
+func GetRecipe(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
 	recipe, err := recipes.NewRecipe(args.Vars["name"])
 	if err != nil {
-		return err
+		return // err
 	}
 	temp := getTemperature(args)
 	method := recipe.GetMethod(temp)
-	enc := json.NewEncoder(args.W)
-	return enc.Encode(method)
+	json.NewEncoder(w).Encode(method)
 }
 
 func getTemperature(args *Args) float64 {

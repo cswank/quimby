@@ -12,6 +12,7 @@ import (
 	"github.com/cswank/quimby/cmd/quimby/handlers"
 	"github.com/cswank/quimby/cmd/quimby/utils"
 	"github.com/cswank/rex"
+	"github.com/justinas/alice"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -110,39 +111,41 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	handlers.DB = db
 	handlers.LG = lg
 
-	go startInternal(iRoot, lg, internalPort)
+	go startInternal(iRoot, db, lg, internalPort)
 
 	r := rex.New("main")
-	r.Post("/api/login", handlers.Login)
-	r.Post("/api/logout", handlers.Logout)
-	r.Get("/api/ping", ping)
-	r.Get("/api/users/current", getUser)
-	r.Get("/api/gadgets", getGadgets)
-	r.Post("/api/gadgets", addGadget)
-	r.Get("/api/gadgets/{id}", getGadget)
-	r.Post("/api/gadgets/{id}", sendCommand)
-	r.Delete("/api/gadgets/{id}", deleteGadget)
-	r.Post("/api/gadgets/{id}/method", sendMethod)
-	r.Get("/api/gadgets/{id}/websocket", connect)
-	r.Get("/api/gadgets/{id}/values", getValues)
-	r.Get("/api/gadgets/{id}/status", getStatus)
-	r.Post("/api/gadgets/{id}/notes", addNote)
-	r.Get("/api/gadgets/{id}/notes", getNotes)
-	r.Get("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getDevice)
-	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", updateDevice)
-	r.Get("/api/gadgets/{id}/sources/{name}", getDataPoints)
-	r.Get("/api/gadgets/{id}/sources/{name}/csv", getDataPointsCSV)
-	r.Get("/beer/{name}", getRecipe)
-	r.Get("/admin/clients", getClients)
+	r.Post("/api/login", http.HandlerFunc(handlers.Login))
+	r.Post("/api/logout", http.HandlerFunc(handlers.Logout))
+	r.Get("/api/ping", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.Ping)))
+	r.Get("/api/users/current", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetUser)))
+	r.Get("/api/gadgets", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetGadgets)))
+	r.Post("/api/gadgets", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.AddGadget)))
+	r.Get("/api/gadgets/{id}", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetGadget)))
+	r.Post("/api/gadgets/{id}", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.SendCommand)))
+	r.Delete("/api/gadgets/{id}", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.DeleteGadget)))
+	r.Post("/api/gadgets/{id}/method", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.SendMethod)))
+	r.Get("/api/gadgets/{id}/websocket", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.Connect)))
+	r.Get("/api/gadgets/{id}/values", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetValues)))
+	r.Get("/api/gadgets/{id}/status", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetStatus)))
+	r.Post("/api/gadgets/{id}/notes", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.AddNote)))
+	r.Get("/api/gadgets/{id}/notes", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetNotes)))
+	r.Get("/api/gadgets/{id}/locations/{location}/devices/{device}/status", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetDevice)))
+	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.UpdateDevice)))
+	r.Get("/api/gadgets/{id}/sources/{name}", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetDataPoints)))
+	r.Get("/api/gadgets/{id}/sources/{name}/csv", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetDataPointsCSV)))
+	r.Get("/beer/{name}", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetRecipe)))
+	r.Get("/admin/clients", alice.New(handlers.Perm(handlers.Admin)).Then(http.HandlerFunc(handlers.GetClients)))
 
 	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
-	http.Handle(root, r)
+	chain := alice.New(handlers.Auth(db, lg, r, "main"), handlers.FetchGadget()).Then(r)
+
+	http.Handle(root, chain)
 
 	addr := fmt.Sprintf("%s:%s", iface, port)
 	lg.Printf("listening on %s\n", addr)
 	if keyPath == "" {
-		lg.Println(http.ListenAndServe(addr, r))
+		lg.Println(http.ListenAndServe(addr, chain))
 	} else {
 		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, nil))
 	}
@@ -151,102 +154,18 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 //This is the endpoint that the gadgets report to. It is
 //served on a separate port so it doesn't have to be exposed
 //publicly if the main port is exposed.
-func startInternal(iRoot string, lg quimby.Logger, port string) {
+func startInternal(iRoot string, db *bolt.DB, lg quimby.Logger, port string) {
 	r := rex.New("internal")
-	r.Post("/internal/updates", relay)
-	r.Post("/internal/gadgets/{id}/sources/{name}", addDataPoint)
-	http.Handle(iRoot, r)
+	r.Post("/internal/updates", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.RelayMessage)))
+	r.Post("/internal/gadgets/{id}/sources/{name}", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.AddDataPoint)))
+
+	chain := alice.New(handlers.Auth(db, lg, r, "internal"), handlers.FetchGadget()).Then(r)
+
+	http.Handle(iRoot, chain)
 	a := fmt.Sprintf(":%s", port)
 	lg.Printf("listening on %s", a)
-	err := http.ListenAndServe(a, r)
+	err := http.ListenAndServe(a, chain)
 	if err != nil {
 		log.Fatal(err)
 	}
-}
-
-func ping(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.Ping, handlers.Read, "main")
-}
-
-func getUser(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetUser, handlers.Read, "main")
-}
-
-func getGadgets(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetGadgets, handlers.Read, "main")
-}
-
-func gadgetOptions(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GadgetOptions, handlers.Read, "main")
-}
-
-func getGadget(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetGadget, handlers.Read, "main")
-}
-
-func addGadget(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.AddGadget, handlers.Write, "main")
-}
-
-func sendCommand(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.SendCommand, handlers.Write, "main")
-}
-
-func sendMethod(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.SendMethod, handlers.Write, "main")
-}
-
-func deleteGadget(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.DeleteGadget, handlers.Write, "main")
-}
-
-func getStatus(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetStatus, handlers.Read, "main")
-}
-
-func addNote(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.AddNote, handlers.Write, "main")
-}
-
-func getNotes(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetNotes, handlers.Read, "main")
-}
-
-func addDataPoint(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.AddDataPoint, handlers.Write, "internal")
-}
-
-func getDataPoints(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetDataPoints, handlers.Read, "main")
-}
-
-func getDataPointsCSV(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetDataPointsCSV, handlers.Read, "main")
-}
-
-func getValues(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetValues, handlers.Read, "main")
-}
-
-func connect(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.Connect, handlers.Read, "main")
-}
-
-func relay(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.RelayMessage, handlers.Write, "internal")
-}
-func updateDevice(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.UpdateDevice, handlers.Write, "main")
-}
-
-func getDevice(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetDevice, handlers.Write, "main")
-}
-
-func getRecipe(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetRecipe, handlers.Read, "main")
-}
-
-func getClients(w http.ResponseWriter, r *http.Request) {
-	handlers.Handle(w, r, handlers.GetClients, handlers.Admin, "main")
 }
