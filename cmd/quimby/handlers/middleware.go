@@ -21,6 +21,18 @@ func setArgs(r *http.Request, args *Args) {
 	context.Set(r, "args", args)
 }
 
+func Error(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		h.ServeHTTP(w, req)
+		e := context.Get(req, "error")
+		if e != nil {
+			err := e.(error)
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write([]byte(err.Error()))
+		}
+	})
+}
+
 func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
@@ -62,6 +74,8 @@ func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.
 			setArgs(req, args)
 
 			h.ServeHTTP(w, req)
+
+			context.Clear(req)
 		})
 	}
 }

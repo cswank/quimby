@@ -104,6 +104,10 @@ func startServer(db *bolt.DB) {
 	start(db, port, internalPort, "/", "/api", lg, clients)
 }
 
+func getMiddleware(perm handlers.ACL, f http.HandlerFunc) http.Handler {
+	return alice.New(handlers.Perm(perm)).Then(http.HandlerFunc(f))
+}
+
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby.Logger, clients *quimby.ClientHolder) {
 	quimby.Clients = clients
 	quimby.DB = db
@@ -116,29 +120,29 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r := rex.New("main")
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))
 	r.Post("/api/logout", http.HandlerFunc(handlers.Logout))
-	r.Get("/api/ping", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.Ping)))
-	r.Get("/api/users/current", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetUser)))
-	r.Get("/api/gadgets", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetGadgets)))
-	r.Post("/api/gadgets", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.AddGadget)))
-	r.Get("/api/gadgets/{id}", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetGadget)))
-	r.Post("/api/gadgets/{id}", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.SendCommand)))
-	r.Delete("/api/gadgets/{id}", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.DeleteGadget)))
-	r.Post("/api/gadgets/{id}/method", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.SendMethod)))
-	r.Get("/api/gadgets/{id}/websocket", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.Connect)))
-	r.Get("/api/gadgets/{id}/values", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetValues)))
-	r.Get("/api/gadgets/{id}/status", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetStatus)))
-	r.Post("/api/gadgets/{id}/notes", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.AddNote)))
-	r.Get("/api/gadgets/{id}/notes", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetNotes)))
-	r.Get("/api/gadgets/{id}/locations/{location}/devices/{device}/status", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetDevice)))
-	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.UpdateDevice)))
-	r.Get("/api/gadgets/{id}/sources/{name}", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetDataPoints)))
-	r.Get("/api/gadgets/{id}/sources/{name}/csv", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetDataPointsCSV)))
-	r.Get("/beer/{name}", alice.New(handlers.Perm(handlers.Read)).Then(http.HandlerFunc(handlers.GetRecipe)))
-	r.Get("/admin/clients", alice.New(handlers.Perm(handlers.Admin)).Then(http.HandlerFunc(handlers.GetClients)))
+	r.Get("/api/ping", getMiddleware(handlers.Read, handlers.Ping))
+	r.Get("/api/users/current", getMiddleware(handlers.Read, handlers.GetUser))
+	r.Get("/api/gadgets", getMiddleware(handlers.Read, handlers.GetGadgets))
+	r.Post("/api/gadgets", getMiddleware(handlers.Read, handlers.AddGadget))
+	r.Get("/api/gadgets/{id}", getMiddleware(handlers.Read, handlers.GetGadget))
+	r.Post("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.SendCommand))
+	r.Delete("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.DeleteGadget))
+	r.Post("/api/gadgets/{id}/method", getMiddleware(handlers.Write, handlers.SendMethod))
+	r.Get("/api/gadgets/{id}/websocket", getMiddleware(handlers.Write, handlers.Connect))
+	r.Get("/api/gadgets/{id}/values", getMiddleware(handlers.Read, handlers.GetValues))
+	r.Get("/api/gadgets/{id}/status", getMiddleware(handlers.Read, handlers.GetStatus))
+	r.Post("/api/gadgets/{id}/notes", getMiddleware(handlers.Write, handlers.AddNote))
+	r.Get("/api/gadgets/{id}/notes", getMiddleware(handlers.Read, handlers.GetNotes))
+	r.Get("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getMiddleware(handlers.Read, handlers.GetDevice))
+	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getMiddleware(handlers.Write, handlers.UpdateDevice))
+	r.Get("/api/gadgets/{id}/sources/{name}", getMiddleware(handlers.Read, handlers.GetDataPoints))
+	r.Get("/api/gadgets/{id}/sources/{name}/csv", getMiddleware(handlers.Read, handlers.GetDataPointsCSV))
+	r.Get("/beer/{name}", getMiddleware(handlers.Read, handlers.GetRecipe))
+	r.Get("/admin/clients", getMiddleware(handlers.Admin, handlers.GetClients))
 
 	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
-	chain := alice.New(handlers.Auth(db, lg, r, "main"), handlers.FetchGadget()).Then(r)
+	chain := alice.New(handlers.Auth(db, lg, r, "main"), handlers.FetchGadget(), handlers.Error).Then(r)
 
 	http.Handle(root, chain)
 
@@ -156,8 +160,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 //publicly if the main port is exposed.
 func startInternal(iRoot string, db *bolt.DB, lg quimby.Logger, port string) {
 	r := rex.New("internal")
-	r.Post("/internal/updates", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.RelayMessage)))
-	r.Post("/internal/gadgets/{id}/sources/{name}", alice.New(handlers.Perm(handlers.Write)).Then(http.HandlerFunc(handlers.AddDataPoint)))
+	r.Post("/internal/updates", getMiddleware(handlers.Write, handlers.RelayMessage))
+	r.Post("/internal/gadgets/{id}/sources/{name}", getMiddleware(handlers.Write, handlers.AddDataPoint))
 
 	chain := alice.New(handlers.Auth(db, lg, r, "internal"), handlers.FetchGadget()).Then(r)
 

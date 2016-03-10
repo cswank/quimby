@@ -12,6 +12,7 @@ import (
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby"
+	"github.com/gorilla/context"
 	"github.com/gorilla/websocket"
 )
 
@@ -30,6 +31,7 @@ func GetGadgets(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	g, err := quimby.GetGadgets(args.DB)
 	if err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	enc := json.NewEncoder(w)
@@ -63,6 +65,7 @@ func AddNote(w http.ResponseWriter, req *http.Request) {
 	var m map[string]string
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
+		context.Set(req, "error", err)
 		return // err
 	}
 	n, ok := m["text"]
@@ -75,6 +78,7 @@ func GetNotes(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	notes, err := args.Gadget.GetNotes(nil, nil)
 	if err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	enc := json.NewEncoder(w)
@@ -86,6 +90,7 @@ func AddDataPoint(w http.ResponseWriter, req *http.Request) {
 	var m map[string]float64
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	args.Gadget.SaveDataPoint(args.Vars["name"], quimby.DataPoint{time.Now(), m["value"]})
@@ -95,6 +100,7 @@ func GetDataPointsCSV(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	points, err := getDataPoints(w, args)
 	if err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	getCSV(w, points, args.Vars["name"])
@@ -104,6 +110,7 @@ func GetDataPoints(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	points, err := getDataPoints(w, args)
 	if err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	if req.Header.Get("accept") == "application/csv" {
@@ -168,6 +175,7 @@ func SendCommand(w http.ResponseWriter, req *http.Request) {
 	var m map[string]string
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	args.Gadget.Update(m["command"])
@@ -178,6 +186,7 @@ func SendMethod(w http.ResponseWriter, req *http.Request) {
 	var m map[string][]string
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	args.Gadget.Method(m["method"])
@@ -189,17 +198,20 @@ func AddGadget(w http.ResponseWriter, req *http.Request) {
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&g)
 	if err != nil {
+		context.Set(req, "error", err)
 		return // err
 	}
 
 	g.DB = args.DB
 	err = g.Save()
 	if err != nil {
+		context.Set(req, "error", err)
 		return // err
 	}
 
 	u, err := url.Parse(fmt.Sprintf("/api/gadgets/%s", g.Name))
 	if err != nil {
+		context.Set(req, "error", err)
 		return //err
 	}
 	w.Header().Set("Location", u.String())
@@ -221,6 +233,7 @@ func randString(n int) string {
 func Connect(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	if err := quimby.Register(*args.Gadget); err != nil {
+		context.Set(req, "error", err)
 		return // err
 	}
 	ws := make(chan gogadgets.Message)
@@ -238,6 +251,7 @@ func Connect(w http.ResponseWriter, req *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
+		context.Set(req, "error", err)
 		return // err
 	}
 
@@ -292,6 +306,7 @@ func UpdateDevice(w http.ResponseWriter, req *http.Request) {
 	var v gogadgets.Value
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&v); err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	args.Gadget.UpdateDevice(args.Vars["location"], args.Vars["device"], v)
@@ -301,6 +316,7 @@ func RelayMessage(w http.ResponseWriter, req *http.Request) {
 	var m gogadgets.Message
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
+		context.Set(req, "error", err)
 		return
 	}
 	chs, ok := quimby.Clients.Get(m.Host)
