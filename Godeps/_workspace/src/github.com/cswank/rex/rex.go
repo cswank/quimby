@@ -9,8 +9,6 @@ var (
 	routers map[string]*Router
 )
 
-type handler func(http.ResponseWriter, *http.Request)
-
 func init() {
 	routers = map[string]*Router{}
 }
@@ -64,34 +62,34 @@ func (r *Router) ServeFiles(h http.Handler) {
 	r.fileServer = h
 }
 
-func (r *Router) Get(pth string, h handler) *node {
+func (r *Router) Get(pth string, h http.Handler) *node {
 	return r.method("GET", pth, h)
 }
 
-func (r *Router) Post(pth string, h handler) *node {
+func (r *Router) Post(pth string, h http.Handler) *node {
 	return r.method("POST", pth, h)
 }
 
-func (r *Router) Put(pth string, h handler) *node {
+func (r *Router) Put(pth string, h http.Handler) *node {
 	return r.method("PUT", pth, h)
 }
 
-func (r *Router) Delete(pth string, h handler) *node {
+func (r *Router) Delete(pth string, h http.Handler) *node {
 	return r.method("DELETE", pth, h)
 }
 
-func (r *Router) Path(pth string, h handler) *node {
+func (r *Router) Path(pth string, h http.Handler) *node {
 	return r.method("PATCH", pth, h)
 }
 
-func (r *Router) method(name, pth string, h handler) *node {
+func (r *Router) method(name, pth string, h http.Handler) *node {
 	return r.methods[name].add(strings.Split(strings.Trim(pth, "/"), "/"), h)
 }
 
 type node struct {
 	id       string
 	key      string
-	handler  handler
+	handler  http.Handler
 	resource bool
 	children map[string]*node
 }
@@ -122,7 +120,7 @@ func (n *node) vars(pth []string, m map[string]string) {
 	}
 }
 
-func (n *node) add(pth []string, h handler) *node {
+func (n *node) add(pth []string, h http.Handler) *node {
 	if len(pth) == 0 {
 		n.handler = h
 		return n
@@ -153,7 +151,7 @@ func (n *node) isResource(s string) (bool, string, string) {
 
 func (n *node) handle(pth []string, w http.ResponseWriter, r *http.Request) bool {
 	if len(pth) == 0 {
-		n.handler(w, r)
+		n.handler.ServeHTTP(w, r)
 		return true
 	}
 	var x string

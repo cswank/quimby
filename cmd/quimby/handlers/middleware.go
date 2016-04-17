@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby"
@@ -37,7 +38,8 @@ func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 
-			if req.URL.Path == "/api/login" || req.URL.Path == "/api/logout" {
+			pth := req.URL.Path
+			if pth == "/api/login" || strings.Index(pth, "api") == -1 {
 				h.ServeHTTP(w, req)
 				return
 			}
@@ -90,7 +92,7 @@ func FetchGadget() alice.Constructor {
 			}
 
 			args := GetArgs(req)
-			if args.Vars["id"] == "" {
+			if args == nil || args.Vars["id"] == "" {
 				h.ServeHTTP(w, req)
 				return
 			}
