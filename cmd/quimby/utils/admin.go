@@ -159,6 +159,6 @@ func ListGadgets(db *bolt.DB) {
 func listGadgets(gadgets []quimby.Gadget) {
 	fmt.Println("# name host")
 	for i, g := range gadgets {
-		fmt.Println(i+1, g.Name, g.Host)
+		fmt.Println(i+1, g.Name, g.Host, g.Id)
 	}
 }

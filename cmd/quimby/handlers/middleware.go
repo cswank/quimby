@@ -37,9 +37,8 @@ func Error(h http.Handler) http.Handler {
 func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-
 			pth := req.URL.Path
-			if pth == "/api/login" || strings.Index(pth, "api") == -1 {
+			if pth == "/api/login" || (strings.Index(pth, "/api") == -1 && strings.Index(pth, "/internal") == -1 && strings.Index(pth, "/admin") == -1 && strings.Index(pth, "/beer") == -1) {
 				h.ServeHTTP(w, req)
 				return
 			}
@@ -144,15 +143,15 @@ func And(acls ...ACL) ACL {
 }
 
 func Admin(args *Args) bool {
-	return args.User.Permission == "admin"
+	return args != nil && args.User != nil && args.User.Permission == "admin"
 }
 
 func Write(args *Args) bool {
-	return args.User.Permission == "admin" || args.User.Permission == "write"
+	return args != nil && args.User != nil && (args.User.Permission == "admin" || args.User.Permission == "write")
 }
 
 func Read(args *Args) bool {
-	return args.User.Permission == "admin" || args.User.Permission == "write" || args.User.Permission == "read"
+	return args != nil && args.User != nil && (args.User.Permission == "admin" || args.User.Permission == "write" || args.User.Permission == "read")
 }
 
 func Anyone(args *Args) bool {

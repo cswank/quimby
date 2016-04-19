@@ -151,7 +151,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	if keyPath == "" {
 		lg.Println(http.ListenAndServe(addr, chain))
 	} else {
-		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, nil))
+		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, chain))
 	}
 }
 
