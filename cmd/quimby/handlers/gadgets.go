@@ -209,7 +209,33 @@ func AddGadget(w http.ResponseWriter, req *http.Request) {
 		return // err
 	}
 
-	u, err := url.Parse(fmt.Sprintf("/api/gadgets/%s", g.Name))
+	u, err := url.Parse(fmt.Sprintf("/api/gadgets/%s", g.Id))
+	if err != nil {
+		context.Set(req, "error", err)
+		return //err
+	}
+	w.Header().Set("Location", u.String())
+}
+
+func UpdateGadget(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	var g quimby.Gadget
+	dec := json.NewDecoder(req.Body)
+	err := dec.Decode(&g)
+	if err != nil {
+		context.Set(req, "error", err)
+		return // err
+	}
+
+	g.DB = args.DB
+	g.Id = args.Vars["id"]
+	err = g.Save()
+	if err != nil {
+		context.Set(req, "error", err)
+		return // err
+	}
+
+	u, err := url.Parse(fmt.Sprintf("/api/gadgets/%s", g.Id))
 	if err != nil {
 		context.Set(req, "error", err)
 		return //err

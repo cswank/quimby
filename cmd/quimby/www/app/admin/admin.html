@@ -1,0 +1,10 @@
+<div class="page" ng-show="gadgets">
+  <ul>
+    <li ng-repeat="gadget in gadgets">
+      <a href="#/admin/{{gadget.id}}">{{gadget.name}}</a>
+    </li>
+    <li>
+      <a href="#/admin/new-gadget">new gadget</a>
+    </li>
+  </ul>
+</div>

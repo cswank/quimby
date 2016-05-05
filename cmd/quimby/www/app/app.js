@@ -10,6 +10,7 @@ angular.module('quimby', [
     'nvd3ChartDirectives',
     'quimby.gadget',
     'quimby.list',
+    'quimby.admin',
     'quimby.history',
     'quimby.directives',
     'quimby.services',

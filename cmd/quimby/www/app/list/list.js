@@ -9,7 +9,7 @@ angular.module('quimby.list', ['ngRoute'])
     }])
 
 .controller('ListCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', function($scope, $rootScope, $gadgets, $auth) {
-    
+    $rootScope.links = [];
     $rootScope.$watch('user', function(user) {
         if (user != {}) {
             $gadgets.getGadgets(function(data) {

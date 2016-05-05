@@ -60,6 +60,7 @@ var (
 		1: "read",
 		2: "write",
 		3: "admin",
+		4: "sys",
 	}
 )
 
@@ -74,22 +75,33 @@ func getPasswd(u *quimby.User) {
 	u.Password = p1
 }
 
+type passworder func(*quimby.User)
+
+func genPasswd(u *quimby.User) {
+	u.Password = randString(32)
+}
+
 func AddUser(db *bolt.DB) {
 	u := quimby.User{
 		DB: db,
 	}
 	fmt.Print("username: ")
 	fmt.Scanf("%s\n", &u.Username)
-	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n")
+	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n  4: system\n")
 	var x int
 	fmt.Scanf("%d\n", &x)
-
+	var f passworder
+	if x == 4 {
+		f = genPasswd
+	} else {
+		f = getPasswd
+	}
 	perm, ok := permissions[x]
 	if !ok {
-		log.Fatal("select 1, 2, or 3")
+		log.Fatal("select 1, 2, 3, or 4")
 	}
 	u.Permission = perm
-	getPasswd(&u)
+	f(&u)
 	log.Println(u.Save())
 }
 

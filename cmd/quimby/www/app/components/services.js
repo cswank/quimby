@@ -19,6 +19,20 @@ angular.module('quimby.services', [])
                 console.log("didn't get gadget");
             });
         }
+        this.save = function(gadget, callback) {
+            $http.post("/api/gadgets", gadget).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't get gadget");
+            });
+        }
+        this.update = function(gadget, callback) {
+            $http.post("/api/gadgets/" + gadget.id, gadget).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't save gadget");
+            });
+        }
         this.getDevices = function(id, callback) {
             $http.get("/api/gadgets/" +  id + "/values").success(function(data) {
                 locations = data;
@@ -41,14 +55,12 @@ angular.module('quimby.services', [])
             });
             
         }
+        
         this.send =  function(location, name, callback) {
             var val = locations[location][name].value;
             var onoff = val ? "off":"on";
             var command = commands[location + " " + name][onoff];
             callback(command);
-        }
-        this.update = function(msg) {
-            
         }
     }])
     .factory('$sockets', ['$location', '$http', '$timeout', '$routeParams', function($location, $http, $timeout, $routeParams) {

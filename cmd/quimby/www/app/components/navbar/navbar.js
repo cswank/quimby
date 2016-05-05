@@ -30,9 +30,14 @@ angular.module('quimby.directives')
             replace: true,
             transclude: true,
             templateUrl: "/components/navbar/navbar.html?t=" + new Date().getTime(),
-            controller: function($scope, $rootScope, $timeout) {
+            controller: function($scope, $rootScope, $timeout, $mdDialog) {
+                var originatorEv;
                 $scope.loggedIn = false;
                 $rootScope.user = {};
+                $scope.openMenu = function($mdOpenMenu, ev) {
+                    originatorEv = ev;
+                    $mdOpenMenu(ev);
+                };
                 $scope.showLogout = function(ev) {
                     $mdDialog.show({
                         controller: LogoutController,

@@ -38,7 +38,7 @@ func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			pth := req.URL.Path
-			if pth == "/api/login" || (strings.Index(pth, "/api") == -1 && strings.Index(pth, "/internal") == -1 && strings.Index(pth, "/admin") == -1 && strings.Index(pth, "/beer") == -1) {
+			if pth == "/api/login" || (strings.Index(pth, "/api") == -1 && strings.Index(pth, "/internal") == -1) {
 				h.ServeHTTP(w, req)
 				return
 			}

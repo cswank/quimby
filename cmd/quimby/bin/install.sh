@@ -5,7 +5,7 @@ rands() {
 }
 
 apt-get update
-apt-get install -y net-tools supervisor openssl
+apt-get install -y net-tools openssl
 
 IP=$(ifconfig eth0 | awk '/inet addr/{print substr($2,6)}')
 BLOCK=$(rands)
@@ -31,21 +31,18 @@ export QUIMBY_JWT_PRIV=$QUIMBY_JWT_PRIV
 export QUIMBY_JWT_PUB=$QUIMBY_JWT_PUB
 export QUIMBY_TLS_KEY=$QUIMBY_TLS_KEY
 export QUIMBY_TLS_CERT=$QUIMBY_TLS_CERT
-export QUIMBY_USER=quimby" > /etc/quimby/quimby.conf
+export QUIMBY_USER=quimby" > /etc/quimby/quimby.env
 
-echo "environment=QUIMBY_DB='/var/lib/quimby/quimby.db',
-  QUIMBY_INTERFACE='$IP',
-  QUIMBY_PORT='443',
-  QUIMBY_INTERNAL_PORT='8989',
-  QUIMBY_HOST='http://$IP',
-  QUIMBY_BLOCK_KEY='$BLOCK',
-  QUIMBY_HASH_KEY=' $HASH',
-  QUIMBY_JWT_PRIV='$QUIMBY_JWT_PRIV',
-  QUIMBY_JWT_PUB='$QUIMBY_JWT_PUB',
-  QUIMBY_TLS_KEY='$QUIMBY_TLS_KEY',
-  QUIMBY_TLS_CERT='$QUIMBY_TLS_CERT',
-  QUIMBY_USER='quimby'
-command=/usr/local/bin/quimby serve" > /etc/supervisor/conf.d/quimby.conf
+echo "[Unit]
+Description=Gogadgets web interface
+After=network.target
+
+[Service]
+Type=simple
+PIDFile=/tmp/quimby.pid
+EnvironmentFile=/etc/quimby/quimby.env
+ExecStart=/usr/local/bin/quimby serve
+" > /etc/systemd/system/quimby.service
 
 # generate keys for JWT
 openssl genrsa -out $QUIMBY_JWT_PRIV 2048

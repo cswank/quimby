@@ -2,13 +2,13 @@
 
 angular.module('quimby.gadget', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/gadgets/:id', {
-            templateUrl: '/gadgets/gadgets.html',
-            controller: 'GadgetsCtrl'
+        $routeProvider.when('/gadget/:id', {
+            templateUrl: '/gadget/gadget.html',
+            controller: 'GadgetCtrl'
         });
     }])
 
-    .controller('GadgetsCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', '$mdSidenav', function($scope, $gadgets, $sockets, $routeParams, $mdSidenav) {
+    .controller('GadgetCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', '$mdSidenav', function($scope, $gadgets, $sockets, $routeParams, $mdSidenav) {
         $scope.method = {};
         $scope.id = $routeParams.id;
         $scope.decimals = 1;

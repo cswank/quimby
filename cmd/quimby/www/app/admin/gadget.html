@@ -1,0 +1,18 @@
+<div class="page" ng-show="gadget">
+  <span ng-if="gadget.id">
+    <a>{{gadget.id}}<a/>
+  </span>
+  <md-input-container>
+    <label>Name</label>
+    <input auto-focus="" ng-model="gadget.name"/>
+  </md-input-container>
+  <md-input-container>
+    <label>Address</label>
+    <input ng-model="gadget.host"/>
+  </md-input-container>
+  <div layout="row">
+    <span flex></span>
+    <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
+    <md-button aria-label="Save" ng-click="save()">Save</md-button>
+  </div>
+</div>

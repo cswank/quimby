@@ -6,9 +6,14 @@ body {
     height: 100%;
 }
 
+.settings {
+    font-size: 12px;
+    height: 12px;
+}
+
 .navlinks a {
     text-decoration: none;
-    color: gray;
+    margin-left:5px;
 }
 
 .md-toolbar-tools {

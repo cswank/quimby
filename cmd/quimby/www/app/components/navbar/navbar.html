@@ -1,11 +1,48 @@
 <div>
   <md-toolbar>
     <div layout="row">
+      <div class="navlinks md-toolbar-tools user-info">
+        <a href="#/gadgets">gadgets</a>
+        <span ng-repeat="link in links">
+          <a href="{{link.href}}">{{link.name}}</a>
+        </span>
+      </div>
       <div flex></div>
       <div class="md-toolbar-tools user-info" flex="20">
         <span ng-show="loggedIn">
           <a>Welcome {{user.username}}</a>
-          <a class="logout" ng-click="showLogout()"> log out</a>
+          <!-- <md-button aria-label="Open settings menu" class="md-icon-button" ng-click="openMenu($mdOpenMenu, $event)"> -->
+          <md-icon
+                 class="settings"
+                 md-svg-src="/img/icons/ic_settings_white_18px.svg"
+                 md-font-icon="icon-settings"
+                 ng-class="md-hue-5"
+                 aria-label="settings"></md-icon>
+          <!--   </md-button> -->
+          <!--   <md-menu-content width="4"> -->
+          <!--     <md-menu-item ng-if="user.permission=='admin'"> -->
+          <!--       <\!-- <md-button ng-click="ctrl.redial($event)"> -\-> -->
+          <!--       <\!--   <md-icon md-svg-icon="call:dialpad" md-menu-align-target></md-icon> -\-> -->
+          <!--       <\!--   Redial -\-> -->
+          <!--       <\!-- </md-button> -->
+          <!--         -\-> -->
+          <!--       xxx -->
+          <!--     </md-menu-item> -->
+          <!--     <\!-- <md-menu-item> -\-> -->
+          <!--     <\!--   <md-button disabled="disabled" ng-click="ctrl.checkVoicemail()"> -\-> -->
+          <!--     <\!--     <md-icon md-svg-icon="call:voicemail"></md-icon> -\-> -->
+          <!--     <\!--     Check voicemail -\-> -->
+          <!--     <\!--   </md-button> -\-> -->
+          <!--     <\!-- </md-menu-item> -\-> -->
+          <!--     <\!-- <md-menu-divider></md-menu-divider> -\-> -->
+          <!--     <\!-- <md-menu-item> -\-> -->
+          <!--     <\!--   <md-button ng-click="showLogout()"> -\-> -->
+          <!--     <\!--     <md-icon md-svg-icon="social:notifications-{{ctrl.notificationsEnabled ? 'off' : 'on'}}"></md-icon> -\-> -->
+          <!--     <\!--     {{ctrl.notificationsEnabled ? 'Disable' : 'Enable' }} notifications -\-> -->
+          <!--     <\!--   </md-button> -\-> -->
+          <!--     <\!-- </md-menu-item> -\-> -->
+          <!--   </md-menu-content> -->
+          <!-- </md-menu> -->
         </span>
         <span ng-hide="loggedIn">
           <md-button ng-click="showLogin()">Login</md-button>

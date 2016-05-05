@@ -125,8 +125,9 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/api/gadgets", getMiddleware(handlers.Read, handlers.GetGadgets))
 	r.Post("/api/gadgets", getMiddleware(handlers.Read, handlers.AddGadget))
 	r.Get("/api/gadgets/{id}", getMiddleware(handlers.Read, handlers.GetGadget))
-	r.Post("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.SendCommand))
+	r.Post("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.UpdateGadget))
 	r.Delete("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.DeleteGadget))
+	r.Post("/api/gadgets/{id}/command", getMiddleware(handlers.Write, handlers.SendCommand))
 	r.Post("/api/gadgets/{id}/method", getMiddleware(handlers.Write, handlers.SendMethod))
 	r.Get("/api/gadgets/{id}/websocket", getMiddleware(handlers.Write, handlers.Connect))
 	r.Get("/api/gadgets/{id}/values", getMiddleware(handlers.Read, handlers.GetValues))
@@ -137,8 +138,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getMiddleware(handlers.Write, handlers.UpdateDevice))
 	r.Get("/api/gadgets/{id}/sources/{name}", getMiddleware(handlers.Read, handlers.GetDataPoints))
 	r.Get("/api/gadgets/{id}/sources/{name}/csv", getMiddleware(handlers.Read, handlers.GetDataPointsCSV))
-	r.Get("/beer/{name}", getMiddleware(handlers.Read, handlers.GetRecipe))
-	r.Get("/admin/clients", getMiddleware(handlers.Admin, handlers.GetClients))
+	r.Get("/api/beer/{name}", getMiddleware(handlers.Read, handlers.GetRecipe))
+	r.Get("/api/admin/clients", getMiddleware(handlers.Admin, handlers.GetClients))
 
 	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 

@@ -450,21 +450,78 @@ var _ = Describe("Quimby", func() {
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
 				Expect(len(r.Header["Location"])).To(Equal(1))
 				u := r.Header["Location"][0]
-				Expect(u).To(Equal("/api/gadgets/back%20yard"))
+				parts := strings.Split(u, "/")
+				Expect(len(parts)).To(Equal(4))
+				id := parts[3]
 
-				req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+				req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/", id, ""), nil)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
 				r, err = http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
-				var gadgs []quimby.Gadget
+				var g2 quimby.Gadget
 				dec := json.NewDecoder(r.Body)
-				err = dec.Decode(&gadgs)
+				err = dec.Decode(&g2)
 				Expect(err).To(BeNil())
 
-				Expect(len(gadgs)).To(Equal(3))
+				Expect(g2.Name).To(Equal("back yard"))
+			})
+
+			It("lets you update a gadget", func() {
+				var buf bytes.Buffer
+				enc := json.NewEncoder(&buf)
+				g := quimby.Gadget{
+					Name: "back yard",
+					Host: "http://overthere.com",
+				}
+				enc.Encode(g)
+
+				req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets", "", ""), &buf)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err := http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				Expect(len(r.Header["Location"])).To(Equal(1))
+				u := r.Header["Location"][0]
+				parts := strings.Split(u, "/")
+				Expect(len(parts)).To(Equal(4))
+				id := parts[3]
+
+				buf = bytes.Buffer{}
+				enc = json.NewEncoder(&buf)
+				g = quimby.Gadget{
+					Id:   id,
+					Name: "back yard for reals",
+					Host: "http://overthere.com",
+				}
+				enc.Encode(g)
+
+				req, err = http.NewRequest("POST", fmt.Sprintf(addr, "gadgets/", id, ""), &buf)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				Expect(len(r.Header["Location"])).To(Equal(1))
+				u = r.Header["Location"][0]
+				Expect(u).To(Equal("/api/gadgets/" + id))
+
+				req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/", id, ""), nil)
+				Expect(err).To(BeNil())
+				req.Header.Add("Authorization", token)
+				r, err = http.DefaultClient.Do(req)
+				Expect(err).To(BeNil())
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+				var g2 quimby.Gadget
+				dec := json.NewDecoder(r.Body)
+				Expect(dec.Decode(&g2)).To(BeNil())
+				Expect(g2.Name).To(Equal("back yard for reals"))
 			})
 
 			It("lets you get the status of a gadget", func() {
@@ -494,7 +551,7 @@ var _ = Describe("Quimby", func() {
 				}
 				enc.Encode(m)
 
-				req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), &buf)
+				req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "/command"), &buf)
 				Expect(err).To(BeNil())
 				req.Header.Add("Authorization", token)
 				r, err := http.DefaultClient.Do(req)
@@ -989,21 +1046,23 @@ var _ = Describe("Quimby", func() {
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
 				Expect(len(r.Header["Location"])).To(Equal(1))
 				u := r.Header["Location"][0]
-				Expect(u).To(Equal("/api/gadgets/back%20yard"))
+				parts := strings.Split(u, "/")
+				Expect(len(parts)).To(Equal(4))
+				id := parts[3]
 
-				req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+				req, err = http.NewRequest("GET", fmt.Sprintf(addr, "gadgets/", id, ""), nil)
 				Expect(err).To(BeNil())
 				req.AddCookie(cookies[0])
 				r, err = http.DefaultClient.Do(req)
 				Expect(err).To(BeNil())
 				defer r.Body.Close()
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
-				var gadgs []quimby.Gadget
+				var g2 quimby.Gadget
 				dec := json.NewDecoder(r.Body)
-				err = dec.Decode(&gadgs)
+				err = dec.Decode(&g2)
 				Expect(err).To(BeNil())
 
-				Expect(len(gadgs)).To(Equal(3))
+				Expect(g2.Name).To(Equal("back yard"))
 			})
 
 			It("lets you get the status of a gadget", func() {
@@ -1033,7 +1092,7 @@ var _ = Describe("Quimby", func() {
 				}
 				enc.Encode(m)
 
-				req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, ""), &buf)
+				req, err := http.NewRequest("POST", fmt.Sprintf(addr, "gadgets/", sprinklers.Id, "/command"), &buf)
 				Expect(err).To(BeNil())
 				req.AddCookie(cookies[0])
 				r, err := http.DefaultClient.Do(req)
@@ -1095,26 +1154,26 @@ var _ = Describe("Quimby", func() {
 				Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
 			})
 
-			It("lets you get a brewtoad method", func() {
+			// XIt("lets you get a brewtoad method", func() {
 
-				u := fmt.Sprintf(
-					beerAddr,
-					"3-floyds-zombie-dust-clone?grain_temperature=70.0",
-				)
-				req, err := http.NewRequest("GET", u, nil)
-				Expect(err).To(BeNil())
-				req.AddCookie(cookies[0])
-				r, err := http.DefaultClient.Do(req)
-				Expect(err).To(BeNil())
-				defer r.Body.Close()
+			// 	u := fmt.Sprintf(
+			// 		beerAddr,
+			// 		"3-floyds-zombie-dust-clone?grain_temperature=70.0",
+			// 	)
+			// 	req, err := http.NewRequest("GET", u, nil)
+			// 	Expect(err).To(BeNil())
+			// 	req.AddCookie(cookies[0])
+			// 	r, err := http.DefaultClient.Do(req)
+			// 	Expect(err).To(BeNil())
+			// 	defer r.Body.Close()
 
-				dec := json.NewDecoder(r.Body)
-				var method []string
-				Expect(dec.Decode(&method)).To(BeNil())
-				Expect(len(method)).To(Equal(37))
-				Expect(method[0]).To(Equal("fill hlt to 7.0 gallons"))
-				Expect(method[36]).To(Equal("stop filling carboy"))
-			})
+			// 	dec := json.NewDecoder(r.Body)
+			// 	var method []string
+			// 	Expect(dec.Decode(&method)).To(BeNil())
+			// 	Expect(len(method)).To(Equal(37))
+			// 	Expect(method[0]).To(Equal("fill hlt to 7.0 gallons"))
+			// 	Expect(method[36]).To(Equal("stop filling carboy"))
+			// })
 
 			It("saves and gets stats", func() {
 				v := map[string]float64{"value": 33.3}
