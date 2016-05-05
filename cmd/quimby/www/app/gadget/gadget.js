@@ -8,13 +8,18 @@ angular.module('quimby.gadget', ['ngRoute'])
         });
     }])
 
-    .controller('GadgetCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', '$mdSidenav', function($scope, $gadgets, $sockets, $routeParams, $mdSidenav) {
+    .controller('GadgetCtrl', ['$scope', '$gadgets', '$sockets', '$routeParams', '$mdSidenav', function($scope, $gadgets, $sockets, $routeParams, $mdSidenav, $rootScope) {
+        
+        
         $scope.method = {};
         $scope.id = $routeParams.id;
         $scope.decimals = 1;
 
         $gadgets.getGadget($scope.id, function(data) {
             $scope.gadget = data;
+            $rootScope.links = [
+                {href:"#/gadget" + id, name:data.name},
+            ]
         });
         
         $gadgets.getDevices($scope.id, function(locations, directions, method) {

@@ -1,5 +1,6 @@
 <div class="page" ng-show="gadget">
   <span ng-if="gadget.id">
+    <a>Id:</a>
     <a>{{gadget.id}}<a/>
   </span>
   <md-input-container>
@@ -14,5 +15,6 @@
     <span flex></span>
     <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
     <md-button aria-label="Save" ng-click="save()">Save</md-button>
+    <md-button ng-if="gadget.id" aria-label="Save" ng-click="delete()">Delete</md-button>
   </div>
 </div>

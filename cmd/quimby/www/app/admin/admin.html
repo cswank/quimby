@@ -1,10 +1,21 @@
 <div class="page" ng-show="gadgets">
+  <a>gadgets</a>
   <ul>
     <li ng-repeat="gadget in gadgets">
       <a href="#/admin/{{gadget.id}}">{{gadget.name}}</a>
     </li>
     <li>
       <a href="#/admin/new-gadget">new gadget</a>
+    </li>
+  </ul>
+
+  <a>users</a>
+  <ul>
+    <li ng-repeat="user in users">
+      <a href="#/admin/users/{{user.id}}">{{user.name}}</a>
+    </li>
+    <li>
+      <a href="#/admin/users/new-user">new user</a>
     </li>
   </ul>
 </div>

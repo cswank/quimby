@@ -18,7 +18,10 @@ angular.module('quimby.admin', ['ngRoute'])
         });
     }])
 
-    .controller('NewGadgetCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$locaion', function($scope, $rootScope, $gadgets, $auth, $location) {
+    .controller('NewGadgetCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$location', function($scope, $rootScope, $gadgets, $auth, $location) {
+        $rootScope.links = [
+            {href:"#/admin", name:"admin"}
+        ];
         $scope.gadget = {
             name: "new gadget"
         };
@@ -27,34 +30,11 @@ angular.module('quimby.admin', ['ngRoute'])
                 $location.path("/admin");
             })
         }
-    }])
 
-    .controller('AdminCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$routeParams', '$location', function($scope, $rootScope, $gadgets, $auth, $routeParams, $location) {
-        var id = $routeParams.id;
-        $scope.gadget = {};
-        
-        $rootScope.links = [
-            {href:"#/admin", name:"admin"},
-            {href:"#/admin/" + id, name:id}
-        ];
-        
-        $rootScope.$watch('user', function(user) {
-            if (user != {} && $scope.gadget != {}) {
-                $gadgets.getGadget(id, function(data) {
-                    $scope.gadget = data;
-                });
-            }
-        });
-
-        $scope.save = function() {
-            $gadgets.update($scope.gadget, function(data) {
-                $location.path("/admin");
-            });
-        }
-            
         $scope.cancel = function() {
             $location.path("/admin");
         }
+        
     }])
 
     .controller('AdminListCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', function($scope, $rootScope, $gadgets, $auth) {

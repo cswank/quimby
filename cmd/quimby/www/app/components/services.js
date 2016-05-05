@@ -26,6 +26,13 @@ angular.module('quimby.services', [])
                 console.log("didn't get gadget");
             });
         }
+        this.delete = function(id, callback) {
+            $http.delete("/api/gadgets/" + id).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't get gadget");
+            });
+        }
         this.update = function(gadget, callback) {
             $http.post("/api/gadgets/" + gadget.id, gadget).success(function(data) {
                 callback(data);
