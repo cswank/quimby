@@ -1,6 +1,32 @@
 'use strict';
 
 angular.module('quimby.services', [])
+    .service('$users', ['$http', function ($http) {
+        this.getAll = function(callback) {
+            $http.get("/api/users").success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't get users");
+            });
+        }
+        
+        this.get = function(username, callback) {
+            $http.get("/api/users/" + username).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't get users");
+            });
+        }
+
+        this.delete = function(username, callback) {
+            $http.delete("/api/users/" + username).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't get users");
+            });
+        }
+    }])
+
     .service('$gadgets', ['$http', function ($http) {
         var commands = {};
         var locations = {};

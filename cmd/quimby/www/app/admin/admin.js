@@ -16,6 +16,11 @@ angular.module('quimby.admin', ['ngRoute'])
             templateUrl: 'admin/gadget.html',
             controller: 'AdminCtrl'
         });
+        
+        $routeProvider.when('/admin/users/:id', {
+            templateUrl: 'admin/user.html',
+            controller: 'UserCtrl'
+        });
     }])
 
     .controller('NewGadgetCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$location', function($scope, $rootScope, $gadgets, $auth, $location) {
@@ -37,7 +42,7 @@ angular.module('quimby.admin', ['ngRoute'])
         
     }])
 
-    .controller('AdminListCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', function($scope, $rootScope, $gadgets, $auth) {
+    .controller('AdminListCtrl', ['$scope', '$rootScope', '$gadgets', '$users', '$auth', function($scope, $rootScope, $gadgets, $users, $auth) {
         $rootScope.links = [
             {href:"#/admin", name:"admin"}
         ];
@@ -45,6 +50,9 @@ angular.module('quimby.admin', ['ngRoute'])
             if (user != {}) {
                 $gadgets.getGadgets(function(data) {
                     $scope.gadgets = data;
+                });
+                $users.getAll(function(data) {
+                    $scope.users = data;
                 });
             } else {
                 $scope.gadgets = {};

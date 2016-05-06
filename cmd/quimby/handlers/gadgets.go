@@ -44,10 +44,38 @@ func GetGadget(w http.ResponseWriter, req *http.Request) {
 	enc.Encode(args.Gadget)
 }
 
-func GetUser(w http.ResponseWriter, req *http.Request) {
+func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
 	enc := json.NewEncoder(w)
 	args := GetArgs(req)
 	enc.Encode(args.User)
+}
+
+func GetUsers(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	users, err := quimby.GetUsers(args.DB)
+	if err != nil {
+		context.Set(req, "error", err)
+		return // err
+	}
+
+	enc := json.NewEncoder(w)
+	enc.Encode(users)
+}
+
+func GetUser(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	u := quimby.User{
+		DB:       args.DB,
+		Username: args.Vars["username"],
+	}
+	err := u.Fetch()
+	if err != nil {
+		context.Set(req, "error", err)
+		return // err
+	}
+
+	enc := json.NewEncoder(w)
+	enc.Encode(u)
 }
 
 func DeleteGadget(w http.ResponseWriter, req *http.Request) {
