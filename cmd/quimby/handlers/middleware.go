@@ -91,6 +91,7 @@ func FetchGadget() alice.Constructor {
 			}
 
 			args := GetArgs(req)
+
 			if args == nil || args.Vars["id"] == "" {
 				h.ServeHTTP(w, req)
 				return

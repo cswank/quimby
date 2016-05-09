@@ -50,7 +50,10 @@ func Bootstrap() {
 	var b bootstrap
 	db := getDB(&b)
 	saveQuimbyUser(db)
-	AddUser(db)
+	u := &quimby.User{
+		DB: db,
+	}
+	AddUser(u)
 	addCert(&b, db)
 	addIP(&b)
 	writeEnv(&b)

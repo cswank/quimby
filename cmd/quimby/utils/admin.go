@@ -81,46 +81,50 @@ func genPasswd(u *quimby.User) {
 	u.Password = randString(32)
 }
 
-func AddUser(db *bolt.DB) {
-	u := quimby.User{
-		DB: db,
-	}
-	fmt.Print("username: ")
-	fmt.Scanf("%s\n", &u.Username)
-	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n  4: system\n")
-	var x int
-	fmt.Scanf("%d\n", &x)
+func AddUser(u *quimby.User) {
 	var f passworder
-	if x == 4 {
-		f = genPasswd
-	} else {
-		f = getPasswd
+	if u.Username == "" {
+		fmt.Print("username: ")
+		fmt.Scanf("%s\n", &u.Username)
+		fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n  4: system\n")
+		var x int
+		fmt.Scanf("%d\n", &x)
+		if x == 4 {
+			f = genPasswd
+		} else {
+			f = getPasswd
+		}
+		perm, ok := permissions[x]
+		if !ok {
+			log.Fatal("select 1, 2, 3, or 4")
+		}
+		u.Permission = perm
+		f(u)
 	}
-	perm, ok := permissions[x]
-	if !ok {
-		log.Fatal("select 1, 2, 3, or 4")
-	}
-	u.Permission = perm
-	f(&u)
 	log.Println(u.Save())
 }
 
-func AddGadget(db *bolt.DB) {
-	g := quimby.Gadget{
-		DB: db,
-	}
-	fmt.Print("name: ")
-	fmt.Scanf("%s\n", &g.Name)
-	fmt.Print("host: ")
-	fmt.Scanf("%s\n", &g.Host)
-	fmt.Print(fmt.Sprintf("really save gadget (name: %s, host: %s)? (Y/n) ", g.Name, g.Host))
-	var save string
-	fmt.Scanf("%s\n", &save)
-	if save == "y" || save == "Y" || save == "" {
-		fmt.Println(g.Save())
+func AddGadget(g *quimby.Gadget) {
+	if g.Name == "" {
+		fmt.Print("name: ")
+		fmt.Scanf("%s\n", &g.Name)
+		fmt.Print("host: ")
+		fmt.Scanf("%s\n", &g.Host)
+		fmt.Print(fmt.Sprintf("really save gadget (name: %s, host: %s)? (Y/n) ", g.Name, g.Host))
+		var save string
+		fmt.Scanf("%s\n", &save)
+		if save == "y" || save == "Y" || save == "" {
+			fmt.Println(g.Save())
+		} else {
+			fmt.Println("not saving")
+		}
 	} else {
-		fmt.Println("not saving")
+		err := g.Save()
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
+	fmt.Println(g.Id)
 }
 
 func DeleteGadget(db *bolt.DB) {

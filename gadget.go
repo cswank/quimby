@@ -325,7 +325,10 @@ func (g *Gadget) Status() (map[string]gogadgets.Message, error) {
 }
 
 func (g *Gadget) ReadStatus(w io.Writer) error {
-	r, err := http.Get(fmt.Sprintf("%s/gadgets", g.Host))
+	u := fmt.Sprintf("%s/gadgets", g.Host)
+	fmt.Println("getting status", u)
+	r, err := http.Get(u)
+
 	if err != nil {
 		return err
 	}
