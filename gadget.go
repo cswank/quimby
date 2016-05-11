@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"time"
 
 	"github.com/boltdb/bolt"
@@ -155,6 +156,7 @@ func (g *Gadget) Save() error {
 				return err
 			}
 		}
+
 		d, _ := json.Marshal(g)
 		return b.Put([]byte(g.Id), d)
 	})
@@ -251,9 +253,17 @@ func (g *Gadget) Method(steps []string) error {
 }
 
 func (g *Gadget) ReadDevice(w io.Writer, location, device string) error {
-	r, err := http.Get(fmt.Sprintf("%s/gadgets/locations/%s/devices/%s/status", g.Host, location, device))
+	u, err := url.Parse(fmt.Sprintf("%s/gadgets/locations/%s/devices/%s/status", g.Host, location, device))
 	if err != nil {
 		return err
+	}
+
+	r, err := http.Get(u.String())
+	if err != nil {
+		return err
+	}
+	if r.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response: %d", r.StatusCode)
 	}
 	defer r.Body.Close()
 	_, err = io.Copy(w, r.Body)
@@ -326,7 +336,6 @@ func (g *Gadget) Status() (map[string]gogadgets.Message, error) {
 
 func (g *Gadget) ReadStatus(w io.Writer) error {
 	u := fmt.Sprintf("%s/gadgets", g.Host)
-	fmt.Println("getting status", u)
 	r, err := http.Get(u)
 
 	if err != nil {

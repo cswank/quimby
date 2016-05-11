@@ -74,10 +74,9 @@ func deleteGadgets() {
 		log.Fatal(err)
 	}
 	for _, g := range gs {
-		if g.Id == sprinklersId {
-			continue
+		if g.Id != sprinklersId {
+			deleteItem(g.Id)
 		}
-		deleteItem(g.Id)
 	}
 }
 
@@ -128,8 +127,47 @@ func loginCookie(u string, p string) *http.Cookie {
 	return r.Cookies()[0]
 }
 
+func initSprinklers() {
+	u := fmt.Sprintf(addr, "gadgets/", sprinklersId, "/command")
+
+	var buf bytes.Buffer
+	enc := json.NewEncoder(&buf)
+	m := map[string]string{
+		"command": "turn on back yard sprinklers",
+	}
+	enc.Encode(m)
+
+	req, err := http.NewRequest("POST", u, &buf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Add("Authorization", token)
+	r, err := http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	r.Body.Close()
+
+	buf = bytes.Buffer{}
+	enc = json.NewEncoder(&buf)
+	m = map[string]string{
+		"command": "turn off back yard sprinklers",
+	}
+	enc.Encode(m)
+
+	req, err = http.NewRequest("POST", u, &buf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	req.Header.Add("Authorization", token)
+	r, err = http.DefaultClient.Do(req)
+	if err != nil {
+		log.Fatal(err)
+	}
+	r.Body.Close()
+}
+
 func init() {
-	fmt.Println("init start")
 	u := fmt.Sprintf(addr, "ping", "", "")
 	for {
 		_, err := http.Get(u)
@@ -144,7 +182,8 @@ func init() {
 	cookie = loginCookie("me", "hushhush")
 	readCookie = loginCookie("him", "shhhhhhhh")
 	adminCookie = loginCookie("boss", "sosecret")
-	fmt.Println("init end")
+
+	initSprinklers()
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -321,12 +360,12 @@ var _ = Describe("Quimby", func() {
 		})
 
 		Context("logging in and out", func() {
-			FIt("lets you log in", func() {
+			It("lets you log in", func() {
 				//Already logged in above in BeforeEach
 				Expect(len(token)).ToNot(Equal(0))
 			})
 
-			FIt("lets you log out", func() {
+			It("lets you log out", func() {
 				getURL = func() string { return fmt.Sprintf(addr, "logout", "", "") }
 				getTok = func() string { return token }
 				getMethod = func() string { return "POST" }
@@ -337,7 +376,7 @@ var _ = Describe("Quimby", func() {
 		})
 
 		Context("logged in", func() {
-			FIt("lets you get gadgets", func() {
+			It("lets you get gadgets", func() {
 				getURL = func() string { return fmt.Sprintf(addr, "gadgets", "", "") }
 				r := getReq()
 				defer r.Body.Close()
@@ -348,7 +387,7 @@ var _ = Describe("Quimby", func() {
 				Expect(len(g)).To(Equal(1))
 			})
 
-			FIt("lets you get a gadget", func() {
+			It("lets you get a gadget", func() {
 				getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "") }
 				r := getReq()
 				defer r.Body.Close()
@@ -360,7 +399,7 @@ var _ = Describe("Quimby", func() {
 				Expect(g.Host).To(Equal(sprinklersHost))
 			})
 
-			FIt("lets you add notes to a gadget", func() {
+			It("lets you add notes to a gadget", func() {
 				getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/notes") }
 				getBuf = func() io.Reader {
 					var buf bytes.Buffer
@@ -403,7 +442,7 @@ var _ = Describe("Quimby", func() {
 
 				})
 
-				FIt("lets you delete a gadget", func() {
+				It("lets you delete a gadget", func() {
 					junkId, err := addGadget("junk", "http://localhost:4444")
 					Expect(err).To(BeNil())
 					getMethod = func() string { return "DELETE" }
@@ -413,7 +452,7 @@ var _ = Describe("Quimby", func() {
 					numGadgets = 1
 				})
 
-				FIt("doesn't let a read only user delete a gadget", func() {
+				It("doesn't let a read only user delete a gadget", func() {
 					getTok = func() string { return readToken }
 					getMethod = func() string { return "DELETE" }
 					getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "") }
@@ -444,7 +483,7 @@ var _ = Describe("Quimby", func() {
 					getURL = func() string { return fmt.Sprintf(addr, "gadgets", "", "") }
 				})
 
-				FIt("lets you add a gadget", func() {
+				It("lets you add a gadget", func() {
 					r := getReq()
 					defer r.Body.Close()
 					Expect(r.StatusCode).To(Equal(http.StatusOK))
@@ -467,7 +506,7 @@ var _ = Describe("Quimby", func() {
 					Expect(g2.Name).To(Equal("back yard"))
 				})
 
-				FIt("lets you update a gadget", func() {
+				It("lets you update a gadget", func() {
 
 					r := getReq()
 					defer r.Body.Close()
@@ -520,42 +559,64 @@ var _ = Describe("Quimby", func() {
 
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
 
-				var m map[string]map[string]gogadgets.Value
+				var m map[string]gogadgets.Message
 				dec := json.NewDecoder(r.Body)
 				Expect(dec.Decode(&m)).To(BeNil())
 
-				v := m["back yard"]["sprinklers"]
+				v := m["back yard sprinklers"]
 
-				val, ok := v.Value.(bool)
+				val, ok := v.Value.Value.(bool)
 				Expect(ok).To(BeTrue())
 				Expect(val).To(BeFalse())
 			})
 
-			// It("lets you send a command to a gadget", func() {
-			// 	getBuf = func() io.Reader {
-			// 		var buf bytes.Buffer
-			// 		enc := json.NewEncoder(&buf)
-			// 		m := map[string]string{
-			// 			"command": "turn on back yard sprinklers",
-			// 		}
-			// 		enc.Encode(m)
-			// 		return &buf
-			// 	}
+			It("lets you send a command to a gadget", func() {
+				getBuf = func() io.Reader {
+					var buf bytes.Buffer
+					enc := json.NewEncoder(&buf)
+					m := map[string]string{
+						"command": "turn on back yard sprinklers",
+					}
+					enc.Encode(m)
+					return &buf
+				}
 
-			// 	getMethod = func() string { return "POST" }
-			// 	getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/command") }
-			// 	r := getReq()
-			// 	defer r.Body.Close()
+				getMethod = func() string { return "POST" }
+				getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/command") }
+				r := getReq()
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
 
-			// 	Eventually(func() int {
-			// 		return len(msgs)
-			// 	}).Should(Equal(1))
+				Eventually(func() string {
+					d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+					Expect(err).To(BeNil())
+					return string(d)
+				}).Should(Equal("1"))
 
-			// 	msg := msgs[0]
-			// 	Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
-			// })
+				getBuf = func() io.Reader {
+					var buf bytes.Buffer
+					enc := json.NewEncoder(&buf)
+					m := map[string]string{
+						"command": "turn off back yard sprinklers",
+					}
+					enc.Encode(m)
+					return &buf
+				}
 
-			It("lets you get the value of a device", func() {
+				getMethod = func() string { return "POST" }
+				getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/command") }
+				r = getReq()
+				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+
+				Eventually(func() string {
+					d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+					Expect(err).To(BeNil())
+					return string(d)
+				}).Should(Equal("0"))
+			})
+
+			FIt("lets you get the value of a device", func() {
 				getURL = func() string {
 					return fmt.Sprintf(
 						addr,
@@ -564,13 +625,16 @@ var _ = Describe("Quimby", func() {
 						"/locations/back%20yard/devices/sprinklers/status",
 					)
 				}
+				getMethod = func() string { return "GET" }
+
 				r := getReq()
 				defer r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
 
-				var v gogadgets.Value
+				var m gogadgets.Value
 				dec := json.NewDecoder(r.Body)
-				Expect(dec.Decode(&v)).To(BeNil())
-				Expect(v.Value).To(BeTrue())
+				Expect(dec.Decode(&m)).To(BeNil())
+				Expect(m.Value).To(BeFalse())
 			})
 
 			Context("on and off", func() {
@@ -601,25 +665,27 @@ var _ = Describe("Quimby", func() {
 					getMethod = func() string { return "POST" }
 				})
 
-				// It("lets you turn off a device", func() {
-				// 	val = false
-				// 	r := getReq()
-				// 	defer r.Body.Close()
+				It("lets you turn a device on and off", func() {
+					val = true
+					r := getReq()
+					r.Body.Close()
 
-				// 	Expect(len(msgs)).To(Equal(1))
-				// 	msg := msgs[0]
-				// 	Expect(msg.Body).To(Equal("turn off front yard sprinklers"))
-				// })
+					Eventually(func() string {
+						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+						Expect(err).To(BeNil())
+						return string(d)
+					}).Should(Equal("1"))
 
-				// It("lets you turn on a device", func() {
-				// 	val = true
-				// 	r := getReq()
-				// 	defer r.Body.Close()
+					val = true
+					r = getReq()
+					r.Body.Close()
 
-				// 	Expect(len(msgs)).To(Equal(1))
-				// 	msg := msgs[0]
-				// 	Expect(msg.Body).To(Equal("turn on front yard sprinklers"))
-				// })
+					Eventually(func() string {
+						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+						Expect(err).To(BeNil())
+						return string(d)
+					}).Should(Equal("0"))
+				})
 			})
 
 			It("saves and gets stats", func() {
@@ -748,7 +814,7 @@ var _ = Describe("Quimby", func() {
 				// 	Expect(msg.UUID).To(Equal(uuid))
 				// })
 
-				FIt("allows the getting of a message with a websocket", func() {
+				It("allows the getting of a message with a websocket", func() {
 
 					uuid := gogadgets.GetUUID()
 					msg := gogadgets.Message{
@@ -827,7 +893,7 @@ var _ = Describe("Quimby", func() {
 				Expect(len(m)).To(Equal(0))
 			})
 
-			FIt("does not let non-admins see how many websocket clients there are", func() {
+			It("does not let non-admins see how many websocket clients there are", func() {
 				getCookie = func() *http.Cookie {
 					return cookie
 				}
@@ -864,7 +930,7 @@ var _ = Describe("Quimby", func() {
 				getURL = func() string { return fmt.Sprintf(addr, "gadgets", "", "") }
 			})
 
-			FIt("lets you get gadgets", func() {
+			It("lets you get gadgets", func() {
 				r := getReq()
 				defer r.Body.Close()
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
@@ -874,7 +940,7 @@ var _ = Describe("Quimby", func() {
 				Expect(len(g)).To(Equal(1))
 			})
 
-			FIt("lets you get a gadget", func() {
+			It("lets you get a gadget", func() {
 				getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "") }
 				r := getReq()
 				defer r.Body.Close()
@@ -891,7 +957,7 @@ var _ = Describe("Quimby", func() {
 					getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/notes") }
 				})
 
-				FIt("lets you add notes to a gadget", func() {
+				It("lets you add notes to a gadget", func() {
 
 					getBuf = func() io.Reader {
 						var buf bytes.Buffer
@@ -923,7 +989,7 @@ var _ = Describe("Quimby", func() {
 				// })
 			})
 
-			FIt("gives a 404 for a non-gadget", func() {
+			It("gives a 404 for a non-gadget", func() {
 				getURL = func() string { return fmt.Sprintf(addr, "gadgets/notarealid", "", "") }
 				r := getReq()
 				Expect(r.StatusCode).To(Equal(http.StatusNotFound))
@@ -961,7 +1027,7 @@ var _ = Describe("Quimby", func() {
 					numGadgets = 1
 				})
 
-				FIt("doesn't let a read only user delete a gadget", func() {
+				It("doesn't let a read only user delete a gadget", func() {
 					getCookie = func() *http.Cookie { return readCookie }
 					r := getReq()
 					Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
@@ -1196,7 +1262,7 @@ var _ = Describe("Quimby", func() {
 				// 	Expect(msg.UUID).To(Equal(uuid))
 				// })
 
-				FIt("allows the getting of a message with a websocket", func() {
+				It("allows the getting of a message with a websocket", func() {
 
 					uuid := gogadgets.GetUUID()
 					msg := gogadgets.Message{
@@ -1319,14 +1385,14 @@ var _ = Describe("Quimby", func() {
 		})
 
 		Describe("does not let you", func() {
-			FIt("get gadgets", func() {
+			It("get gadgets", func() {
 				u := fmt.Sprintf(addr, "gadgets", "", "")
 				r, err := http.Get(u)
 				Expect(err).To(BeNil())
 				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
 			})
 
-			FIt("get a gadget", func() {
+			It("get a gadget", func() {
 				r, err := http.Get(fmt.Sprintf(addr, "gadgets/", sprinklersId, ""))
 				Expect(err).To(BeNil())
 				Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
@@ -1335,7 +1401,7 @@ var _ = Describe("Quimby", func() {
 				r.Body.Close()
 			})
 
-			FIt("delete a gadget", func() {
+			It("delete a gadget", func() {
 				req, err := http.NewRequest("DELETE", fmt.Sprintf(addr, "gadgets/", sprinklersId, ""), nil)
 				Expect(err).To(BeNil())
 				r, err := http.DefaultClient.Do(req)
@@ -1346,7 +1412,7 @@ var _ = Describe("Quimby", func() {
 				defer r.Body.Close()
 			})
 
-			FIt("add a gadget", func() {
+			It("add a gadget", func() {
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
 				g := quimby.Gadget{
@@ -1362,7 +1428,7 @@ var _ = Describe("Quimby", func() {
 				r.Body.Close()
 			})
 
-			FIt("get the status of a gadget", func() {
+			It("get the status of a gadget", func() {
 				u := fmt.Sprintf(
 					addr,
 					"gadgets/",
@@ -1377,7 +1443,7 @@ var _ = Describe("Quimby", func() {
 				r.Body.Close()
 			})
 
-			FIt("send a command to a gadget", func() {
+			It("send a command to a gadget", func() {
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
 				m := map[string]string{
@@ -1393,7 +1459,7 @@ var _ = Describe("Quimby", func() {
 				r.Body.Close()
 			})
 
-			FIt("you to get of a websocket", func() {
+			It("you to get of a websocket", func() {
 				u := strings.Replace(
 					fmt.Sprintf(
 						addr,
@@ -1408,7 +1474,7 @@ var _ = Describe("Quimby", func() {
 				Expect(ws).To(BeNil())
 			})
 
-			FIt("does not turn on a device", func() {
+			It("does not turn on a device", func() {
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
 				v := gogadgets.Value{

@@ -36,7 +36,7 @@ var (
 	method       = kingpin.Command("method", "Send a method.")
 	gadgets      = kingpin.Command("gadgets", "Commands for managing gadgets")
 	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
-	gadgetName   = gadgets.Flag("name", "Permission (read, write, or admin").String()
+	gadgetName   = gadgets.Flag("name", "Name of the gadget.").String()
 	gadgetHost   = gadgets.Flag("host", "ip address of gadget (id http://<ipaddr>:6111)").String()
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
 	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
