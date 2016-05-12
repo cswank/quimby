@@ -793,27 +793,42 @@ var _ = Describe("Quimby", func() {
 					ws.Close()
 				})
 
-				// It("allows the sending of a message with a websocket", func() {
+				It("allows the sending of a message with a websocket", func() {
 
-				// 	uuid := gogadgets.GetUUID()
-				// 	msg := gogadgets.Message{
-				// 		Type:   gogadgets.COMMAND,
-				// 		Body:   "turn on back yard sprinklers",
-				// 		UUID:   uuid,
-				// 		Sender: "cli",
-				// 	}
-				// 	d, _ := json.Marshal(msg)
-				// 	err := ws.WriteMessage(websocket.TextMessage, d)
-				// 	Expect(err).To(BeNil())
+					uuid := gogadgets.GetUUID()
+					msg := gogadgets.Message{
+						Type:   gogadgets.COMMAND,
+						Body:   "turn on back yard sprinklers",
+						UUID:   uuid,
+						Sender: "cli",
+					}
+					d, _ := json.Marshal(msg)
+					err := ws.WriteMessage(websocket.TextMessage, d)
+					Expect(err).To(BeNil())
 
-				// 	Eventually(func() int {
-				// 		return len(msgs)
-				// 	}).Should(Equal(1))
+					Eventually(func() string {
+						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+						Expect(err).To(BeNil())
+						return string(d)
+					}).Should(Equal("1"))
 
-				// 	msg = msgs[0]
-				// 	Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
-				// 	Expect(msg.UUID).To(Equal(uuid))
-				// })
+					msg = gogadgets.Message{
+						Type:   gogadgets.COMMAND,
+						Body:   "turn off back yard sprinklers",
+						UUID:   uuid,
+						Sender: "cli",
+					}
+					d, _ = json.Marshal(msg)
+					err = ws.WriteMessage(websocket.TextMessage, d)
+					Expect(err).To(BeNil())
+
+					Eventually(func() string {
+						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+						Expect(err).To(BeNil())
+						return string(d)
+					}).Should(Equal("0"))
+
+				})
 
 				It("allows the getting of a message with a websocket", func() {
 
@@ -950,17 +965,28 @@ var _ = Describe("Quimby", func() {
 			})
 
 			Context("notes", func() {
+				var (
+					startingNotes []quimby.Note
+				)
 				BeforeEach(func() {
+
 					getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/notes") }
+
+					startingNotes = []quimby.Note{}
+					getMethod = func() string { return "GET" }
+					getBuf = func() io.Reader { return nil }
+					r := getReq()
+					Expect(r.StatusCode).To(Equal(http.StatusOK))
+					dec := json.NewDecoder(r.Body)
+					Expect(dec.Decode(&startingNotes)).To(BeNil())
 				})
 
-				It("lets you add notes to a gadget", func() {
-
+				It("lets you add  and get notes", func() {
 					getBuf = func() io.Reader {
 						var buf bytes.Buffer
 						enc := json.NewEncoder(&buf)
 						note := map[string]string{
-							"text": "jibber jabber",
+							"text": "how's things?",
 						}
 						enc.Encode(note)
 						return &buf
@@ -969,21 +995,19 @@ var _ = Describe("Quimby", func() {
 					r := getReq()
 					Expect(r.StatusCode).To(Equal(http.StatusOK))
 					r.Body.Close()
+
+					getMethod = func() string { return "GET" }
+					getBuf = func() io.Reader { return nil }
+					r = getReq()
+					Expect(r.StatusCode).To(Equal(http.StatusOK))
+					var notes []quimby.Note
+					dec := json.NewDecoder(r.Body)
+					Expect(dec.Decode(&notes)).To(BeNil())
+					r.Body.Close()
+					Expect(len(notes)).To(Equal(len(startingNotes) + 1))
+					n := notes[len(notes)-1]
+					Expect(n.Text).To(Equal("how's things?"))
 				})
-
-				// It("lets you get notes from a gadget", func() {
-				// 	Expect(sprinklers.AddNote(quimby.Note{Text: "how's things?", Author: "me"}))
-
-				// 	r := getReq()
-				// 	Expect(r.StatusCode).To(Equal(http.StatusOK))
-				// 	var notes []quimby.Note
-				// 	dec := json.NewDecoder(r.Body)
-				// 	Expect(dec.Decode(&notes)).To(BeNil())
-				// 	r.Body.Close()
-				// 	Expect(len(notes)).To(Equal(1))
-				// 	n := notes[0]
-				// 	Expect(n.Text).To(Equal("how's things?"))
-				// })
 			})
 
 			It("gives a 404 for a non-gadget", func() {
@@ -1070,29 +1094,51 @@ var _ = Describe("Quimby", func() {
 				Expect(v.Value.Value).To(BeFalse())
 			})
 
-			// It("lets you send a command to a gadget", func() {
-			// 	getBuf = func() io.Reader {
-			// 		var buf bytes.Buffer
-			// 		enc := json.NewEncoder(&buf)
-			// 		m := map[string]string{
-			// 			"command": "turn on back yard sprinklers",
-			// 		}
-			// 		enc.Encode(m)
-			// 		return &buf
-			// 	}
-			// 	getMethod = func() string { return "POST" }
-			// 	getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/command") }
+			It("lets you send a command to a gadget", func() {
+				getBuf = func() io.Reader {
+					var buf bytes.Buffer
+					enc := json.NewEncoder(&buf)
+					m := map[string]string{
+						"command": "turn on back yard sprinklers",
+					}
+					enc.Encode(m)
+					return &buf
+				}
+				getMethod = func() string { return "POST" }
+				getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/command") }
 
-			// 	r := getReq()
-			// 	defer r.Body.Close()
+				r := getReq()
+				r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
 
-			// 	Eventually(func() int {
-			// 		return len(msgs)
-			// 	}).Should(Equal(1))
+				Eventually(func() string {
+					d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+					Expect(err).To(BeNil())
+					return string(d)
+				}).Should(Equal("1"))
 
-			// 	msg := msgs[0]
-			// 	Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
-			// })
+				getBuf = func() io.Reader {
+					var buf bytes.Buffer
+					enc := json.NewEncoder(&buf)
+					m := map[string]string{
+						"command": "turn off back yard sprinklers",
+					}
+					enc.Encode(m)
+					return &buf
+				}
+				getMethod = func() string { return "POST" }
+				getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "/command") }
+
+				r = getReq()
+				r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
+
+				Eventually(func() string {
+					d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+					Expect(err).To(BeNil())
+					return string(d)
+				}).Should(Equal("0"))
+			})
 
 			It("lets you get the value of a device", func() {
 				getURL = func() string {
@@ -1243,27 +1289,41 @@ var _ = Describe("Quimby", func() {
 					ws.Close()
 				})
 
-				// It("allows the sending of a message with a websocket", func() {
+				It("allows the sending of a message with a websocket", func() {
 
-				// 	uuid := gogadgets.GetUUID()
-				// 	msg := gogadgets.Message{
-				// 		Type:   gogadgets.COMMAND,
-				// 		Body:   "turn on back yard sprinklers",
-				// 		UUID:   uuid,
-				// 		Sender: "cli",
-				// 	}
-				// 	d, _ := json.Marshal(msg)
-				// 	err := ws.WriteMessage(websocket.TextMessage, d)
-				// 	Expect(err).To(BeNil())
+					uuid := gogadgets.GetUUID()
+					msg := gogadgets.Message{
+						Type:   gogadgets.COMMAND,
+						Body:   "turn on back yard sprinklers",
+						UUID:   uuid,
+						Sender: "cli",
+					}
+					d, _ := json.Marshal(msg)
+					err := ws.WriteMessage(websocket.TextMessage, d)
+					Expect(err).To(BeNil())
 
-				// 	Eventually(func() int {
-				// 		return len(msgs)
-				// 	}).Should(Equal(1))
+					Eventually(func() string {
+						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+						Expect(err).To(BeNil())
+						return string(d)
+					}).Should(Equal("1"))
 
-				// 	msg = msgs[0]
-				// 	Expect(msg.Body).To(Equal("turn on back yard sprinklers"))
-				// 	Expect(msg.UUID).To(Equal(uuid))
-				// })
+					msg = gogadgets.Message{
+						Type:   gogadgets.COMMAND,
+						Body:   "turn off back yard sprinklers",
+						UUID:   uuid,
+						Sender: "cli",
+					}
+					d, _ = json.Marshal(msg)
+					err = ws.WriteMessage(websocket.TextMessage, d)
+					Expect(err).To(BeNil())
+
+					Eventually(func() string {
+						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+						Expect(err).To(BeNil())
+						return string(d)
+					}).Should(Equal("0"))
+				})
 
 				It("allows the getting of a message with a websocket", func() {
 
