@@ -616,7 +616,7 @@ var _ = Describe("Quimby", func() {
 				}).Should(Equal("0"))
 			})
 
-			FIt("lets you get the value of a device", func() {
+			It("lets you get the value of a device", func() {
 				getURL = func() string {
 					return fmt.Sprintf(
 						addr,
@@ -659,7 +659,7 @@ var _ = Describe("Quimby", func() {
 							addr,
 							"gadgets/",
 							sprinklersId,
-							"/locations/front%20yard/devices/sprinklers/status",
+							"/locations/back%20yard/devices/sprinklers/status",
 						)
 					}
 					getMethod = func() string { return "POST" }
@@ -669,6 +669,7 @@ var _ = Describe("Quimby", func() {
 					val = true
 					r := getReq()
 					r.Body.Close()
+					Expect(r.StatusCode).To(Equal(http.StatusOK))
 
 					Eventually(func() string {
 						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
@@ -676,7 +677,7 @@ var _ = Describe("Quimby", func() {
 						return string(d)
 					}).Should(Equal("1"))
 
-					val = true
+					val = false
 					r = getReq()
 					r.Body.Close()
 
@@ -705,7 +706,7 @@ var _ = Describe("Quimby", func() {
 						addr2,
 						"internal/gadgets/",
 						sprinklersId,
-						"/sources/front%20yard%20temperature",
+						"/sources/basement%20temperature",
 					)
 				}
 				getMethod = func() string { return "POST" }
@@ -726,7 +727,7 @@ var _ = Describe("Quimby", func() {
 						"gadgets/",
 						sprinklersId,
 						fmt.Sprintf(
-							"/sources/front%%20yard%%20temperature?start=%s&end=%s",
+							"/sources/basement%%20temperature?start=%s&end=%s",
 							url.QueryEscape(n.Add(-60*time.Second).Format(time.RFC3339Nano)),
 							url.QueryEscape(n.Add(time.Second).Format(time.RFC3339Nano)),
 						),
@@ -885,12 +886,8 @@ var _ = Describe("Quimby", func() {
 					return adminCookie
 				}
 				r := getReq()
-				defer r.Body.Close()
+				r.Body.Close()
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
-				var m map[string]int
-				dec := json.NewDecoder(r.Body)
-				Expect(dec.Decode(&m)).To(BeNil())
-				Expect(len(m)).To(Equal(0))
 			})
 
 			It("does not let non-admins see how many websocket clients there are", func() {
@@ -1002,8 +999,10 @@ var _ = Describe("Quimby", func() {
 				)
 
 				BeforeEach(func() {
+					junkId, err := addGadget("junk", "http://localhost:4444")
+					Expect(err).To(BeNil())
 					getMethod = func() string { return "DELETE" }
-					getURL = func() string { return fmt.Sprintf(addr, "gadgets/", sprinklersId, "") }
+					getURL = func() string { return fmt.Sprintf(addr, "gadgets/", junkId, "") }
 					getTok = func() string { return token }
 				})
 
@@ -1032,7 +1031,7 @@ var _ = Describe("Quimby", func() {
 					r := getReq()
 					Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
 					r.Body.Close()
-					numGadgets = 1
+					numGadgets = 2
 				})
 
 				It("lets you add a gadget", func() {
@@ -1062,13 +1061,13 @@ var _ = Describe("Quimby", func() {
 				r := getReq()
 				defer r.Body.Close()
 
-				m := map[string]map[string]gogadgets.Value{}
+				m := map[string]gogadgets.Message{}
 				dec := json.NewDecoder(r.Body)
 				Expect(dec.Decode(&m)).To(BeNil())
-				Expect(len(m)).To(Equal(2))
-				v, ok := m["back yard"]["sprinklers"]
+				Expect(len(m)).To(Equal(1))
+				v, ok := m["back yard sprinklers"]
 				Expect(ok).To(BeTrue())
-				Expect(v.Value).To(BeFalse())
+				Expect(v.Value.Value).To(BeFalse())
 			})
 
 			// It("lets you send a command to a gadget", func() {
@@ -1110,7 +1109,7 @@ var _ = Describe("Quimby", func() {
 				var v gogadgets.Value
 				dec := json.NewDecoder(r.Body)
 				Expect(dec.Decode(&v)).To(BeNil())
-				Expect(v.Value).To(BeTrue())
+				Expect(v.Value).To(BeFalse())
 			})
 
 			// XIt("lets you get a brewtoad method", func() {
@@ -1135,7 +1134,6 @@ var _ = Describe("Quimby", func() {
 			// })
 
 			It("saves and gets stats", func() {
-
 				var getVal floatGetter
 
 				getBuf = func() io.Reader {
@@ -1152,20 +1150,22 @@ var _ = Describe("Quimby", func() {
 						addr2,
 						"internal/gadgets/",
 						sprinklersId,
-						"/sources/front%20yard%20temperature",
+						"/sources/outside%20temperature",
 					)
 				}
 				getMethod = func() string { return "POST" }
 				n := time.Now()
 
 				r := getReq()
-				defer r.Body.Close()
+				r.Body.Close()
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
-				time.Sleep(10 * time.Millisecond)
+
+				time.Sleep(100 * time.Millisecond)
 
 				getVal = func() float64 { return 33.5 }
 				r = getReq()
-				defer r.Body.Close()
+				r.Body.Close()
+				Expect(r.StatusCode).To(Equal(http.StatusOK))
 
 				getURL = func() string {
 					return fmt.Sprintf(
@@ -1173,7 +1173,7 @@ var _ = Describe("Quimby", func() {
 						"gadgets/",
 						sprinklersId,
 						fmt.Sprintf(
-							"/sources/front%%20yard%%20temperature?start=%s&end=%s",
+							"/sources/outside%%20temperature?start=%s&end=%s",
 							url.QueryEscape(n.Add(-60*time.Second).Format(time.RFC3339Nano)),
 							url.QueryEscape(n.Add(time.Second).Format(time.RFC3339Nano)),
 						),
@@ -1181,13 +1181,16 @@ var _ = Describe("Quimby", func() {
 				}
 
 				getMethod = func() string { return "GET" }
-				r = getReq()
-				defer r.Body.Close()
-
+				getBuf = func() io.Reader { return nil }
 				var points []quimby.DataPoint
-				dec := json.NewDecoder(r.Body)
-				Expect(dec.Decode(&points)).To(BeNil())
-				Expect(len(points)).To(Equal(2))
+
+				Eventually(func() int {
+					r = getReq()
+					defer r.Body.Close()
+					dec := json.NewDecoder(r.Body)
+					Expect(dec.Decode(&points)).To(BeNil())
+					return len(points)
+				}).Should(Equal(2))
 
 				p1 := points[0]
 				Expect(p1.Value).To(Equal(33.3))
@@ -1318,7 +1321,7 @@ var _ = Describe("Quimby", func() {
 							addr,
 							"gadgets/",
 							sprinklersId,
-							"/locations/front%20yard/devices/sprinklers/status",
+							"/locations/back%20yard/devices/sprinklers/status",
 						)
 					}
 					getMethod = func() string { return "POST" }
@@ -1329,9 +1332,11 @@ var _ = Describe("Quimby", func() {
 					r := getReq()
 					defer r.Body.Close()
 
-					d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
-					Expect(err).To(BeNil())
-					Expect(string(d)).To(Equal("1"))
+					Eventually(func() string {
+						d, err := ioutil.ReadFile("/tmp/sprinklers.txt")
+						Expect(err).To(BeNil())
+						return string(d)
+					}).Should(Equal("1"))
 				})
 
 				It("lets you turn off a device", func() {
@@ -1361,20 +1366,11 @@ var _ = Describe("Quimby", func() {
 
 		AfterEach(func() {
 
-			getReq = func() *http.Response {
-				req, err := http.NewRequest(getMethod(), getURL(), getBuf())
-				Expect(err).To(BeNil())
-				req.Header.Add("Authorization", getTok())
-				req.Header.Add("Accept", getAccept())
-				r, err := http.DefaultClient.Do(req)
-				Expect(err).To(BeNil())
-				return r
-			}
-
-			getURL = func() string { return fmt.Sprintf(addr, "gadgets", "", "") }
-			getMethod = func() string { return "GET" }
-			getBuf = func() io.Reader { return nil }
-			r := getReq()
+			req, err := http.NewRequest("GET", fmt.Sprintf(addr, "gadgets", "", ""), nil)
+			Expect(err).To(BeNil())
+			req.Header.Add("Authorization", token)
+			r, err := http.DefaultClient.Do(req)
+			Expect(err).To(BeNil())
 			defer r.Body.Close()
 			Expect(r.StatusCode).To(Equal(http.StatusOK))
 			var g []quimby.Gadget
@@ -1474,7 +1470,7 @@ var _ = Describe("Quimby", func() {
 				Expect(ws).To(BeNil())
 			})
 
-			It("does not turn on a device", func() {
+			It("turn on a device", func() {
 				var buf bytes.Buffer
 				enc := json.NewEncoder(&buf)
 				v := gogadgets.Value{
