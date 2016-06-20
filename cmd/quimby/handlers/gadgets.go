@@ -246,6 +246,7 @@ func AddGadget(w http.ResponseWriter, req *http.Request) {
 }
 
 func UpdateGadget(w http.ResponseWriter, req *http.Request) {
+
 	args := GetArgs(req)
 	var g quimby.Gadget
 	dec := json.NewDecoder(req.Body)

@@ -23,6 +23,9 @@ const (
 var (
 	users        = kingpin.Command("users", "User management")
 	userAdd      = users.Command("add", "Add a new user.")
+	userName     = users.Flag("username", "Username for a new user").String()
+	userPW       = users.Flag("password", "Password for a new user").String()
+	userPerm     = users.Flag("permission", "Permission (read, write, or admin").String()
 	userList     = users.Command("list", "List users.")
 	userEdit     = users.Command("edit", "Update a user.")
 	cert         = kingpin.Command("cert", "Make an tls cert.")
@@ -33,6 +36,8 @@ var (
 	method       = kingpin.Command("method", "Send a method.")
 	gadgets      = kingpin.Command("gadgets", "Commands for managing gadgets")
 	gadgetAdd    = gadgets.Command("add", "Add a gadget.")
+	gadgetName   = gadgets.Flag("name", "Name of the gadget.").String()
+	gadgetHost   = gadgets.Flag("host", "ip address of gadget (id http://<ipaddr>:6111)").String()
 	gadgetList   = gadgets.Command("list", "List the gadgets.")
 	gadgetEdit   = gadgets.Command("edit", "List the gadgets.")
 	gadgetDelete = gadgets.Command("delete", "Delete a gadget.")
@@ -50,13 +55,13 @@ func main() {
 	case "cert":
 		utils.GenerateCert(*domain, *pth)
 	case "users add":
-		addDB(utils.AddUser)
+		doUser(utils.AddUser)
 	case "users list":
 		addDB(utils.ListUsers)
 	case "users edit":
 		addDB(utils.EditUser)
 	case "gadgets add":
-		addDB(utils.AddGadget)
+		doGadget(utils.AddGadget)
 	case "gadgets list":
 		addDB(utils.ListGadgets)
 	case "gadgets edit":
@@ -75,8 +80,10 @@ func main() {
 }
 
 type dbNeeder func(*bolt.DB)
+type userNeeder func(*quimby.User)
+type gadgetNeeder func(*quimby.Gadget)
 
-func addDB(f dbNeeder) {
+func getDB() *bolt.DB {
 	pth := os.Getenv("QUIMBY_DB")
 	if pth == "" {
 		log.Fatal("you must specify a db location with QUIMBY_DB")
@@ -85,6 +92,34 @@ func addDB(f dbNeeder) {
 	if err != nil {
 		log.Fatalf("could not open db at %s - %v", pth, err)
 	}
+	return db
+}
+
+func doUser(f userNeeder) {
+	db := getDB()
+	u := &quimby.User{
+		DB:         db,
+		Password:   *userPW,
+		Username:   *userName,
+		Permission: *userPerm,
+	}
+	f(u)
+	defer db.Close()
+}
+
+func doGadget(f gadgetNeeder) {
+	db := getDB()
+	g := &quimby.Gadget{
+		DB:   db,
+		Name: *gadgetName,
+		Host: *gadgetHost,
+	}
+	f(g)
+	db.Close()
+}
+
+func addDB(f dbNeeder) {
+	db := getDB()
 	f(db)
 	defer db.Close()
 }

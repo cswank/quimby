@@ -64,6 +64,7 @@ func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.
 				return
 			}
 			user.HashedPassword = []byte{}
+
 			args := &Args{
 				User: user,
 				DB:   db,
@@ -71,7 +72,6 @@ func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.
 				Vars: rex.Vars(req, name),
 				Args: req.URL.Query(),
 			}
-
 			setArgs(req, args)
 
 			h.ServeHTTP(w, req)
@@ -113,6 +113,8 @@ func FetchGadget() alice.Constructor {
 				w.WriteHeader(status)
 				w.Write([]byte(msg))
 				return
+			} else {
+				setArgs(req, args)
 			}
 			h.ServeHTTP(w, req)
 		})
