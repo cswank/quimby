@@ -3,7 +3,7 @@
 source test.env
 
 rm $QUIMBY_DB
-godep go install
+go install
 
 quimby users add --username me --permission write --password hushhush
 quimby users add --username him --permission read --password shhhhhhhh
@@ -18,7 +18,7 @@ export QUIMBY_TEST_SPRINKLERS_ID=$QUIMBY_TEST_SPRINKLERS_ID
 quimby serve & SERVER=$!
 gogadgets -c ./extras/sprinklers.conf & SPRINKLERS=$!
 
-godep go test
+go test
 
 kill $SERVER
 kill $SPRINKLERS
