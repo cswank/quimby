@@ -40,8 +40,24 @@ After=network.target
 [Service]
 Type=simple
 PIDFile=/tmp/quimby.pid
-EnvironmentFile=/etc/quimby/quimby.env
+Environment=QUIMBY_DB=/var/lib/quimby/quimby.db
+Environment=QUIMBY_INTERFACE=$IP
+Environment=QUIMBY_PORT=443
+Environment=QUIMBY_INTERNAL_PORT=8989
+Environment=QUIMBY_HOST=http://$IP
+Environment=QUIMBY_BLOCK_KEY=$BLOCK
+Environment=QUIMBY_HASH_KEY= $HASH
+Environment=QUIMBY_JWT_PRIV=$QUIMBY_JWT_PRIV
+Environment=QUIMBY_JWT_PUB=$QUIMBY_JWT_PUB
+Environment=QUIMBY_TLS_KEY=$QUIMBY_TLS_KEY
+Environment=QUIMBY_TLS_CERT=$QUIMBY_TLS_CERT
+Environment=QUIMBY_USER=quimby
 ExecStart=/usr/local/bin/quimby serve
+
+[Install]
+# multi-user.target corresponds to run level 3
+# roughtly meaning wanted by system start
+WantedBy    = multi-user.target
 " > /etc/systemd/system/quimby.service
 
 # generate keys for JWT
