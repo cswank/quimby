@@ -157,8 +157,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Post("/api/logout", http.HandlerFunc(handlers.Logout))
 	r.Get("/api/ping", getMiddleware(handlers.Read, handlers.Ping))
 	r.Get("/api/users", getMiddleware(handlers.Admin, handlers.GetUsers))
-	r.Get("/api/users/current", getMiddleware(handlers.Read, handlers.GetCurrentUser))
 	r.Get("/api/users/{username}", getMiddleware(handlers.Admin, handlers.GetUser))
+	r.Get("/api/users/current", getMiddleware(handlers.Read, handlers.GetCurrentUser))
 	r.Get("/api/gadgets", getMiddleware(handlers.Read, handlers.GetGadgets))
 	r.Post("/api/gadgets", getMiddleware(handlers.Read, handlers.AddGadget))
 	r.Get("/api/gadgets/{id}", getMiddleware(handlers.Read, handlers.GetGadget))
@@ -180,7 +180,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 
 	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
 
-	chain := alice.New(handlers.Auth(db, lg, r, "main"), handlers.FetchGadget(), handlers.Error).Then(r)
+	chain := alice.New(handlers.Auth(db, lg, "main"), handlers.FetchGadget(), handlers.Error(lg)).Then(r)
 
 	http.Handle(root, chain)
 
@@ -201,7 +201,7 @@ func startInternal(iRoot string, db *bolt.DB, lg quimby.Logger, port string) {
 	r.Post("/internal/updates", getMiddleware(handlers.Write, handlers.RelayMessage))
 	r.Post("/internal/gadgets/{id}/sources/{name}", getMiddleware(handlers.Write, handlers.AddDataPoint))
 
-	chain := alice.New(handlers.Auth(db, lg, r, "internal"), handlers.FetchGadget()).Then(r)
+	chain := alice.New(handlers.Auth(db, lg, "internal"), handlers.FetchGadget()).Then(r)
 
 	http.Handle(iRoot, chain)
 	a := fmt.Sprintf(":%s", port)

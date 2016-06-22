@@ -22,19 +22,22 @@ func setArgs(r *http.Request, args *Args) {
 	context.Set(r, "args", args)
 }
 
-func Error(h http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		h.ServeHTTP(w, req)
-		e := context.Get(req, "error")
-		if e != nil {
-			err := e.(error)
-			w.WriteHeader(http.StatusInternalServerError)
-			w.Write([]byte(err.Error()))
-		}
-	})
+func Error(lg quimby.Logger) alice.Constructor {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			h.ServeHTTP(w, req)
+			e := context.Get(req, "error")
+			if e != nil {
+				lg.Printf("error (%s)\n", e)
+				err := e.(error)
+				w.WriteHeader(http.StatusInternalServerError)
+				w.Write([]byte(err.Error()))
+			}
+		})
+	}
 }
 
-func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.Constructor {
+func Auth(db *bolt.DB, lg quimby.Logger, name string) alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			pth := req.URL.Path
@@ -84,8 +87,8 @@ func Auth(db *bolt.DB, lg quimby.Logger, router *rex.Router, name string) alice.
 func FetchGadget() alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-
-			if req.URL.Path == "/api/login" || req.URL.Path == "/api/logout" {
+			pth := req.URL.Path
+			if pth == "/api/login" || (strings.Index(pth, "/api") == -1 && strings.Index(pth, "/internal") == -1) {
 				h.ServeHTTP(w, req)
 				return
 			}

@@ -26,20 +26,23 @@ angular.module('quimby.services')
             },
             login: function(username, password, callback, errorCallback) {
                 var u = {username:username, password: password};
+                console.log("loggin in", username, password);
                 $http({
                     url: '/api/login',
                     method: "POST",
                     data: JSON.stringify(u),
                     headers: {'Content-Type': 'application/json'}
                 }).success(function (data, status, headers, config) {
+                    console.log("logged in good", data, status, headers('Location'));
                     loggedIn = true;
                     $http.get(headers('Location')).success(function(data) {
                         user = data;
                         callback(data);
                     });
                 }).error(function (data, status, headers, config) {
+                    console.log("loggin in fail", data, status);
                     loggedIn = false;
-                    errorCallback();
+                    errorCallback(data);
                 });
             },
 

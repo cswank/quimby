@@ -6,7 +6,7 @@ angular.module('quimby.services')
             restrict: "E",
             replace: true,
             transclude: true,
-            templateUrl: "/gadgets/method.html?t=" + new Date().getTime(),
+            templateUrl: "/gadget/method.html?t=" + new Date().getTime(),
             scope: {
                 uuid: '=',
                 method: '=',

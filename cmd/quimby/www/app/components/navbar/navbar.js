@@ -66,11 +66,13 @@ angular.module('quimby.directives')
                             $location.path("/reset-password");
                         } else if (result) {
                             $auth.login(result.username, result.password, function(user) {
+                                console.log("logged in", user);
                                 $scope.message = "";
                                 $scope.user = user;
                                 $scope.loggedIn = true;
                                 $location.path("/gadgets");
-                            }, function(){
+                            }, function(data) {
+                                console.log("not logged in", data);
                                 $scope.message = "the username or password is not correct, please try again";
                                 $scope.showLogin();
                             });
