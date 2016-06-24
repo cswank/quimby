@@ -377,7 +377,7 @@ var _ = Describe("Quimby", func() {
 
 		Context("logged in", func() {
 			It("lets you get the logged in user", func() {
-				getURL = func() string { return fmt.Sprintf(addr, "users/current", "", "") }
+				getURL = func() string { return fmt.Sprintf(addr, "currentuser", "", "") }
 				r := getReq()
 				defer r.Body.Close()
 				Expect(r.StatusCode).To(Equal(http.StatusOK))
@@ -868,9 +868,7 @@ var _ = Describe("Quimby", func() {
 					Expect(msg2.Location).To(Equal("back yard"))
 					Expect(msg2.UUID).To(Equal(uuid))
 				})
-
 			})
-
 		})
 	})
 

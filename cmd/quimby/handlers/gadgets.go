@@ -44,12 +44,6 @@ func GetGadget(w http.ResponseWriter, req *http.Request) {
 	enc.Encode(args.Gadget)
 }
 
-func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
-	enc := json.NewEncoder(w)
-	args := GetArgs(req)
-	enc.Encode(args.User)
-}
-
 func GetUsers(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	users, err := quimby.GetUsers(args.DB)
@@ -60,6 +54,12 @@ func GetUsers(w http.ResponseWriter, req *http.Request) {
 
 	enc := json.NewEncoder(w)
 	enc.Encode(users)
+}
+
+func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
+	enc := json.NewEncoder(w)
+	args := GetArgs(req)
+	enc.Encode(args.User)
 }
 
 func GetUser(w http.ResponseWriter, req *http.Request) {

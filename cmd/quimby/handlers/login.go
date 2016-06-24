@@ -37,7 +37,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("Location", "/api/users/current")
+	w.Header().Set("Location", "/api/currentuser")
 	params := r.URL.Query()
 	methods, ok := params["auth"]
 	if ok && methods[0] == "jwt" {
