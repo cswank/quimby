@@ -66,7 +66,6 @@ angular.module('quimby.directives')
                             $location.path("/reset-password");
                         } else if (result) {
                             $auth.login(result.username, result.password, function(user) {
-                                console.log("logged in", user);
                                 $scope.message = "";
                                 $scope.user = user;
                                 $scope.loggedIn = true;
@@ -79,6 +78,10 @@ angular.module('quimby.directives')
                         }
                     });
                 };
+
+                $scope.admin = function() {
+                    $location.path('/admin');
+                }
                 
                 $auth.getUser(function(user) {
                     if (user) {

@@ -23,7 +23,7 @@ var (
 func Ping(w http.ResponseWriter, req *http.Request) {
 	w.Header().Add(
 		"Location",
-		"/api/users/current",
+		"/api/currentuser",
 	)
 }
 
