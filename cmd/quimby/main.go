@@ -32,6 +32,8 @@ var (
 	domain       = cert.Flag("domain", "The domain for the tls cert.").Required().Short('d').String()
 	pth          = cert.Flag("path", "The directory where the cert files will be written").Required().Short('p').String()
 	serve        = kingpin.Command("serve", "Start the server.")
+	setup        = kingpin.Command("setup", "Set up the the server (keys and init scripts and what not.")
+	net          = setup.Flag("net", "network interface").Short('n').Default("eth0").String()
 	command      = kingpin.Command("command", "Send a command.")
 	method       = kingpin.Command("method", "Send a method.")
 	gadgets      = kingpin.Command("gadgets", "Commands for managing gadgets")
@@ -76,6 +78,8 @@ func main() {
 		utils.Bootstrap()
 	case "serve":
 		addDB(startServer)
+	case "setup":
+		utils.SetupServer(*net)
 	}
 }
 

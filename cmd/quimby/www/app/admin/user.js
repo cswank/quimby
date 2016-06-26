@@ -11,7 +11,7 @@ angular.module('quimby.admin')
                         {href:"#/admin", name:"admin"},
                         {href:"#/admin/users" + username, name:data.name}
                     ];
-                    $scope.u = data;
+                    $scope.user = data;
                 });
             }
         });
@@ -21,7 +21,7 @@ angular.module('quimby.admin')
                 controller: DeleteGadgetController,
                 templateUrl: 'admin/confirm.html?t=' + new Date().getTime(),
                 locals: {
-                    name: $scope.u.username
+                    name: $scope.user.username
                 },
                 targetEvent: ev
             }).then(function(result) {
