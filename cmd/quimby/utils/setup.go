@@ -8,9 +8,10 @@ import (
 	"os/exec"
 )
 
-func SetupServer(net string) {
+func SetupServer(domain, net string) {
 	s := Setup{
 		Interface: net,
+		Domain:    domain,
 	}
 	f, err := ioutil.TempFile("", "")
 	if err := f.Chmod(0777); err != nil {
@@ -45,6 +46,7 @@ func SetupServer(net string) {
 
 type Setup struct {
 	Interface string
+	Domain    string
 }
 
 const script = `#!/bin/bash
@@ -114,5 +116,5 @@ openssl genrsa -out $QUIMBY_JWT_PRIV 2048
 openssl rsa -in $QUIMBY_JWT_PRIV -pubout -out $QUIMBY_JWT_PUB
 
 # generate keys for TLS
-quimby cert --domain localhost --path $QUIMBY_TLS_KEYS
+quimby cert --domain {{domain}} --path $QUIMBY_TLS_KEYS
 `

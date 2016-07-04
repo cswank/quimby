@@ -73,7 +73,7 @@ func GetUser(w http.ResponseWriter, req *http.Request) {
 		context.Set(req, "error", err)
 		return // err
 	}
-
+	u.HashedPassword = []byte{}
 	enc := json.NewEncoder(w)
 	enc.Encode(u)
 }

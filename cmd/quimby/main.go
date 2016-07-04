@@ -34,6 +34,7 @@ var (
 	serve        = kingpin.Command("serve", "Start the server.")
 	setup        = kingpin.Command("setup", "Set up the the server (keys and init scripts and what not.")
 	net          = setup.Flag("net", "network interface").Short('n').Default("eth0").String()
+	setupDomain  = setup.Flag("domain", "network interface").Required().Short('d').String()
 	command      = kingpin.Command("command", "Send a command.")
 	method       = kingpin.Command("method", "Send a method.")
 	gadgets      = kingpin.Command("gadgets", "Commands for managing gadgets")
@@ -79,7 +80,7 @@ func main() {
 	case "serve":
 		addDB(startServer)
 	case "setup":
-		utils.SetupServer(*net)
+		utils.SetupServer(*setupDomain, *net)
 	}
 }
 

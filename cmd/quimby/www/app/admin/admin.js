@@ -2,6 +2,12 @@
 
 angular.module('quimby.admin', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
+
+        $routeProvider.when('/admin/add-user', {
+            templateUrl: 'admin/add-user.html',
+            controller: 'AddUserCtrl'
+        });
+        
         $routeProvider.when('/admin', {
             templateUrl: 'admin/admin.html',
             controller: 'AdminListCtrl'
@@ -21,6 +27,8 @@ angular.module('quimby.admin', ['ngRoute'])
             templateUrl: 'admin/user.html',
             controller: 'UserCtrl'
         });
+
+        
     }])
 
     .controller('NewGadgetCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$location', function($scope, $rootScope, $gadgets, $auth, $location) {

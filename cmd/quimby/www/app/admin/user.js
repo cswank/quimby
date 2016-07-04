@@ -1,17 +1,19 @@
 'use strict';
 
 angular.module('quimby.admin')
-    .controller('UserCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$location', function($scope, $rootScope, $gadgets, $auth, $location) {
+    .controller('UserCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$users', '$location', '$routeParams', function($scope, $rootScope, $gadgets, $auth, $users, $location, $routeParams) {
         var username = $routeParams.id;
 
+        console.log("user", username);
         $rootScope.$watch('user', function(user) {
             if (user != {} && $scope.gadget != {}) {
-                $users.getUser(username, function(data) {
+                $users.get(username, function(data) {
+                    console.log("got user", data);
                     $rootScope.links = [
                         {href:"#/admin", name:"admin"},
                         {href:"#/admin/users" + username, name:data.name}
                     ];
-                    $scope.user = data;
+                    $scope.editUser = data;
                 });
             }
         });
