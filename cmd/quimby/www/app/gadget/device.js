@@ -1,5 +1,19 @@
 'use strict';
 
+function ArgsController($scope, $mdDialog, command) {
+
+    $scope.args = "";
+    $scope.command = command;
+
+    $scope.cancel = function() {
+        $mdDialog.cancel();
+    };
+    $scope.send = function() {
+        var cmd = $scope.command + " " + $scope.args;
+        $mdDialog.hide(cmd);
+    };
+}
+
 angular.module('quimby.services')
     .directive("device", ['$gadgets', '$sockets', '$mdDialog', '$routeParams', '$location', function($gadgets, $sockets, $mdDialog, $routeParams, $location) {
         return {
@@ -15,6 +29,23 @@ angular.module('quimby.services')
                 decimals: '='
             },
             controller: function($scope) {
+                $scope.args = function(ev) {
+                    $gadgets.getCommand($scope.location, $scope.name, function(cmd) {
+                        $mdDialog.show({
+                            controller: ArgsController,
+                            templateUrl: '/gadget/args.html?t=' + new Date().getTime(),
+                            targetEvent: ev,
+                            locals: {
+                                command: cmd
+                            },
+                        }).then(function(args) {
+                            if (args) {
+                                $gadgets.sendWithArgs($scope.location, $scope.name, args, $sockets.send);
+                            }
+                        });
+                    })
+                }
+                
                 $scope.toggle = function() {
                     $gadgets.send($scope.location, $scope.name, $sockets.send);
                 }

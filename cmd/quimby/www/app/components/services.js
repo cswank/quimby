@@ -45,6 +45,13 @@ angular.module('quimby.services', [])
                 console.log("didn't get gadget");
             });
         }
+        this.getDevice = function(id, callback) {
+            $http.get("/api/gadgets/" + id).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't get gadget");
+            });
+        }
         this.save = function(gadget, callback) {
             $http.post("/api/gadgets", gadget).success(function(data) {
                 callback(data);
@@ -90,6 +97,21 @@ angular.module('quimby.services', [])
         }
         
         this.send =  function(location, name, callback) {
+            var val = locations[location][name].value;
+            var onoff = val ? "off":"on";
+            var command = commands[location + " " + name][onoff];
+            callback(command);
+        }
+
+        this.sendWithArgs =  function(location, name, args, callback) {
+            var val = locations[location][name].value;
+            var onoff = val ? "off":"on";
+            var command = commands[location + " " + name][onoff];
+            command += " " + args;
+            callback(command);
+        }
+
+        this.getCommand =  function(location, name, callback) {
             var val = locations[location][name].value;
             var onoff = val ? "off":"on";
             var command = commands[location + " " + name][onoff];
