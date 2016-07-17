@@ -74,6 +74,9 @@ angular.module('quimby.services', [])
             });
         }
         this.getDevices = function(id, callback) {
+            commands = {};
+            locations = {};
+            method = {};
             $http.get("/api/gadgets/" +  id + "/values").success(function(data) {
                 locations = data;
                 $http.get("/api/gadgets/" +  id + "/status").success(function(statuses) {
