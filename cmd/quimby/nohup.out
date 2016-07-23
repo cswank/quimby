@@ -3,7 +3,7 @@
 > bower install
 
 [4mRunning "copy:main" (copy) task[24m
-Created [36m179[39m directories, copied [36m757[39m files
+Created [36m179[39m directories, copied [36m760[39m files
 
 [4mRunning "copy:shims" (copy) task[24m
 
@@ -48,6 +48,7 @@ Looking for build script HTML comment blocks
              [32m'app/admin/admin.js'[39m,
              [32m'app/admin/update.js'[39m,
              [32m'app/admin/user.js'[39m,
+             [32m'app/admin/add-user.js'[39m,
              [32m'app/list/list.js'[39m,
              [32m'app/gadget/gadget.js'[39m,
              [32m'app/gadget/device.js'[39m,
@@ -73,16 +74,17 @@ File .tmp/concat/js/quimby.min.js created.
 
 [4mRunning "uglify:generated" (uglify) task[24m
 File "dist/js/quimby.min.js" created.
-Original: [32m3210940[39m bytes.
-Minified: [32m1388526[39m bytes.
+Original: [32m3213731[39m bytes.
+Minified: [32m1390141[39m bytes.
 
 [4mRunning "cssmin:generated" (cssmin) task[24m
 File dist/css/quimby.min.css created.
 
 [4mRunning "rev:files" (rev) task[24m
-dist/admin/admin.js [32m>> [39m760c46a1.admin.js
+dist/admin/add-user.js [32m>> [39m7ef11921.add-user.js
+dist/admin/admin.js [32m>> [39m75257d14.admin.js
 dist/admin/update.js [32m>> [39m036db17b.update.js
-dist/admin/user.js [32m>> [39m6dd6d35d.user.js
+dist/admin/user.js [32m>> [39m2dd29bde.user.js
 dist/app.js [32m>> [39mc72c0565.app.js
 dist/bower_components/angular-animate/angular-animate.js [32m>> [39mc5f5a862.angular-animate.js
 dist/bower_components/angular-animate/angular-animate.min.js [32m>> [39m0cecf711.angular-animate.min.js
@@ -576,14 +578,14 @@ dist/bower_components/underscore/underscore.js [32m>> [39me0cd904b.underscore.
 dist/components/directives.js [32m>> [39m21fb89ec.directives.js
 dist/components/filters.js [32m>> [39mf559f867.filters.js
 dist/components/navbar/auth.js [32m>> [39md291af28.auth.js
-dist/components/navbar/navbar.js [32m>> [39m31260c18.navbar.js
-dist/components/services.js [32m>> [39m0118aef6.services.js
-dist/css/quimby.min.css [32m>> [39m9d3d22dc.quimby.min.css
-dist/gadget/device.js [32m>> [39m547462c1.device.js
+dist/components/navbar/navbar.js [32m>> [39m6a65e8c5.navbar.js
+dist/components/services.js [32m>> [39m62cc0518.services.js
+dist/css/quimby.min.css [32m>> [39mcc6addd3.quimby.min.css
+dist/gadget/device.js [32m>> [39m0a1c407b.device.js
 dist/gadget/gadget.js [32m>> [39mddce4142.gadget.js
 dist/gadget/method.js [32m>> [39m343a14e0.method.js
 dist/history/history.js [32m>> [39m22e965dd.history.js
-dist/js/quimby.min.js [32m>> [39m7e9c39d5.quimby.min.js
+dist/js/quimby.min.js [32m>> [39m90ccda30.quimby.min.js
 dist/list/list.js [32m>> [39m3fa6e704.list.js
 
 [4mRunning "usemin:html" (usemin) task[24m
@@ -591,9 +593,9 @@ dist/list/list.js [32m>> [39m3fa6e704.list.js
 [1mProcessing as HTML - dist/index.html[22m
 Update the HTML to reference our concat/min/revved script files
 <script src="bower_components/html5-boilerplate/dist/js/vendor/modernizr-2.8.3.min.js" changed to <script src="bower_components/html5-boilerplate/dist/js/vendor/da941a6e.modernizr-2.8.3.min.js"
-<script src="js/quimby.min.js" changed to <script src="js/7e9c39d5.quimby.min.js"
+<script src="js/quimby.min.js" changed to <script src="js/90ccda30.quimby.min.js"
 Update the HTML with the new css filenames
-<link rel="stylesheet" href="css/quimby.min.css" changed to <link rel="stylesheet" href="css/9d3d22dc.quimby.min.css"
+<link rel="stylesheet" href="css/quimby.min.css" changed to <link rel="stylesheet" href="css/cc6addd3.quimby.min.css"
 Update the HTML with the new img filenames
 Update the HTML with data-main tags
 Update the HTML with data-* tags
