@@ -13,3 +13,5 @@ cd www
 rm -r dist
 ln -s app dist
 cd ..
+
+echo 'done'
