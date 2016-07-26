@@ -1,9 +1,13 @@
 'use strict';
 
-function ArgsController($scope, $mdDialog, command) {
+function ArgsController($scope, $mdDialog, commands) {
 
     $scope.args = "";
-    $scope.command = command;
+    $scope.commands = commands;
+
+    if (commands.length == 1) {
+        $scope.command = commands[0];
+    }
 
     $scope.cancel = function() {
         $mdDialog.cancel();
@@ -30,13 +34,13 @@ angular.module('quimby.services')
             },
             controller: function($scope) {
                 $scope.args = function(ev) {
-                    $gadgets.getCommand($scope.location, $scope.name, function(cmd) {
+                    $gadgets.getCommands($scope.location, $scope.name, function(cmds) {
                         $mdDialog.show({
                             controller: ArgsController,
                             templateUrl: '/gadget/args.html?t=' + new Date().getTime(),
                             targetEvent: ev,
                             locals: {
-                                command: cmd
+                                commands: cmds
                             },
                         }).then(function(args) {
                             if (args) {

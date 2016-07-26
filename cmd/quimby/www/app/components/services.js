@@ -102,23 +102,22 @@ angular.module('quimby.services', [])
         this.send =  function(location, name, callback) {
             var val = locations[location][name].value;
             var onoff = val ? "off":"on";
-            var command = commands[location + " " + name][onoff];
+            var command = commands[location + " " + name][onoff][0];
             callback(command);
         }
 
         this.sendWithArgs =  function(location, name, args, callback) {
             var val = locations[location][name].value;
             var onoff = val ? "off":"on";
-            var command = commands[location + " " + name][onoff];
+            var command = commands[location + " " + name][onoff][0];
             command += " " + args;
             callback(command);
         }
 
-        this.getCommand =  function(location, name, callback) {
+        this.getCommands =  function(location, name, callback) {
             var val = locations[location][name].value;
             var onoff = val ? "off":"on";
-            var command = commands[location + " " + name][onoff];
-            callback(command);
+            callback(commands[location + " " + name][onoff]);
         }
     }])
     .factory('$sockets', ['$location', '$http', '$timeout', '$routeParams', function($location, $http, $timeout, $routeParams) {

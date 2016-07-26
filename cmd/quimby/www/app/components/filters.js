@@ -6,7 +6,7 @@ angular.module('quimby.filters', [])
             return input ? 'on' : 'off';
         };
     })
-    .filter('io', function() {
+    .filter('onoffColor', function() {
         return function(input) {
             return input ? 'green' : 'red';
         };
