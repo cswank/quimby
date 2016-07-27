@@ -12,7 +12,7 @@ This only works when the source is available to the machine executing the binary
 
 ### Installation
 
-Use `go get` for the package and `go install` for the tool.
+Use `go get` to install the package the `rice` tool.
 ```
 go get github.com/GeertJohan/go.rice
 go get github.com/GeertJohan/go.rice/rice
@@ -68,7 +68,7 @@ The `rice` tool lets you add the resources to a binary executable so the files a
 #### embed-go
 **Embed resources by generating Go source code**
 
-This method must be executed before building. It generates Go source files that are compiled by the go compiler into the binary.
+This method must be executed before building. It generates a single Go source file called *rice-box.go* for each package, that is compiled by the go compiler into the binary.
 
 The downside with this option is that the generated go source files can become very large, which will slow down compilation and require lots of memory to compile.
 
@@ -103,7 +103,7 @@ go build
 #### append
 **Append resources to executable as zip file**
 
-This method changes an allready built executable. It appends the resources as zip file to the binary. It makes compilation a lot faster and can be used with large resource files.
+This method changes an already built executable. It appends the resources as zip file to the binary. It makes compilation a lot faster and can be used with large resource files.
 
 Downsides for appending are that it requires `zip` to be installed and does not provide a working Seek method.
 
@@ -149,4 +149,3 @@ You will find package documentation at [godoc.org/github.com/GeertJohan/go.rice]
 
  [license]: https://github.com/GeertJohan/go.rice/blob/master/LICENSE
  [godoc]: http://godoc.org/github.com/GeertJohan/go.rice
- 

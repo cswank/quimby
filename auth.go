@@ -42,22 +42,6 @@ func GenerateCookie(username string) *http.Cookie {
 	}
 }
 
-func GenerateToken(username string, d time.Duration) (string, error) {
-	if PubKey == nil || privKey == nil {
-		PubKey = getPublicKey()
-		privKey = getPrivateKey()
-	}
-	token := jwt.New(jwt.SigningMethodRS512)
-	token.Claims["exp"] = time.Now().Add(d).Unix()
-	token.Claims["iat"] = time.Now().Unix()
-	token.Claims["sub"] = username
-	tokenString, err := token.SignedString(privKey)
-	if err != nil {
-		panic(err)
-	}
-	return tokenString, nil
-}
-
 func GetUserFromCookie(r *http.Request) (*User, error) {
 	user := &User{
 		DB: DB,
@@ -80,6 +64,26 @@ func GetUserFromCookie(r *http.Request) (*User, error) {
 	return user, err
 }
 
+func GenerateToken(username string, d time.Duration) (string, error) {
+	if PubKey == nil || privKey == nil {
+		PubKey = getPublicKey()
+		privKey = getPrivateKey()
+	}
+	token := jwt.NewWithClaims(
+		jwt.SigningMethodRS512,
+		jwt.MapClaims{
+			"exp": time.Now().Add(d).Unix(),
+			"iat": time.Now().Unix(),
+			"sub": username,
+		},
+	)
+	tokenString, err := token.SignedString(privKey)
+	if err != nil {
+		panic(err)
+	}
+	return tokenString, nil
+}
+
 func GetUserFromToken(r *http.Request) (*User, error) {
 	if PubKey == nil || privKey == nil {
 		PubKey = getPublicKey()
@@ -87,19 +91,23 @@ func GetUserFromToken(r *http.Request) (*User, error) {
 	}
 
 	user := &User{}
-	token, err := jwt.ParseFromRequest(r, func(token *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(r.Header.Get("Authorization"), func(token *jwt.Token) (interface{}, error) {
+		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodRSA); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
-		} else {
-			return PubKey, nil
 		}
+		return PubKey, nil
 	})
-
-	if err != nil || !token.Valid {
+	if err != nil {
 		return nil, errors.New("invalid token")
 	}
 
-	user.Username = token.Claims["sub"].(string)
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		user.Username = claims["sub"].(string)
+	} else {
+		return nil, errors.New("invalid token")
+	}
+
 	return user, nil
 }
 

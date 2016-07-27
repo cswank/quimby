@@ -39,6 +39,11 @@ Configure a thermostat like:
 	                        "pin": "13",
                             "direction": "out"
                         },
+                        "fan": {
+                            "platform": "rpi",
+	                        "pin": "15",
+                            "direction": "out"
+                        }
                     },
 	                "args": {
 	                    "sensor": "home temperature",
@@ -94,10 +99,21 @@ func NewThermostat(pin *Pin) (OutputDevice, error) {
 		lg.Fatal(err)
 	}
 
+	p, ok = pin.Pins["fan"]
+	if !ok {
+		return nil, fmt.Errorf("invalid fan pin: %v", pin)
+	}
+
+	f, err := NewGPIO(&p)
+	if err != nil {
+		lg.Fatal(err)
+	}
+
 	return &Thermostat{
 		gpios: map[string]OutputDevice{
 			"heat": h,
 			"cool": c,
+			"fan":  f,
 		},
 		cmp: map[string]cmp{
 			"heat": func(x, y float64) bool { return x >= y },
@@ -159,14 +175,17 @@ func (t *Thermostat) Update(msg *Message) bool {
 
 	var changed bool
 	temperature, ok := msg.Value.Value.(float64)
-	if t.status && ok {
+	if t.status && ok && (t.lastCmd == "heat" || t.lastCmd == "cool") {
 		changed = true
 		gpio := t.gpios[t.lastCmd]
+		fan := t.gpios["fan"]
 		t.lastChange = &now
 		if t.cmp[t.lastCmd](temperature, t.target) {
 			gpio.Off()
+			fan.Off()
 		} else {
 			gpio.On(nil)
+			fan.On(nil)
 		}
 	}
 	return changed
@@ -181,6 +200,10 @@ func (t *Thermostat) On(val *Value) error {
 		return nil
 	}
 	parts := strings.Split(val.Cmd, " ")
+	if len(parts) == 0 {
+		return nil
+	}
+
 	t.lastCmd = parts[0]
 	t.lastChange = nil
 	t.target = tar
@@ -193,6 +216,7 @@ func (t *Thermostat) Off() error {
 		t.status = false
 		t.gpios["heat"].Off()
 		t.gpios["cool"].Off()
+		t.gpios["fan"].Off()
 	}
 	return nil
 }

@@ -59,19 +59,19 @@ func deleteGadgets() {
 	u := fmt.Sprintf(addr, "gadgets", "", "")
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't delete", err)
 	}
 	req.Header.Add("Authorization", token)
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't delete ", err)
 	}
 
 	defer r.Body.Close()
 	var gs []quimby.Gadget
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&gs); err != nil {
-		log.Fatal(err)
+		log.Fatal("can't delete ", err)
 	}
 	for _, g := range gs {
 		if g.Id != sprinklersId {
@@ -84,12 +84,12 @@ func deleteItem(id string) {
 	u := fmt.Sprintf(addr, "gadgets/", id, "")
 	req, err := http.NewRequest("DELETE", u, nil)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't delete", err)
 	}
 	req.Header.Add("Authorization", token)
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("can't delete", err)
 	}
 	r.Body.Close()
 }
@@ -106,7 +106,7 @@ func loginJWT(u string, p string) string {
 
 	r, err := http.Post(url, "application/json", &buf)
 	if err != nil || r.StatusCode != http.StatusOK {
-		log.Fatal("couldn't log in", err)
+		log.Fatal("couldn't log in ", err)
 	}
 	return r.Header.Get("Authorization")
 }
@@ -139,12 +139,12 @@ func initSprinklers() {
 
 	req, err := http.NewRequest("POST", u, &buf)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("error init sprinklers", err)
 	}
 	req.Header.Add("Authorization", token)
 	r, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("error init sprinklers", err)
 	}
 	r.Body.Close()
 
@@ -157,12 +157,12 @@ func initSprinklers() {
 
 	req, err = http.NewRequest("POST", u, &buf)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("error init sprinklers", err)
 	}
 	req.Header.Add("Authorization", token)
 	r, err = http.DefaultClient.Do(req)
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("error init sprinklers", err)
 	}
 	r.Body.Close()
 }
@@ -182,7 +182,6 @@ func init() {
 	cookie = loginCookie("me", "hushhush")
 	readCookie = loginCookie("him", "shhhhhhhh")
 	adminCookie = loginCookie("boss", "sosecret")
-
 	initSprinklers()
 }
 
@@ -227,7 +226,6 @@ var _ = Describe("Quimby", func() {
 			Expect(err).To(BeNil())
 			return r
 		}
-
 	})
 
 	AfterEach(func() {

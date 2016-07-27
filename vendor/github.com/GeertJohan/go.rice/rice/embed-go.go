@@ -11,8 +11,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 )
+
+const boxFilename = "rice-box.go"
 
 func operationEmbedGo(pkg *build.Package) {
 
@@ -25,6 +26,7 @@ func operationEmbedGo(pkg *build.Package) {
 	}
 
 	verbosef("\n")
+	var boxes []*boxDataType
 
 	for boxname := range boxMap {
 		// find path and filename for this box
@@ -39,28 +41,24 @@ func operationEmbedGo(pkg *build.Package) {
 			boxPath = symPath
 		}
 
-		boxFilename := strings.Replace(boxname, "/", "-", -1)
-		boxFilename = strings.Replace(boxFilename, "..", "back", -1)
-		boxFilename = boxFilename + `.rice-box.go`
-
 		// verbose info
-		verbosef("embedding box '%s'\n", boxname)
-		verbosef("\tto file %s\n", boxFilename)
+		verbosef("embedding box '%s' to '%s'\n", boxname, boxFilename)
 
-		// create box datastructure (used by template)
-		box := &boxDataType{
-			Package: pkg.Name,
-			BoxName: boxname,
-			UnixNow: time.Now().Unix(),
-			Files:   make([]*fileDataType, 0),
-			Dirs:    make(map[string]*dirDataType),
-		}
-
+		// read box metadata
 		boxInfo, ierr := os.Stat(boxPath)
 		if ierr != nil {
 			fmt.Printf("Error: unable to access box at %s\n", boxPath)
 			os.Exit(1)
 		}
+
+		// create box datastructure (used by template)
+		box := &boxDataType{
+			BoxName: boxname,
+			UnixNow: boxInfo.ModTime().Unix(),
+			Files:   make([]*fileDataType, 0),
+			Dirs:    make(map[string]*dirDataType),
+		}
+
 		if !boxInfo.IsDir() {
 			fmt.Printf("Error: Box %s must point to a directory but points to %s instead\n",
 				boxname, boxPath)
@@ -119,36 +117,42 @@ func operationEmbedGo(pkg *build.Package) {
 			}
 			return nil
 		})
+		boxes = append(boxes, box)
 
-		embedSourceUnformated := bytes.NewBuffer(make([]byte, 0))
-
-		// execute template to buffer
-		err := tmplEmbeddedBox.Execute(embedSourceUnformated, box)
-		if err != nil {
-			log.Printf("error writing embedded box to file (template execute): %s\n", err)
-			os.Exit(1)
-		}
-
-		// format the source code
-		embedSource, err := format.Source(embedSourceUnformated.Bytes())
-		if err != nil {
-			log.Printf("error formatting embedSource: %s\n", err)
-			os.Exit(1)
-		}
-
-		// create go file for box
-		boxFile, err := os.Create(filepath.Join(pkg.Dir, boxFilename))
-		if err != nil {
-			log.Printf("error creating embedded box file: %s\n", err)
-			os.Exit(1)
-		}
-		defer boxFile.Close()
-
-		// write source to file
-		_, err = io.Copy(boxFile, bytes.NewBuffer(embedSource))
-		if err != nil {
-			log.Printf("error writing embedSource to file: %s\n", err)
-			os.Exit(1)
-		}
 	}
+
+	embedSourceUnformated := bytes.NewBuffer(make([]byte, 0))
+
+	// execute template to buffer
+	err := tmplEmbeddedBox.Execute(
+		embedSourceUnformated,
+		embedFileDataType{pkg.Name, boxes},
+	)
+	if err != nil {
+		log.Printf("error writing embedded box to file (template execute): %s\n", err)
+		os.Exit(1)
+	}
+
+	// format the source code
+	embedSource, err := format.Source(embedSourceUnformated.Bytes())
+	if err != nil {
+		log.Printf("error formatting embedSource: %s\n", err)
+		os.Exit(1)
+	}
+
+	// create go file for box
+	boxFile, err := os.Create(filepath.Join(pkg.Dir, boxFilename))
+	if err != nil {
+		log.Printf("error creating embedded box file: %s\n", err)
+		os.Exit(1)
+	}
+	defer boxFile.Close()
+
+	// write source to file
+	_, err = io.Copy(boxFile, bytes.NewBuffer(embedSource))
+	if err != nil {
+		log.Printf("error writing embedSource to file: %s\n", err)
+		os.Exit(1)
+	}
+
 }

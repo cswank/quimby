@@ -53,7 +53,7 @@ func setToken(w http.ResponseWriter, user *quimby.User) {
 		w.WriteHeader(http.StatusUnauthorized)
 	} else {
 
-		w.Header().Set("Authorization", "Bearer "+token)
+		w.Header().Set("Authorization", token)
 	}
 }
 
