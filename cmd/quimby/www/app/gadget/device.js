@@ -42,9 +42,9 @@ angular.module('quimby.services')
                             locals: {
                                 commands: cmds
                             },
-                        }).then(function(args) {
-                            if (args) {
-                                $gadgets.sendWithArgs($scope.location, $scope.name, args, $sockets.send);
+                        }).then(function(cmd) {
+                            if (cmd) {
+                                $sockets.send(cmd);
                             }
                         });
                     })
