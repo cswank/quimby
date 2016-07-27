@@ -30,6 +30,8 @@ angular.module('quimby.admin')
             }
         });
 
+        $scope.interfaces = [{name:"default"}, {name:"furnace"}];
+
         $scope.save = function() {
             $gadgets.update($scope.gadget, function(data) {
                 $location.path("/admin");

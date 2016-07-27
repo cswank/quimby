@@ -9,6 +9,7 @@ angular.module('quimby', [
     'ngStorage',
     'nvd3ChartDirectives',
     'quimby.gadget',
+    'quimby.furnace',
     'quimby.list',
     'quimby.admin',
     'quimby.history',

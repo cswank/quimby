@@ -82,6 +82,7 @@ angular.module('quimby.services', [])
                 $http.get("/api/gadgets/" +  id + "/status").success(function(statuses) {
                     var directions = {};
                     angular.forEach(statuses, function(value, key) {
+                        console.log(key, value);
                         if (value.info.direction != undefined) {
                             directions[key] = value.info.direction;
                         }

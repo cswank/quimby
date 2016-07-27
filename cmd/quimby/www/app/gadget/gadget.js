@@ -2,7 +2,7 @@
 
 angular.module('quimby.gadget', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
-        $routeProvider.when('/gadget/:id', {
+        $routeProvider.when('/gadget/default/:id', {
             templateUrl: '/gadget/gadget.html',
             controller: 'GadgetCtrl'
         });

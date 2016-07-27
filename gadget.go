@@ -19,6 +19,7 @@ type Gadget struct {
 	Id   string   `json:"id"`
 	Name string   `json:"name"`
 	Host string   `json:"host"`
+	View string   `json:"view"`
 	DB   *bolt.DB `json:"-"`
 }
 
@@ -43,6 +44,9 @@ func GetGadgets(db *bolt.DB) ([]Gadget, error) {
 			g := Gadget{DB: db}
 			if err := json.Unmarshal(v, &g); err != nil {
 				return err
+			}
+			if g.View == "" {
+				g.View = "default"
 			}
 			gadgets = append(gadgets, g)
 		}

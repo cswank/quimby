@@ -35,8 +35,12 @@ angular.module('quimby.admin', ['ngRoute'])
         $rootScope.links = [
             {href:"#/admin", name:"admin"}
         ];
+
+        $scope.interfaces = [{name:"default"}, {name:"furnace"}];
+        
         $scope.gadget = {
-            name: "new gadget"
+            name: "new gadget",
+            view: "default"
         };
         $scope.save = function() {
             $gadgets.save($scope.gadget, function(data) {
