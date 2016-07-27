@@ -1,0 +1,54 @@
+hash: 66e430134e665bf3151ad3dd95613fe0d5078b5ee132d91f224c6be4ef56561f
+updated: 2016-07-27T07:26:42.959065762-06:00
+imports:
+- name: github.com/alecthomas/template
+  version: a0175ee3bccc567396460bf5acd36800cb10c49c
+  subpackages:
+  - parse
+- name: github.com/alecthomas/units
+  version: 2efee857e7cfd4f3d0138cc3cbb1b4966962b93a
+- name: github.com/boltdb/bolt
+  version: dfb21201d9270c1082d5fb0f07f500311ff72f18
+- name: github.com/cswank/brewery
+  version: 828dafd2cd5d2d1f1a28e5beafa9bf9ec6d978e7
+  subpackages:
+  - recipes
+- name: github.com/cswank/gogadgets
+  version: 7e493036c03336c47d33713873dd76bf0995cfbb
+  subpackages:
+  - utils
+- name: github.com/cswank/rex
+  version: d994161bbe349b93a0db6377275db7ff09bdbf93
+- name: github.com/daaku/go.zipexe
+  version: a5fe2436ffcb3236e175e5149162b41cd28bd27d
+- name: github.com/dgrijalva/jwt-go
+  version: d2709f9f1f31ebcda9651b03077758c1f3a0018c
+- name: github.com/GeertJohan/go.rice
+  version: 0f3f5fde32fd1f755632a3d31ba2ec6d449e387b
+  subpackages:
+  - embedded
+- name: github.com/gorilla/context
+  version: 1ea25387ff6f684839d82767c1733ff4d4d15d0a
+- name: github.com/gorilla/securecookie
+  version: 667fe4e3466a040b780561fe9b51a83a3753eefc
+- name: github.com/gorilla/websocket
+  version: 1f512fc3f05332ba7117626cdfb4e07474e58e60
+- name: github.com/howeyc/gopass
+  version: 66487b23f2880ba32e185121d2cd51a338ea069a
+- name: github.com/justinas/alice
+  version: 052b8b6c18edb9db317af86806d8e00ebaa94160
+- name: github.com/kardianos/osext
+  version: 29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc
+- name: golang.org/x/crypto
+  version: bc89c496413265e715159bdc8478ee9a92fdc265
+  subpackages:
+  - bcrypt
+  - blowfish
+  - ssh/terminal
+- name: golang.org/x/sys
+  version: a646d33e2ee3172a661fc09bca23bb4889a41bc8
+  subpackages:
+  - unix
+- name: gopkg.in/alecthomas/kingpin.v2
+  version: e5900212cbf65b181d3d8e08308ef06a01d117cf
+testImports: []

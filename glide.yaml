@@ -1,0 +1,26 @@
+package: github.com/cswank/quimby
+import:
+- package: github.com/GeertJohan/go.rice
+- package: github.com/boltdb/bolt
+  version: ^1.2.1
+- package: github.com/cswank/brewery
+  subpackages:
+  - recipes
+- package: github.com/cswank/gogadgets
+- package: github.com/cswank/rex
+- package: github.com/dgrijalva/jwt-go
+  version: ^3.0.0
+- package: github.com/gorilla/context
+  version: ^1.1.0
+- package: github.com/gorilla/securecookie
+  version: ^1.1.0
+- package: github.com/gorilla/websocket
+  version: ^1.0.0
+- package: github.com/howeyc/gopass
+- package: github.com/justinas/alice
+  version: ^1.0.0
+- package: golang.org/x/crypto
+  subpackages:
+  - bcrypt
+- package: gopkg.in/alecthomas/kingpin.v2
+  version: ^2.2.2
