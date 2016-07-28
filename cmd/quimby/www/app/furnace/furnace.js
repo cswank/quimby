@@ -25,21 +25,23 @@ angular.module('quimby.furnace', ['ngRoute'])
         $gadgets.getDevices($scope.id, function(locations, directions, method) {
             $scope.locations = locations;
             $scope.method = method;
+            $scope.furnace = {};
+            angular.copy(locations.home.furnace, $scope.furnace);
         });
 
         $scope.change = function(item) {
             var cmd;
             if (item == "heat") {
                 if ($scope.locations.home.furnace.io.heat) {
-                    cmd = "heat home to 75 F";
-                } else {
                     cmd = "turn off furnace";
+                } else {
+                    cmd = "heat home to 75 F";
                 }
             } else if (item == "cool") {
                 if ($scope.locations.home.furnace.io.cool) {
-                    cmd = "cool home to 70 F";
-                } else {
                     cmd = "turn off furnace";
+                } else {
+                    cmd = "cool home to 70 F";
                 }
             } else if (item == "fan") {
                 if ($scope.locations.home.furnace.io.fan) {
@@ -48,17 +50,18 @@ angular.module('quimby.furnace', ['ngRoute'])
                     
                 }
             }
-            console.log("cmd", cmd);
             if (cmd) {
                 $sockets.send(cmd);
             }
         };
         
         $sockets.connect(function(msg) {
-            console.log("update", msg);
             if (msg.type == "update") {
                 $scope.$apply(function() {
                     $scope.locations[msg.location][msg.name] = msg.value;
+                    if (msg.location == "home" && msg.name == "furnace") {
+                        angular.copy(msg.value, $scope.furnace);
+                    }
                 })
             } else if (msg.type == "method update") {
                 $scope.$apply(function() {
