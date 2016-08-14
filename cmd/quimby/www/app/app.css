@@ -87,3 +87,8 @@ md-icon.settings {
     margin-left: 10px;
     margin-right: 10px;
 }
+
+.furnace {
+    margin-left: 30px;
+    max-width: 200px;
+}

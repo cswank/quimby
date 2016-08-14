@@ -73,6 +73,11 @@ angular.module('quimby.services', [])
                 console.log("didn't save gadget");
             });
         }
+        this.getStatus = function(id, callback) {
+            $http.get("/api/gadgets/" +  id + "/status").success(function(statuses) {
+                callback(statuses);
+            });
+        }
         this.getDevices = function(id, callback) {
             commands = {};
             locations = {};
@@ -82,7 +87,6 @@ angular.module('quimby.services', [])
                 $http.get("/api/gadgets/" +  id + "/status").success(function(statuses) {
                     var directions = {};
                     angular.forEach(statuses, function(value, key) {
-                        console.log(key, value);
                         if (value.info.direction != undefined) {
                             directions[key] = value.info.direction;
                         }

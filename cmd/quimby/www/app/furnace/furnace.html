@@ -1,15 +1,21 @@
-<div class="page">
-  furnace
-  <md-switch ng-model="furnace.io.heat" aria-label="Heat" ng-change="change('heat')">
-    Heat
-  </md-switch>
-  <md-switch ng-model="furnace.io.cool" aria-label="Cool" ng-change="change('cool')">
-    Cool
-  </md-switch>
-  <md-switch ng-model="furnace.io.fan" aria-label="Fan" ng-change="change(fan')">
-    Fan
-  </md-switch>
-  <div>
-    <a ng-click="showHistory('home', 'temperature')" class="graph-link">temperature: {{locations.home.temperature.value | number : 1}}</a>
+<div class="furnace">
+  <div layout="column" >
+    <div flex>
+      <md-radio-group ng-model="mode" ng-change="change()">
+        <md-radio-button value="off" class="md-primary">off</md-radio-button>
+        <md-radio-button value="heat">heat</md-radio-button>
+        <md-radio-button value="cool">cool</md-radio-button>
+        <md-radio-button value="fan">fan</md-radio-button>
+      </md-radio-group>
+    </div>
+    <div flex>
+      <md-slider-container flex=20>
+        <span>{{target}}<span/>
+          <md-slider ng-model="target" min="60" max="80" drag-end done-dragging="done()"></md-slider>
+      </md-slider-container>
+    </div>
+    <div>
+      <a ng-click="showHistory('home', 'temperature')" class="graph-link">temperature: {{temperature | number : 1}}</a>
+    </div>
   </div>
 </div>

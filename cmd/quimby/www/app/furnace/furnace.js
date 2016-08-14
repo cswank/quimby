@@ -22,51 +22,50 @@ angular.module('quimby.furnace', ['ngRoute'])
             ]
         });
         
-        $gadgets.getDevices($scope.id, function(locations, directions, method) {
-            $scope.locations = locations;
-            $scope.method = method;
-            $scope.furnace = {};
-            angular.copy(locations.home.furnace, $scope.furnace);
+        $gadgets.getStatus($scope.id, function(statuses) {
+            var furnace = statuses["home furnace"];
+            if (furnace.value.value) {
+                if (furnace.value.command == "cool home") {
+                    $scope.mode = "cool";
+                } else if (furnace.value.command == "heat home") {
+                    $scope.mode = "heat";
+                }
+            } else {
+                $scope.mode = "off";
+            }
+            
+            $scope.temperature = statuses["home temperature"].value.value;
+
+            if (furnace.target_value != undefined) {
+                $scope.target = statuses["home furnace"].target_value.value;
+            } else {
+                $scope.target = Math.floor($scope.temperature);
+            }
         });
 
-        $scope.change = function(item) {
-            var cmd;
-            if (item == "heat") {
-                if ($scope.locations.home.furnace.io.heat) {
-                    cmd = "turn off furnace";
-                } else {
-                    cmd = "heat home to 75 F";
-                }
-            } else if (item == "cool") {
-                if ($scope.locations.home.furnace.io.cool) {
-                    cmd = "turn off furnace";
-                } else {
-                    cmd = "cool home to 70 F";
-                }
-            } else if (item == "fan") {
-                if ($scope.locations.home.furnace.io.fan) {
-                    //cmd = "turn off furnace";
-                } else {
-                    
-                }
+        $scope.done = function() {
+            console.log("done sliding");
+        };
+
+        $scope.change = function() {
+            var cmd = "turn off furnace";
+            if ($scope.mode == "heat") {
+                cmd = "heat home to " + $scope.target + " F";
+            } else if ($scope.mode == "cool") {
+                cmd = "cool home to " + $scope.target + " F";
+            } else if ($scope.mode == "fan") {
+                cmd = "trun on furnace fan";
             }
-            if (cmd) {
-                $sockets.send(cmd);
-            }
+            $sockets.send(cmd);
         };
         
         $sockets.connect(function(msg) {
             if (msg.type == "update") {
                 $scope.$apply(function() {
-                    $scope.locations[msg.location][msg.name] = msg.value;
-                    if (msg.location == "home" && msg.name == "furnace") {
-                        angular.copy(msg.value, $scope.furnace);
+                    if (msg.name == "temperature") {
+                        $scope.temperature = msg.value.value;
                     }
-                })
-            } else if (msg.type == "method update") {
-                $scope.$apply(function() {
-                    $scope.method = msg.method;
-                })
+                });
             }
         });
         
