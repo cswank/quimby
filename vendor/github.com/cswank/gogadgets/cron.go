@@ -4,30 +4,77 @@ import (
 	"bytes"
 	"fmt"
 	"html/template"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 )
 
+var (
+	cronExp, _ = regexp.Compile("^[*0-9,-]+$")
+)
+
 type Afterer func(d time.Duration) <-chan time.Time
 
-func NewCron(config *GadgetConfig) (*Cron, error) {
-	v := config.Args["jobs"].([]interface{})
-	jobs := make([]string, len(v))
-	for i, r := range v {
-		jobs[i] = r.(string)
+func NewCron(config *GadgetConfig, options ...func(*Cron) error) (*Cron, error) {
+
+	c := &Cron{}
+
+	for _, opt := range options {
+		if err := opt(c); err != nil {
+			return c, err
+		}
 	}
-	return &Cron{
-		Jobs:  jobs,
-		After: time.After,
-		Sleep: time.Second,
-	}, nil
+
+	if c.after == nil {
+		c.after = time.After
+	}
+
+	if c.sleep == time.Duration(0) {
+		c.sleep = time.Second
+	}
+
+	var err error
+	if c.jobs == nil {
+		v := config.Args["jobs"].([]interface{})
+		jobs := make([]string, len(v))
+		for i, r := range v {
+			jobs[i] = r.(string)
+		}
+		c.jobs, err = c.parseJobs(jobs)
+		if err != nil {
+			return c, err
+		}
+	}
+
+	return c, nil
+}
+
+func CronAfter(a Afterer) func(*Cron) error {
+	return func(c *Cron) error {
+		c.after = a
+		return nil
+	}
+}
+
+func CronSleep(d time.Duration) func(*Cron) error {
+	return func(c *Cron) error {
+		c.sleep = d
+		return nil
+	}
+}
+
+func CronJobs(j []string) func(*Cron) error {
+	return func(c *Cron) error {
+		var err error
+		c.jobs, err = c.parseJobs(j)
+		return err
+	}
 }
 
 type Cron struct {
-	After  Afterer
-	Jobs   []string
-	Sleep  time.Duration
+	after  Afterer
+	sleep  time.Duration
 	status bool
 	jobs   map[string][]string
 	out    chan<- Message
@@ -44,10 +91,9 @@ func (c *Cron) GetDirection() string {
 
 func (c *Cron) Start(in <-chan Message, out chan<- Message) {
 	c.out = out
-	c.parseJobs()
 	for {
 		select {
-		case t := <-c.After(c.getSleep()):
+		case t := <-c.after(c.getSleep()):
 			ts := time.Now()
 			c.ts = &ts
 			if t.Second() == 0 {
@@ -60,28 +106,38 @@ func (c *Cron) Start(in <-chan Message, out chan<- Message) {
 
 func (c *Cron) getSleep() time.Duration {
 	if c.ts == nil {
-		return c.Sleep
+		return c.sleep
 	}
 	diff := time.Now().Sub(*c.ts)
-	return c.Sleep - diff
+	return c.sleep - diff
 }
 
-func (c *Cron) parseJobs() {
-	c.jobs = map[string][]string{}
-	for _, row := range c.Jobs {
-		c.parseJob(row)
+func (c *Cron) parseJobs(jobs []string) (map[string][]string, error) {
+	m := map[string][]string{}
+	for _, row := range jobs {
+		if err := c.parseJob(row, m); err != nil {
+			return m, err
+		}
 	}
+	return m, nil
 }
 
-func (c *Cron) parseJob(row string) {
-
+func (c *Cron) parseJob(row string, m map[string][]string) error {
 	if strings.Index(row, "#") == 0 {
-		return
+		return nil
 	}
+
 	parts := strings.Fields(row)
 	if len(parts) < 6 {
-		return
+		return fmt.Errorf("could not parse job: %s", row)
 	}
+
+	for _, p := range parts[0:5] {
+		if !cronExp.MatchString(p) {
+			return fmt.Errorf("could not parse job: %s", row)
+		}
+	}
+
 	keys := c.getKeys(parts[0:5])
 	cmd := strings.Join(parts[5:], " ")
 	for _, key := range keys {
@@ -90,8 +146,9 @@ func (c *Cron) parseJob(row string) {
 			a = []string{}
 		}
 		a = append(a, cmd)
-		c.jobs[key] = a
+		m[key] = a
 	}
+	return nil
 }
 
 func (c *Cron) getKeys(parts []string) []string {
