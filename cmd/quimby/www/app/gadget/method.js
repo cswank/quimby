@@ -79,7 +79,7 @@ angular.module('quimby.services')
     .service('$brew', ['$http', function ($http) {
         this.fetchMethod = function(brew, callback) {
             $http.get(
-                "/beer/" + brew.name,
+                "/api/beer/" + brew.name,
                 {grain_temperature: brew.temperature}
             ).success(function(data) {
                 callback(data);
