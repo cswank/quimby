@@ -193,7 +193,7 @@ func getCSV(w http.ResponseWriter, points []quimby.DataPoint, name string) {
 	wr.Flush()
 }
 
-func GetValues(w http.ResponseWriter, req *http.Request) {
+func GetUpdates(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	args.Gadget.ReadValues(w)
 }
