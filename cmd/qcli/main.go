@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -66,22 +67,34 @@ func main() {
 }
 
 func commands(v *ui.View, key ui.Key, ch rune, mod ui.Modifier) {
+	if ch == 'q' {
+		current = "nodes-cursor"
+		return
+	}
 	if key == ui.KeyEnter && len(cmdTokens) > 0 {
-		cmd := getCmd()
-		cli.Out <- gogadgets.Message{Type: gogadgets.COMMAND, Body: cmd}
+		cmd, err := getCmd()
+		if err == nil {
+			cli.Out <- gogadgets.Message{Type: gogadgets.COMMAND, Body: cmd}
+		}
 	} else {
 		cmdTokens = append(cmdTokens, ch)
 	}
 }
 
-func getCmd() string {
+func getCmd() (string, error) {
 	var cmd string
 	for _, t := range cmdTokens {
 		cmd += string(t)
 	}
-	i, _ := strconv.ParseInt(cmd, 10, 64)
+	i, err := strconv.ParseInt(cmd, 10, 64)
+	if err != nil {
+		return "", errors.New("invalid input")
+	}
 	cmdTokens = []rune{}
-	return links[i-1][0]
+	if int(i)-1 >= len(links) {
+		return "", errors.New("out of range")
+	}
+	return links[i-1][0], err
 }
 
 // exists returns whether the given file or directory exists or not

@@ -16,13 +16,11 @@ import (
 )
 
 type Gadget struct {
-	Id      string                                  `json:"id"`
-	Name    string                                  `json:"name"`
-	Host    string                                  `json:"host"`
-	View    string                                  `json:"view"`
-	DB      *bolt.DB                                `json:"-"`
-	Values  map[string]map[string]gogadgets.Value   `json:"-"`
-	Devices map[string]map[string]gogadgets.Message `json:"-"`
+	Id   string   `json:"id"`
+	Name string   `json:"name"`
+	Host string   `json:"host"`
+	View string   `json:"view"`
+	DB   *bolt.DB `json:"-"`
 }
 
 var (

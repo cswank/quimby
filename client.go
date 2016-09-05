@@ -15,9 +15,14 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type Node struct {
+	Gadget
+	Devices map[string]map[string]gogadgets.Message
+}
+
 type Client struct {
 	addr        string
-	Nodes       []Gadget
+	Nodes       []Node
 	Out         chan gogadgets.Message
 	token       string
 	lock        sync.Mutex
@@ -80,20 +85,11 @@ func (c *Client) GetNodes() error {
 
 func (c *Client) fetchNode(i int, wg *sync.WaitGroup) {
 	c.lock.Lock()
-	g := c.Nodes[i]
+	n := c.Nodes[i]
 	c.lock.Unlock()
-	url := fmt.Sprintf(c.addr, fmt.Sprintf("gadgets/%s/values", g.Id))
-	var v map[string]map[string]gogadgets.Value
-	err := c.get(url, &v)
-	if err == nil {
-		c.lock.Lock()
-		c.Nodes[i].Values = v
-		c.lock.Unlock()
-	}
-
-	url = fmt.Sprintf(c.addr, fmt.Sprintf("gadgets/%s/status", g.Id))
+	url := fmt.Sprintf(c.addr, fmt.Sprintf("gadgets/%s/status", n.Id))
 	var m map[string]gogadgets.Message
-	err = c.get(url, &m)
+	err := c.get(url, &m)
 	if err == nil {
 		c.lock.Lock()
 		c.Nodes[i].Devices = c.getDevices(m)
