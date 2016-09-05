@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -27,6 +28,7 @@ func Error(lg quimby.Logger) alice.Constructor {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			h.ServeHTTP(w, req)
 			e := context.Get(req, "error")
+			fmt.Println("context err", e)
 			if e != nil {
 				lg.Printf("error (%s)\n", e)
 				err := e.(error)
