@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/user"
 	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -245,9 +246,23 @@ func printNode(g *ui.Gui) {
 	f := colors["color2"]
 	i := 1
 	links = [][]string{}
-	for key, loc := range n.Devices {
+	var keys []string
+	for key := range n.Devices {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
 		f(v, fmt.Sprintf("  %s", key))
-		for name, val := range loc {
+		loc := n.Devices[key]
+		var names []string
+		for name := range loc {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+
+		for _, name := range names {
+			val := loc[name]
 			var l string
 			l, i = getLink(val, i)
 			f(v, fmt.Sprintf("    %s: %s %s", name, getVal(val.Value), l))
