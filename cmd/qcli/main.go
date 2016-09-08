@@ -6,9 +6,12 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/user"
+	"path/filepath"
 	"strconv"
+	"strings"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby"
@@ -69,6 +72,11 @@ func main() {
 func commands(v *ui.View, key ui.Key, ch rune, mod ui.Modifier) {
 	if ch == 'q' {
 		current = "nodes-cursor"
+		cli.Disconnect()
+		return
+	}
+	if key == ui.KeyBackspace2 && len(cmdTokens) > 0 {
+		cmdTokens = cmdTokens[0 : len(cmdTokens)-1]
 		return
 	}
 	if key == ui.KeyEnter && len(cmdTokens) > 0 {
@@ -76,9 +84,13 @@ func commands(v *ui.View, key ui.Key, ch rune, mod ui.Modifier) {
 		if err == nil {
 			cli.Out <- gogadgets.Message{Type: gogadgets.COMMAND, Body: cmd}
 		}
-	} else {
+	} else if isNumber(ch) {
 		cmdTokens = append(cmdTokens, ch)
 	}
+}
+
+func isNumber(ch rune) bool {
+	return strings.Index("0123456789", string(ch)) > -1
 }
 
 func getCmd() (string, error) {
@@ -213,7 +225,9 @@ func cmd(g *ui.Gui, v *ui.View) error {
 	cmdMode = true
 
 	_, cur := v.Cursor()
-	cli.Connect(cur, update)
+	if err := cli.Connect(cur, update); err != nil {
+		return err
+	}
 	return v.SetCursor(0, 0)
 }
 
@@ -343,7 +357,11 @@ func login() {
 		log.Fatal(err)
 	}
 	d := fmt.Sprintf("%s/.qcli", usr.HomeDir)
-	p := fmt.Sprintf("%s/.qcli/token", usr.HomeDir)
+	u, err := url.Parse(*addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	p := filepath.Join(usr.HomeDir, ".qcli", u.Host)
 	if exists(p) {
 		d, err := ioutil.ReadFile(p)
 		if err != nil {

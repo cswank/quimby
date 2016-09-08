@@ -5,9 +5,9 @@ import (
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+	"sort"
 	"strings"
 	"sync"
 
@@ -20,13 +20,30 @@ type Node struct {
 	Devices map[string]map[string]gogadgets.Message
 }
 
+type Nodes []Node
+
+func (n Nodes) Less(i, j int) bool {
+	return n[i].Name < n[j].Name
+}
+
+func (n Nodes) Len() int {
+	return len(n)
+}
+
+func (n Nodes) Swap(i, j int) {
+	t := n[j]
+	n[j] = n[i]
+	n[i] = t
+}
+
 type Client struct {
 	addr        string
-	Nodes       []Node
+	Nodes       Nodes
 	Out         chan gogadgets.Message
 	token       string
 	lock        sync.Mutex
 	ws          *websocket.Conn
+	disconnect  chan bool
 	connectedTo int
 }
 
@@ -71,6 +88,8 @@ func (c *Client) GetNodes() error {
 	if err := c.get(url, &c.Nodes); err != nil {
 		return err
 	}
+
+	sort.Sort(c.Nodes)
 
 	var wg sync.WaitGroup
 	for i := range c.Nodes {
@@ -132,34 +151,58 @@ func (c *Client) Login(username, password string) (string, error) {
 	return c.token, nil
 }
 
-func (c *Client) Connect(i int, cb func(gogadgets.Message)) {
+func (c *Client) Disconnect() {
+	c.disconnect <- true
+}
+
+func (c *Client) Connect(i int, cb func(gogadgets.Message)) error {
+	c.disconnect = make(chan bool)
 	c.connectedTo = i
 	g := c.Nodes[i]
-	a := strings.Replace(c.addr, "http", "ws", -1)
-	u := fmt.Sprintf(a, fmt.Sprintf("gadgets/%s/websocket", g.Id))
-	h := http.Header{"Origin": {u}, "Authorization": {c.token}}
-	var err error
+
+	a := fmt.Sprintf(c.addr, fmt.Sprintf("gadgets/%s/websocket", g.Id))
+	u, err := url.Parse(a)
+	if err != nil {
+		return err
+	}
+
+	if u.Scheme == "https" {
+		a = strings.Replace(a, "https", "wss", -1)
+	} else {
+		a = strings.Replace(a, "http", "ws", -1)
+	}
+
+	h := http.Header{"Origin": {a}, "Authorization": {c.token}}
 	dialer := websocket.Dialer{
 		Subprotocols:    []string{"p1", "p2"},
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 	}
-	c.ws, _, err = dialer.Dial(u, h)
+	c.ws, _, err = dialer.Dial(a, h)
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 	c.Out = make(chan gogadgets.Message)
-	go c.listen(cb)
+	ws := make(chan gogadgets.Message)
+	go c.listen(ws)
 	go func() {
 		for {
-			msg := <-c.Out
-			d, _ := json.Marshal(msg)
-			c.ws.WriteMessage(websocket.TextMessage, d)
+			select {
+			case msg := <-c.Out:
+				d, _ := json.Marshal(msg)
+				c.ws.WriteMessage(websocket.TextMessage, d)
+			case msg := <-ws:
+				cb(msg)
+			case <-c.disconnect:
+				c.ws.Close()
+				return
+			}
 		}
 	}()
+	return nil
 }
 
-func (c *Client) listen(cb func(gogadgets.Message)) {
+func (c *Client) listen(ch chan gogadgets.Message) {
 	for {
 		var msg gogadgets.Message
 		if err := c.ws.ReadJSON(&msg); err != nil {
@@ -168,6 +211,6 @@ func (c *Client) listen(cb func(gogadgets.Message)) {
 		c.lock.Lock()
 		c.Nodes[c.connectedTo].Devices[msg.Location][msg.Name] = msg
 		c.lock.Unlock()
-		cb(msg)
+		ch <- msg
 	}
 }
