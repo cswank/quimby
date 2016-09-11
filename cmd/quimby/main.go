@@ -172,7 +172,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Post("/api/gadgets/{id}/command", getMiddleware(handlers.Write, handlers.SendCommand))
 	r.Post("/api/gadgets/{id}/method", getMiddleware(handlers.Write, handlers.SendMethod))
 	r.Get("/api/gadgets/{id}/websocket", getMiddleware(handlers.Write, handlers.Connect))
-	r.Get("/api/gadgets/{id}/values", getMiddleware(handlers.Read, handlers.GetValues))
+	r.Get("/api/gadgets/{id}/values", getMiddleware(handlers.Read, handlers.GetUpdates))
 	r.Get("/api/gadgets/{id}/status", getMiddleware(handlers.Read, handlers.GetStatus))
 	r.Post("/api/gadgets/{id}/notes", getMiddleware(handlers.Write, handlers.AddNote))
 	r.Get("/api/gadgets/{id}/notes", getMiddleware(handlers.Read, handlers.GetNotes))
