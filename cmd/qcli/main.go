@@ -1,13 +1,18 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
+	"net/url"
 	"os"
 	"os/user"
+	"path/filepath"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby"
@@ -27,6 +32,9 @@ var (
 	cli       *quimby.Client
 	color1    string
 	colorMap  map[string]string
+	cmdMode   bool
+	cmdTokens []rune
+	links     [][]string
 )
 
 func init() {
@@ -50,6 +58,8 @@ func main() {
 		log.Fatal(err)
 	}
 
+	g.Editor = ui.EditorFunc(commands)
+	current = "nodes-cursor"
 	g.SetLayout(layout)
 	g.Cursor = true
 
@@ -58,6 +68,46 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+}
+
+func commands(v *ui.View, key ui.Key, ch rune, mod ui.Modifier) {
+	if ch == 'q' {
+		current = "nodes-cursor"
+		cli.Disconnect()
+		return
+	}
+	if key == ui.KeyBackspace2 && len(cmdTokens) > 0 {
+		cmdTokens = cmdTokens[0 : len(cmdTokens)-1]
+		return
+	}
+	if key == ui.KeyEnter && len(cmdTokens) > 0 {
+		cmd, err := getCmd()
+		if err == nil {
+			cli.Out <- gogadgets.Message{Type: gogadgets.COMMAND, Body: cmd}
+		}
+	} else if isNumber(ch) {
+		cmdTokens = append(cmdTokens, ch)
+	}
+}
+
+func isNumber(ch rune) bool {
+	return strings.Index("0123456789", string(ch)) > -1
+}
+
+func getCmd() (string, error) {
+	var cmd string
+	for _, t := range cmdTokens {
+		cmd += string(t)
+	}
+	i, err := strconv.ParseInt(cmd, 10, 64)
+	if err != nil {
+		return "", errors.New("invalid input")
+	}
+	cmdTokens = []rune{}
+	if int(i)-1 >= len(links) {
+		return "", errors.New("out of range")
+	}
+	return links[i-1][0], err
 }
 
 // exists returns whether the given file or directory exists or not
@@ -70,6 +120,7 @@ func exists(path string) bool {
 }
 
 func layout(g *ui.Gui) error {
+
 	x, y := g.Size()
 	size := len(cli.Nodes)
 
@@ -102,9 +153,10 @@ func layout(g *ui.Gui) error {
 			return err
 		}
 		v.Frame = false
-		printNode()
+		v.Editable = true
+		printNode(g)
 	}
-	return g.SetCurrentView("nodes-cursor")
+	return g.SetCurrentView(current)
 }
 
 type key struct {
@@ -121,6 +173,10 @@ var keys = []key{
 	{"nodes-cursor", 'n', ui.ModNone, next},
 	{"nodes-cursor", ui.KeyArrowDown, ui.ModNone, next},
 	{"nodes-cursor", ui.KeyCtrlP, ui.ModNone, prev},
+	{"nodes-cursor", 'p', ui.ModNone, prev},
+	{"nodes-cursor", ui.KeyArrowUp, ui.ModNone, prev},
+	{"nodes-cursor", ui.KeyEnter, ui.ModNone, cmd},
+	{"node", ui.KeyEsc, ui.ModNone, esc},
 	{"login", ui.KeyCtrlN, ui.ModNone, next},
 }
 
@@ -144,7 +200,7 @@ func next(g *ui.Gui, v *ui.View) error {
 	}
 	err := v.SetCursor(cx, cy+1)
 	printNodes()
-	printNode()
+	printNode(g)
 	return err
 }
 
@@ -155,23 +211,79 @@ func prev(g *ui.Gui, v *ui.View) error {
 	}
 	err := v.SetCursor(cx, cy-1)
 	printNodes()
-	printNode()
+	printNode(g)
 	return err
 }
 
-func printNode() {
+func cmd(g *ui.Gui, v *ui.View) error {
+	current = "node"
+	cmdTokens = []rune{}
+	var err error
+	v, err = g.View("node")
+	if err != nil {
+		return err
+	}
+	cmdMode = true
+
+	_, cur := v.Cursor()
+	if err := cli.Connect(cur, update); err != nil {
+		return err
+	}
+	return v.SetCursor(0, 0)
+}
+
+func esc(g *ui.Gui, v *ui.View) error {
+	current = "nodes-cursor"
+	return nil
+}
+
+func printNode(g *ui.Gui) {
 	v, _ := g.View("node")
 	cv, _ := g.View("nodes-cursor")
 	v.Clear()
 	_, cur := cv.Cursor()
 	n := cli.Nodes[cur]
 	f := colors["color2"]
-	for key, loc := range n.Devices {
+	i := 1
+	links = [][]string{}
+	var keys []string
+	for key := range n.Devices {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	for _, key := range keys {
 		f(v, fmt.Sprintf("  %s", key))
-		for name, val := range loc {
-			f(v, fmt.Sprintf("    %s: %s", name, getVal(val)))
+		loc := n.Devices[key]
+		var names []string
+		for name := range loc {
+			names = append(names, name)
+		}
+		sort.Strings(names)
+
+		for _, name := range names {
+			val := loc[name]
+			var l string
+			l, i = getLink(val, i)
+			f(v, fmt.Sprintf("    %s: %s %s", name, getVal(val.Value), l))
+			if l != "" {
+				if val.Value.Value.(bool) {
+					links = append(links, val.Info.Off)
+				} else {
+					links = append(links, val.Info.On)
+				}
+			}
 		}
 	}
+}
+
+func getLink(msg gogadgets.Message, i int) (string, int) {
+	if msg.Info.Direction == "input" {
+		return "", i
+	}
+	link := fmt.Sprintf("[%d]", i)
+	i++
+	return link, i
 }
 
 func getVal(val gogadgets.Value) string {
@@ -260,13 +372,20 @@ func login() {
 		log.Fatal(err)
 	}
 	d := fmt.Sprintf("%s/.qcli", usr.HomeDir)
-	p := fmt.Sprintf("%s/.qcli/token", usr.HomeDir)
+	u, err := url.Parse(*addr)
+	if err != nil {
+		log.Fatal(err)
+	}
+	p := filepath.Join(usr.HomeDir, ".qcli", u.Host)
 	if exists(p) {
 		d, err := ioutil.ReadFile(p)
 		if err != nil {
 			log.Fatal(err)
 		}
-		cli = quimby.NewClient(*addr, quimby.Token(string(d)))
+		cli, err = quimby.NewClient(*addr, quimby.Token(string(d)))
+		if err != nil {
+			log.Fatal(err)
+		}
 		if err := cli.GetNodes(); err != nil {
 			os.Remove(p)
 			login()
@@ -282,7 +401,10 @@ func login() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		cli = quimby.NewClient(*addr)
+		cli, err = quimby.NewClient(*addr)
+		if err != nil {
+			log.Fatal(err)
+		}
 		token, err := cli.Login(username, string(pw))
 		if err != nil {
 			log.Fatal(err)
@@ -295,4 +417,11 @@ func login() {
 			log.Fatal(err)
 		}
 	}
+}
+
+func update(msg gogadgets.Message) {
+	g.Execute(func(g *ui.Gui) error {
+		printNode(g)
+		return nil
+	})
 }
