@@ -13,7 +13,7 @@ angular.module('quimby.list', ['ngRoute'])
     $rootScope.$watch('user', function(user) {
         if (user != {}) {
             $gadgets.getGadgets(function(data) {
-                $scope.gadgets = data;
+                $scope.gadgets = _.filter(data, function(d) { return !d.disabled });
             });
         } else {
             $scope.gadgets = {};
