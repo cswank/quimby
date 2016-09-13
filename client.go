@@ -83,8 +83,15 @@ func (c *Client) get(url string, val interface{}) error {
 
 func (c *Client) GetNodes() error {
 	url := fmt.Sprintf(c.addr, "gadgets")
-	if err := c.get(url, &c.Nodes); err != nil {
+	var nodes Nodes
+	if err := c.get(url, &nodes); err != nil {
 		return err
+	}
+
+	for _, n := range nodes {
+		if !n.Disabled {
+			c.Nodes = append(c.Nodes, n)
+		}
 	}
 
 	sort.Sort(c.Nodes)
@@ -104,6 +111,7 @@ func (c *Client) fetchNode(i int, wg *sync.WaitGroup) {
 	c.lock.Lock()
 	n := c.Nodes[i]
 	c.lock.Unlock()
+
 	url := fmt.Sprintf(c.addr, fmt.Sprintf("gadgets/%s/status", n.Id))
 	var m map[string]gogadgets.Message
 	err := c.get(url, &m)
