@@ -397,10 +397,7 @@ func login() {
 			}
 		}
 		fmt.Printf("password: ")
-		pw, err := gopass.GetPasswd()
-		if err != nil {
-			log.Fatal(err)
-		}
+		pw := gopass.GetPasswd()
 		cli, err = quimby.NewClient(*addr)
 		if err != nil {
 			log.Fatal(err)

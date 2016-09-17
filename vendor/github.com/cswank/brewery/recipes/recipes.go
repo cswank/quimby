@@ -3,7 +3,6 @@ package recipes
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 )
 
@@ -34,11 +33,12 @@ type MashStep struct {
 }
 
 type Recipe struct {
-	Name         string        `json:"name"`
-	BatchSize    float64       `json:"batch_size"`
-	BoilSize     float64       `json:"boil_size"`
-	BoilTime     float64       `json:"boil_time"`
-	Efficiency   float64       `json:"efficiency"`
+	Name         string  `json:"name"`
+	BatchSize    float64 `json:"batch_size"`
+	BoilSize     float64 `json:"boil_size"`
+	BoilTime     float64 `json:"boil_time"`
+	Efficiency   float64 `json:"efficiency"`
+	strikeFactor float64
 	Fermentables []Fermentable `json:"recipe_fermentables"`
 	WaterRatio   float64
 	Hops         []Hop      `json:"recipe_hops"`
@@ -54,24 +54,22 @@ type Mash struct {
 	SecondSpargeVolume float64
 }
 
-func NewRecipe(name string) (r *Recipe, err error) {
+func NewRecipe(name string) (*Recipe, error) {
 	recipeUrl := fmt.Sprintf("http://www.brewtoad.com/recipes/%s.json", name)
 	res, err := http.Get(recipeUrl)
 	if err != nil {
-		return r, err
+		return nil, err
 	}
-	body, err := ioutil.ReadAll(res.Body)
-	res.Body.Close()
-	if err != nil {
-		return r, err
+
+	defer res.Body.Close()
+
+	r := &Recipe{
+		WaterRatio:   1.25,
+		strikeFactor: 0.2,
 	}
-	r = &Recipe{}
-	err = json.Unmarshal(body, r)
-	if err != nil {
-		return r, err
-	}
-	r.WaterRatio = 1.25
-	return r, err
+
+	dec := json.NewDecoder(res.Body)
+	return r, dec.Decode(r)
 }
 
 func (r *Recipe) getMash(grainTemperature float64) *Mash {
@@ -114,7 +112,8 @@ func (r *Recipe) getMashTime() (t float64) {
 
 func (r *Recipe) getStrikeTemperature(grainTemperature float64) float64 {
 	targetTemperature := r.getTargetTemperature()
-	return (0.2*r.WaterRatio)*(targetTemperature-grainTemperature) + targetTemperature
+
+	return (r.strikeFactor/r.WaterRatio)*(targetTemperature-grainTemperature) + targetTemperature
 }
 
 func (r *Recipe) getInfusionVolume(initialTemperature, targetTemperature, volume, grainWeight, waterTemperature, mashTemperature float64) float64 {

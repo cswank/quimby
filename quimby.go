@@ -17,16 +17,15 @@ var (
 	Clients *ClientHolder
 	LG      Logger
 	addr    string
-	host    string
-	user    string
+	host    = os.Getenv("QUIMBY_HOST")
+	user    = os.Getenv("QUIMBY_USER")
 )
 
 func GetAddr() string {
-	host = os.Getenv("QUIMBY_HOST")
 	if host == "" {
 		LG.Println("please set QUIMBY_HOST")
 	}
-	user = os.Getenv("QUIMBY_USER")
+
 	if user == "" {
 		LG.Println("please set QUIMBY_USER")
 	}

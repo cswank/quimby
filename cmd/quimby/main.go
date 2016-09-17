@@ -156,6 +156,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	handlers.LG = lg
 
 	go startInternal(iRoot, db, lg, internalPort)
+	go startHomeKit(db, lg)
 
 	r := rex.New("main")
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))
@@ -196,6 +197,16 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	} else {
 		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, chain))
 	}
+}
+
+func startHomeKit(db *bolt.DB, lg quimby.Logger) {
+	key := os.Getenv("QUIMBY_HOMEKIT")
+	if key == "" {
+		lg.Println("QUIMBY_HOMEKIT not set, not starting homekit")
+		return
+	}
+	hk := quimby.NewHomeKit(key, db)
+	hk.Start()
 }
 
 //This is the endpoint that the gadgets report to. It is

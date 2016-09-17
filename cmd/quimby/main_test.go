@@ -287,13 +287,16 @@ var _ = Describe("Quimby", func() {
 			})
 			Describe("lets admins", func() {
 				It("see how many websocket clients there are", func() {
+					getURL = func() string {
+						return fmt.Sprintf(adminAddr, "clients")
+					}
 					r := getReq()
 					defer r.Body.Close()
 					Expect(r.StatusCode).To(Equal(http.StatusOK))
 					var m map[string]int
 					dec := json.NewDecoder(r.Body)
 					Expect(dec.Decode(&m)).To(BeNil())
-					Expect(len(m)).To(Equal(0))
+					Expect(len(m)).To(Equal(1))
 				})
 
 				It("get a list of users", func() {

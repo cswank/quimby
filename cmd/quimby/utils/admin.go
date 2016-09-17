@@ -66,16 +66,10 @@ var (
 
 func getPasswd(u *quimby.User) {
 	fmt.Printf("password: ")
-	b1, err := gopass.GetPasswd()
-	if err != nil {
-		log.Fatal(err)
-	}
+	b1 := gopass.GetPasswd()
 	p1 := string(b1)
 	fmt.Printf("again: ")
-	b2, err := gopass.GetPasswd()
-	if err != nil {
-		log.Fatal(err)
-	}
+	b2 := gopass.GetPasswd()
 	p2 := string(b2)
 	if p1 != p2 {
 		log.Fatal("passwords don't match")
