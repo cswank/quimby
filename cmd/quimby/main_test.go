@@ -296,7 +296,7 @@ var _ = Describe("Quimby", func() {
 					var m map[string]int
 					dec := json.NewDecoder(r.Body)
 					Expect(dec.Decode(&m)).To(BeNil())
-					Expect(len(m)).To(Equal(1))
+					Expect(len(m)).To(Equal(0))
 				})
 
 				It("get a list of users", func() {
