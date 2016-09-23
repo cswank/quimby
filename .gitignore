@@ -26,5 +26,6 @@ _testmain.go
 *.rice-box.go
 dist
 .tmp
+*.log
 bower_components
 nohup.out
