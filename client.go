@@ -214,9 +214,11 @@ func (c *Client) listen(ch chan gogadgets.Message) {
 		if err := c.ws.ReadJSON(&msg); err != nil {
 			return
 		}
-		c.lock.Lock()
-		c.Nodes[c.connectedTo].Devices[msg.Location][msg.Name] = msg
-		c.lock.Unlock()
+		if msg.Type == gogadgets.UPDATE {
+			c.lock.Lock()
+			c.Nodes[c.connectedTo].Devices[msg.Location][msg.Name] = msg
+			c.lock.Unlock()
+		}
 		ch <- msg
 	}
 }

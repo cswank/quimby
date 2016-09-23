@@ -216,20 +216,19 @@ func prev(g *ui.Gui, v *ui.View) error {
 }
 
 func cmd(g *ui.Gui, v *ui.View) error {
+	_, cur := v.Cursor()
 	current = "node"
 	cmdTokens = []rune{}
 	var err error
-	v, err = g.View("node")
+	nv, err := g.View("node")
 	if err != nil {
 		return err
 	}
 	cmdMode = true
-
-	_, cur := v.Cursor()
 	if err := cli.Connect(cur, update); err != nil {
 		return err
 	}
-	return v.SetCursor(0, 0)
+	return nv.SetCursor(0, 0)
 }
 
 func esc(g *ui.Gui, v *ui.View) error {
@@ -397,7 +396,10 @@ func login() {
 			}
 		}
 		fmt.Printf("password: ")
-		pw := gopass.GetPasswd()
+		pw, err := gopass.GetPasswd()
+		if err != nil {
+			log.Fatal(err)
+		}
 		cli, err = quimby.NewClient(*addr)
 		if err != nil {
 			log.Fatal(err)
