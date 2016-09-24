@@ -131,15 +131,7 @@ func layout(g *ui.Gui) error {
 	x, y := g.Size()
 	size := len(cli.Nodes)
 
-	if v, err := g.SetView("nodes-label", -1, -1, len("nodes"), 1); err != nil {
-		if err != ui.ErrUnknownView {
-			return err
-		}
-		v.Frame = false
-		fmt.Fprintln(v, hostLabel)
-	}
-
-	if v, err := g.SetView("nodes-cursor", 4, 0, 6, size+1); err != nil {
+	if v, err := g.SetView("nodes-cursor", 0, 0, 6, size+1); err != nil {
 		if err != ui.ErrUnknownView {
 			return err
 		}
@@ -147,7 +139,7 @@ func layout(g *ui.Gui) error {
 		v.Frame = false
 	}
 
-	if v, err := g.SetView("nodes", 6, 0, 20, size+1); err != nil {
+	if v, err := g.SetView("nodes", 2, 0, 20, size+1); err != nil {
 		if err != ui.ErrUnknownView {
 			return err
 		}
@@ -155,7 +147,7 @@ func layout(g *ui.Gui) error {
 		printNodes()
 	}
 
-	if v, err := g.SetView("node", 20, 0, x, y-1); err != nil {
+	if v, err := g.SetView("node", 16, 0, x, y-1); err != nil {
 		if err != ui.ErrUnknownView {
 			return err
 		}
