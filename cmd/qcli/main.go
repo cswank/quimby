@@ -26,6 +26,7 @@ var (
 	hostLabel string
 	g         *ui.Gui
 	addr      = kingpin.Arg("addr", "quimby address").String()
+	userArg   = kingpin.Flag("username", "username").Short('u').String()
 	colors    map[string]func(io.Writer, string)
 	username  string
 	pw        string
@@ -38,7 +39,13 @@ var (
 )
 
 func init() {
-	username = os.Getenv("QUIMBY_USERNAME")
+	if os.Getenv("QUIMBY_USERNAME") != "" {
+		username = os.Getenv("QUIMBY_USERNAME")
+	} else if *userArg != "" {
+		username = *userArg
+	} else {
+		log.Fatal("you must either set the QUIMBY_USERNAME env var or pass it in with the --username arg")
+	}
 	setupColors()
 }
 
