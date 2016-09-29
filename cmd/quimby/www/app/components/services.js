@@ -25,6 +25,33 @@ angular.module('quimby.services', [])
                 console.log("didn't get users");
             });
         }
+
+        this.save = function(user, callback) {
+            var url = "/api/users";
+            $http.post(url, user).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't save user");
+            });
+        }
+
+        this.updatePermission = function(user, callback) {
+            var url = "/api/users/" + user.username + "/permission";
+            $http.post(url, user).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't save user");
+            });
+        }
+
+        this.updatePassword = function(user, callback) {
+            var url = "/api/users/" + user.username + "/password";
+            $http.post(url, user).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't save user");
+            });
+        }
     }])
 
     .service('$gadgets', ['$http', function ($http) {

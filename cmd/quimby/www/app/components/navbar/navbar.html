@@ -10,7 +10,7 @@
       <div flex></div>
       <div class="md-toolbar-tools user-info" flex="20">
         <span ng-show="loggedIn">
-          <a>Welcome {{user.username}}
+          <a>Welcome <a ng-click="showLogout()">{{user.username}}</a>
             <md-icon
                ng-show="user.permission=='admin'"
                class="settings"

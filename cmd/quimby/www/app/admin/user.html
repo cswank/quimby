@@ -1,9 +1,37 @@
 <div class="page">
-  <a>Username: {{editUser.username}}</a><br/>
-  <a>Permissions: {{editUser.permission}}</a>
-  <div layout="row">
-    <span flex></span>
-    <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
-    <md-button ng-if="user.username" aria-label="Delete" ng-click="delete()">Delete</md-button>
-  </div>
+  <span ng-if="!isNew">
+    <a>{{editUser.username}}</a>
+  </span>
+  <md-input-container ng-if="isNew">
+    <label>Username</label>
+    <input auto-focus="" ng-model="editUser.username" md-autofocus/>
+  </md-input-container>
+  
+  <md-input-container>
+    <p>Permission</p>
+    <md-radio-group ng-model="editUser.permission">
+      <md-radio-button value="read" class="md-primary">Read</md-radio-button>
+      <md-radio-button value="write">Write</md-radio-button>
+      <md-radio-button value="admin">Admin</md-radio-button>
+    </md-radio-group>
+  </md-input-container>
+
+  <span ng-if="isNew">
+    <a>{{passwordError}}</a>
+    <md-input-container>
+      <label>Password</label>
+      <input type="password" ng-model="password.first"/>
+    </md-input-container>
+    <md-input-container>
+      <label>Confirm Password</label>
+      <input type="password" ng-model="password.second"/>
+    </md-input-container>
+  </span>
+  
+  <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
+  <md-button ng-if="user.username" aria-label="Save" ng-click="save()">Save</md-button>
+  <span ng-if="!isNew">
+    <md-button aria-label="Delete" ng-click="delete()">Delete</md-button>
+    <md-button aria-label="Update Password" ng-click="updatePassword()">Update Password</md-button>
+  </span>
 </div>
