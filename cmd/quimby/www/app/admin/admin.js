@@ -3,11 +3,6 @@
 angular.module('quimby.admin', ['ngRoute'])
     .config(['$routeProvider', function($routeProvider) {
 
-        $routeProvider.when('/admin/add-user', {
-            templateUrl: 'admin/add-user.html',
-            controller: 'AddUserCtrl'
-        });
-        
         $routeProvider.when('/admin', {
             templateUrl: 'admin/admin.html',
             controller: 'AdminListCtrl'

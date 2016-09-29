@@ -2,16 +2,15 @@
 
 angular.module('quimby.admin')
     .controller('UserCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$users', '$location', '$routeParams', function($scope, $rootScope, $gadgets, $auth, $users, $location, $routeParams) {
-        var username = $routeParams.id;
+        $scope.editUser = {username: $routeParams.id};
 
-        console.log("user", username);
         $rootScope.$watch('user', function(user) {
-            if (user != {} && $scope.gadget != {}) {
-                $users.get(username, function(data) {
+            if (user != {} && $scope.gadget != {} && $scope.editUser.username != "new-user") {
+                $users.get($scope.editUser.username, function(data) {
                     console.log("got user", data);
                     $rootScope.links = [
                         {href:"#/admin", name:"admin"},
-                        {href:"#/admin/users" + username, name:data.name}
+                        {href:"#/admin/users/" + $scope.editUser.username, name:data.name}
                     ];
                     $scope.editUser = data;
                 });

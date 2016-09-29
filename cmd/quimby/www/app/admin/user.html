@@ -1,9 +1,13 @@
 <div class="page">
-  <a>Username: {{editUser.username}}</a><br/>
-  <a>Permissions: {{editUser.permission}}</a>
-  <div layout="row">
-    <span flex></span>
-    <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
-    <md-button ng-if="user.username" aria-label="Delete" ng-click="delete()">Delete</md-button>
-  </div>
+  <md-input-container>
+    <label>Username</label>
+    <input auto-focus="" ng-model="editUser.username"/>
+  </md-input-container>
+  <md-input-container>
+    <label>Permission</label>
+    <input ng-model="editUser.permission"/>
+  </md-input-container>
+  <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
+  <md-button ng-if="user.username" aria-label="Save" ng-click="save()">Save</md-button>
+  <md-button ng-if="editUser.username != 'new-user'" aria-label="Delete" ng-click="delete()">Delete</md-button>
 </div>
