@@ -17,6 +17,10 @@ angular.module('quimby.admin')
             }
         });
 
+        $scope.save = function() {
+            
+        };
+
         $scope.delete = function() {
             $mdDialog.show({
                 controller: DeleteGadgetController,

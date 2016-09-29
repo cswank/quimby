@@ -9,5 +9,7 @@
   </md-input-container>
   <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
   <md-button ng-if="user.username" aria-label="Save" ng-click="save()">Save</md-button>
-  <md-button ng-if="editUser.username != 'new-user'" aria-label="Delete" ng-click="delete()">Delete</md-button>
+  <span ng-if="editUser.username != 'new-user'">
+    <md-button aria-label="Delete" ng-click="delete()">Delete</md-button>
+  </span>
 </div>
