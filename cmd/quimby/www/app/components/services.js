@@ -25,6 +25,20 @@ angular.module('quimby.services', [])
                 console.log("didn't get users");
             });
         }
+
+        this.save = function(user, update, callback) {
+            var url
+            if (update) {
+                url = "/api/users/" + user.username;
+            } else {
+                url = "/api/users"
+            }
+            $http.post(url, user).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't svae user");
+            });
+        }
     }])
 
     .service('$gadgets', ['$http', function ($http) {

@@ -56,6 +56,17 @@ func GetUsers(w http.ResponseWriter, req *http.Request) {
 	enc.Encode(users)
 }
 
+func AddUser(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	u := quimby.User{DB: args.DB}
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&u); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	context.Set(req, "error", u.Save())
+}
+
 func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
 	enc := json.NewEncoder(w)
 	args := GetArgs(req)

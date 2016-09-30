@@ -1,15 +1,33 @@
 <div class="page">
   <md-input-container>
     <label>Username</label>
-    <input auto-focus="" ng-model="editUser.username"/>
+    <input auto-focus="" ng-model="editUser.username" md-autofocus/>
   </md-input-container>
+  
   <md-input-container>
-    <label>Permission</label>
-    <input ng-model="editUser.permission"/>
+    <p>Permission</p>
+    <md-radio-group ng-model="editUser.permission">
+      <md-radio-button value="read" class="md-primary">Read</md-radio-button>
+      <md-radio-button value="write">Write</md-radio-button>
+      <md-radio-button value="admin">Admin</md-radio-button>
+    </md-radio-group>
   </md-input-container>
+
+  <span ng-if="isNew">
+    <a>{{passwordError}}</a>
+    <md-input-container>
+      <label>Password</label>
+      <input ng-model="password.first"/>
+    </md-input-container>
+    <md-input-container>
+      <label>Confirm Password</label>
+      <input ng-model="password.second"/>
+    </md-input-container>
+  </span>
+  
   <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
   <md-button ng-if="user.username" aria-label="Save" ng-click="save()">Save</md-button>
-  <span ng-if="editUser.username != 'new-user'">
+  <span ng-if="isNew">
     <md-button aria-label="Delete" ng-click="delete()">Delete</md-button>
   </span>
 </div>
