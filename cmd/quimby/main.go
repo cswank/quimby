@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -139,7 +140,13 @@ func startServer(db *bolt.DB) {
 	if port == "" {
 		log.Fatal("you must specify a port with QUIMBY_INTERNAL_PORT")
 	}
-	lg := log.New(os.Stdout, "quimby ", log.Ltime)
+
+	var lg *log.Logger
+	if os.Getenv("QUIMBY_NULLLOG") != "" {
+		lg = log.New(ioutil.Discard, "quimby ", log.Ltime)
+	} else {
+		lg = log.New(os.Stdout, "quimby ", log.Ltime)
+	}
 	clients := quimby.NewClientHolder()
 	start(db, port, internalPort, "/", "/api", lg, clients)
 }

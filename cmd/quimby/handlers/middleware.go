@@ -30,7 +30,11 @@ func Error(lg quimby.Logger) alice.Constructor {
 			if e != nil {
 				lg.Printf("error (%s)\n", e)
 				err := e.(error)
-				w.WriteHeader(http.StatusInternalServerError)
+				if err.Error() == "not found" {
+					w.WriteHeader(http.StatusNotFound)
+				} else {
+					w.WriteHeader(http.StatusInternalServerError)
+				}
 				w.Write([]byte(err.Error()))
 			}
 		})

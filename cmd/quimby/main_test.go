@@ -286,18 +286,6 @@ var _ = Describe("Quimby", func() {
 				getTok = func() string { return adminToken }
 			})
 			Describe("lets admins", func() {
-				It("see how many websocket clients there are", func() {
-					getURL = func() string {
-						return fmt.Sprintf(adminAddr, "clients")
-					}
-					r := getReq()
-					defer r.Body.Close()
-					Expect(r.StatusCode).To(Equal(http.StatusOK))
-					var m map[string]int
-					dec := json.NewDecoder(r.Body)
-					Expect(dec.Decode(&m)).To(BeNil())
-					Expect(len(m)).To(Equal(0))
-				})
 
 				It("get a list of users", func() {
 					getURL = func() string { return fmt.Sprintf(addr, "users", "", "") }
@@ -321,6 +309,54 @@ var _ = Describe("Quimby", func() {
 					dec := json.NewDecoder(r.Body)
 					Expect(dec.Decode(&u)).To(BeNil())
 					Expect(u.Username).To(Equal("boss"))
+				})
+
+				It("creates and deletes a user", func() {
+					getURL = func() string { return fmt.Sprintf(addr, "users", "", "") }
+					getMethod = func() string { return "POST" }
+					getBuf = func() io.Reader {
+						u := quimby.User{
+							Username:   "disposable",
+							Password:   "xxxyyyzz111",
+							Permission: "read",
+						}
+						var buf bytes.Buffer
+						enc := json.NewEncoder(&buf)
+						Expect(enc.Encode(u)).To(BeNil())
+						return &buf
+					}
+					r := getReq()
+					defer r.Body.Close()
+					Expect(r.StatusCode).To(Equal(http.StatusOK))
+
+					getURL = func() string { return fmt.Sprintf(addr, "users/", "disposable", "") }
+					getMethod = func() string { return "GET" }
+					getBuf = func() io.Reader { return nil }
+
+					r = getReq()
+					defer r.Body.Close()
+					Expect(r.StatusCode).To(Equal(http.StatusOK))
+
+					var u quimby.User
+					dec := json.NewDecoder(r.Body)
+					Expect(dec.Decode(&u)).To(BeNil())
+					Expect(u.Username).To(Equal("disposable"))
+
+					getURL = func() string { return fmt.Sprintf(addr, "users/", "disposable", "") }
+					getMethod = func() string { return "DELETE" }
+					getBuf = func() io.Reader { return nil }
+
+					r = getReq()
+					defer r.Body.Close()
+					Expect(r.StatusCode).To(Equal(http.StatusOK))
+
+					getURL = func() string { return fmt.Sprintf(addr, "users/", "disposable", "") }
+					getMethod = func() string { return "GET" }
+					getBuf = func() io.Reader { return nil }
+
+					r = getReq()
+					defer r.Body.Close()
+					Expect(r.StatusCode).To(Equal(http.StatusNotFound))
 				})
 			})
 
@@ -357,6 +393,38 @@ var _ = Describe("Quimby", func() {
 				It("see how many websocket clients there are", func() {
 					r := getReq()
 					Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+				})
+
+				It("create a user", func() {
+					getURL = func() string { return fmt.Sprintf(addr, "users", "", "") }
+					getMethod = func() string { return "POST" }
+					getBuf = func() io.Reader {
+						u := quimby.User{
+							Username:   "disposable",
+							Password:   "xxxyyyzz111",
+							Permission: "read",
+						}
+						var buf bytes.Buffer
+						enc := json.NewEncoder(&buf)
+						Expect(enc.Encode(u)).To(BeNil())
+						return &buf
+					}
+					r := getReq()
+					defer r.Body.Close()
+					Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+
+					getURL = func() string { return fmt.Sprintf(addr, "users/", "disposable", "") }
+					getMethod = func() string { return "GET" }
+					getBuf = func() io.Reader { return nil }
+
+					r = getReq()
+					defer r.Body.Close()
+					Expect(r.StatusCode).To(Equal(http.StatusUnauthorized))
+
+					var u quimby.User
+					dec := json.NewDecoder(r.Body)
+					Expect(dec.Decode(&u)).ToNot(BeNil())
+					Expect(u.Username).ToNot(Equal("disposable"))
 				})
 			})
 		})
