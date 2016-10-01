@@ -26,13 +26,17 @@ angular.module('quimby.services', [])
             });
         }
 
-        this.save = function(user, update, callback) {
-            var url
-            if (update) {
-                url = "/api/users/" + user.username;
-            } else {
-                url = "/api/users"
-            }
+        this.save = function(user, callback) {
+            var url = "/api/users";
+            $http.post(url, user).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't svae user");
+            });
+        }
+
+        this.updatePermission = function(user, callback) {
+            var url = "/api/users/" + user.username + "/permission";
             $http.post(url, user).success(function(data) {
                 callback(data);
             }).error(function() {

@@ -1,5 +1,8 @@
 <div class="page">
-  <md-input-container>
+  <span ng-if="!isNew">
+    <a>{{editUser.username}}</a>
+  </span>
+  <md-input-container ng-if="isNew">
     <label>Username</label>
     <input auto-focus="" ng-model="editUser.username" md-autofocus/>
   </md-input-container>
@@ -17,17 +20,17 @@
     <a>{{passwordError}}</a>
     <md-input-container>
       <label>Password</label>
-      <input ng-model="password.first"/>
+      <input type="password" ng-model="password.first"/>
     </md-input-container>
     <md-input-container>
       <label>Confirm Password</label>
-      <input ng-model="password.second"/>
+      <input type="password" ng-model="password.second"/>
     </md-input-container>
   </span>
   
   <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>
   <md-button ng-if="user.username" aria-label="Save" ng-click="save()">Save</md-button>
-  <span ng-if="isNew">
+  <span ng-if="!isNew">
     <md-button aria-label="Delete" ng-click="delete()">Delete</md-button>
   </span>
 </div>

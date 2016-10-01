@@ -56,6 +56,34 @@ func GetUsers(w http.ResponseWriter, req *http.Request) {
 	enc.Encode(users)
 }
 
+func DeleteUser(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	username := args.Vars["username"]
+	u := quimby.User{DB: args.DB, Username: username}
+	context.Set(req, "error", u.Delete())
+}
+
+func UpdateUserPassword(w http.ResponseWriter, req *http.Request) {
+}
+
+func UpdateUserPermission(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	username := args.Vars["username"]
+	u := quimby.User{DB: args.DB}
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&u); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	savedU := quimby.User{DB: args.DB, Username: username}
+	if err := savedU.Fetch(); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	savedU.Permission = u.Permission
+	context.Set(req, "error", savedU.Save())
+}
+
 func AddUser(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	u := quimby.User{DB: args.DB}

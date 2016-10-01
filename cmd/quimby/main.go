@@ -165,6 +165,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/api/currentuser", getMiddleware(handlers.Read, handlers.GetCurrentUser))
 	r.Get("/api/users", getMiddleware(handlers.Admin, handlers.GetUsers))
 	r.Post("/api/users", getMiddleware(handlers.Admin, handlers.AddUser))
+	r.Delete("/api/users/{username}", getMiddleware(handlers.Admin, handlers.DeleteUser))
+	r.Post("/api/users/{username}/permission", getMiddleware(handlers.Admin, handlers.UpdateUserPermission))
 	r.Get("/api/users/{username}", getMiddleware(handlers.Admin, handlers.GetUser))
 	r.Get("/api/gadgets", getMiddleware(handlers.Read, handlers.GetGadgets))
 	r.Post("/api/gadgets", getMiddleware(handlers.Read, handlers.AddGadget))

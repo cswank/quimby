@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('quimby.admin')
-    .controller('UserCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$users', '$location', '$routeParams', function($scope, $rootScope, $gadgets, $auth, $users, $location, $routeParams) {
+    .controller('UserCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$users', '$location', '$routeParams', '$mdDialog', function($scope, $rootScope, $gadgets, $auth, $users, $location, $routeParams, $mdDialog) {
         $scope.editUser = {username: $routeParams.id};
         $scope.password = {};
         $scope.isNew = false;
@@ -32,25 +32,28 @@ angular.module('quimby.admin')
                 } else {
                     $scope.editUser.password = $scope.password.first;
                 }
+                $users.save($scope.editUser, function() {
+                    $location.path("/admin");
+                });
+            } else {
+                $users.updatePermission($scope.editUser, function() {
+                    $location.path("/admin");
+                });
             }
-            
-            $users.save($scope.editUser, !$scope.isNew, function() {
-                $location.path("/admin");
-            });
         };
 
-        $scope.delete = function() {
+        $scope.delete = function(ev) {
             $mdDialog.show({
                 controller: DeleteGadgetController,
                 templateUrl: 'admin/confirm.html?t=' + new Date().getTime(),
                 locals: {
-                    name: $scope.user.username
+                    name: $scope.editUser.username
                 },
                 targetEvent: ev
             }).then(function(result) {
                 if (result == true) {
                     $users.delete($scope.editUser.username, function() {
-                        $location.path("/admin");  
+                        $location.path("/admin");
                     });
                 }
             });
