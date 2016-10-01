@@ -31,7 +31,7 @@ angular.module('quimby.services', [])
             $http.post(url, user).success(function(data) {
                 callback(data);
             }).error(function() {
-                console.log("didn't svae user");
+                console.log("didn't save user");
             });
         }
 
@@ -40,7 +40,16 @@ angular.module('quimby.services', [])
             $http.post(url, user).success(function(data) {
                 callback(data);
             }).error(function() {
-                console.log("didn't svae user");
+                console.log("didn't save user");
+            });
+        }
+
+        this.updatePassword = function(user, callback) {
+            var url = "/api/users/" + user.username + "/password";
+            $http.post(url, user).success(function(data) {
+                callback(data);
+            }).error(function() {
+                console.log("didn't save user");
             });
         }
     }])

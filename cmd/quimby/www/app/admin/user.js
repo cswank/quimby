@@ -1,5 +1,22 @@
 'use strict';
 
+function UpdatePasswordController($scope, $mdDialog) {
+    $scope.password = {first:"", second: ""};
+    $scope.cancel = function() {
+        $mdDialog.cancel();
+    };
+    $scope.save = function() {
+        if ($scope.password.first != $scope.password.second) {
+            $scope.password.first = "";
+            $scope.password.second = "";
+            $scope.passwordError = "passwords don't match";
+        } else {
+            $mdDialog.hide(true, $scope.password.first);
+        }
+    };
+}
+
+
 angular.module('quimby.admin')
     .controller('UserCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$users', '$location', '$routeParams', '$mdDialog', function($scope, $rootScope, $gadgets, $auth, $users, $location, $routeParams, $mdDialog) {
         $scope.editUser = {username: $routeParams.id};
@@ -41,6 +58,21 @@ angular.module('quimby.admin')
                 });
             }
         };
+
+        $scope.updatePassword = function(ev) {
+            $mdDialog.show({
+                controller: UpdatePasswordController,
+                templateUrl: 'admin/password.html?t=' + new Date().getTime(),
+                targetEvent: ev
+            }).then(function(result, pw) {
+                if (result == true) {
+                    $scope.editUser.password = pw;
+                    $users.updatePassword($scope.editUser, function() {
+                        $location.path("/admin");
+                    });
+                }
+            });
+        }
 
         $scope.delete = function(ev) {
             $mdDialog.show({

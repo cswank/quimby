@@ -64,6 +64,21 @@ func DeleteUser(w http.ResponseWriter, req *http.Request) {
 }
 
 func UpdateUserPassword(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	username := args.Vars["username"]
+	u := quimby.User{DB: args.DB}
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&u); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	savedU := quimby.User{DB: args.DB, Username: username}
+	if err := savedU.Fetch(); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	savedU.Password = u.Password
+	context.Set(req, "error", savedU.Save())
 }
 
 func UpdateUserPermission(w http.ResponseWriter, req *http.Request) {
