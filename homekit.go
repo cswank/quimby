@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 
 	"github.com/boltdb/bolt"
 	"github.com/brutella/hc"
@@ -16,12 +17,9 @@ var (
 )
 
 type HomeKit struct {
-	db          *bolt.DB
-	id          string
-	switches    map[string]accessory.Switch
-	accessories []*accessory.Accessory
-	key         string
-	cmds        []cmd
+	db  *bolt.DB
+	id  string
+	key string
 }
 
 func NewHomeKit(key string, db *bolt.DB) *HomeKit {
@@ -39,38 +37,21 @@ func (h *HomeKit) Start() {
 		return
 	}
 	h.getSwitches()
-
-	cfg := hc.Config{
-		StoragePath: pth,
-		Pin:         h.key,
-	}
-
-	var t hc.Transport
-	var err error
-	if len(h.accessories) == 1 {
-		t, err = hc.NewIPTransport(cfg, h.accessories[0])
-	} else if len(h.accessories) > 1 {
-		t, err = hc.NewIPTransport(cfg, h.accessories[0], h.accessories[1:]...)
-	} else {
-		return
-	}
-	if err != nil {
-		log.Fatal(err)
-	}
-	t.Start()
-	LG.Println("homekit is done")
 }
 
 func (h *HomeKit) getSwitches() {
-	h.cmds = []cmd{}
 	gadgets, err := GetGadgets(h.db)
 	if err != nil {
 		log.Fatal(err)
 	}
-	h.switches = map[string]accessory.Switch{}
-	h.cmds = []cmd{}
-	h.accessories = []*accessory.Accessory{}
 	for _, g := range gadgets {
+		p := path.Join(pth, g.Name)
+		cfg := hc.Config{
+			StoragePath: p,
+			Pin:         h.key,
+		}
+
+		accessories := []*accessory.Accessory{}
 		Register(g)
 		if err := g.Fetch(); err != nil {
 			log.Printf("not adding %s to homekit: %s\n", g.Name, err)
@@ -88,51 +69,78 @@ func (h *HomeKit) getSwitches() {
 					Manufacturer: "gogadgets",
 				}
 				s := accessory.NewSwitch(info)
-				h.switches[name] = *s
-				h.cmds = append(h.cmds, newCMD(s, g, name))
-				h.accessories = append(h.accessories, s.Accessory)
+				accessories = append(accessories, s.Accessory)
+				connect(s, g, name)
+			} else if dev.Info.Direction == "input" && dev.Info.Type == "thermometer" {
+				info := accessory.Info{
+					Name:         name,
+					Manufacturer: "gogadgets",
+				}
+				t := accessory.NewTemperatureSensor(info, dev.Value.Value.(float64), 0.0, 212.0, 0.1)
+				accessories = append(accessories, t.Accessory)
+				connect(t, g, name)
 			}
 		}
-	}
-}
 
-type cmd struct {
-	s   *accessory.Switch
-	g   Gadget
-	k   string
-	on  string
-	off string
-	ch  chan gogadgets.Message
-}
-
-func newCMD(s *accessory.Switch, g Gadget, k string) cmd {
-	c := cmd{
-		s:   s,
-		g:   g,
-		k:   k,
-		on:  fmt.Sprintf("turn on %s", k),
-		off: fmt.Sprintf("turn off %s", k),
-	}
-	c.s.Switch.On.OnValueRemoteUpdate(func(on bool) {
-		if on == true {
-			c.g.SendCommand(c.on)
+		var t hc.Transport
+		if len(accessories) == 1 {
+			t, err = hc.NewIPTransport(cfg, accessories[0])
+		} else if len(accessories) > 1 {
+			t, err = hc.NewIPTransport(cfg, accessories[0], accessories[1:]...)
 		} else {
-			c.g.SendCommand(c.off)
+			return
+		}
+		if err != nil {
+			log.Println("not starting accesory", err)
+		} else {
+			go t.Start()
+		}
+	}
+}
+
+func connect(a interface{}, g Gadget, k string) {
+	switch a.(type) {
+	case *accessory.Switch:
+		connectSwitch(a.(*accessory.Switch), g, k)
+	case *accessory.Thermometer:
+		connectThermometer(a.(*accessory.Thermometer), g, k)
+	}
+}
+
+func connectThermometer(t *accessory.Thermometer, g Gadget, k string) {
+	ch := make(chan gogadgets.Message)
+	uuid := gogadgets.GetUUID()
+	Clients.Add(g.Host, uuid, ch)
+	go func(ch chan gogadgets.Message, k string, t *accessory.Thermometer) {
+		for {
+			msg := <-ch
+			key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
+			if key == k {
+				temp := (msg.Value.Value.(float64) - 32.0) / 1.8
+				t.TempSensor.CurrentTemperature.SetValue(temp)
+			}
+		}
+	}(ch, k, t)
+}
+
+func connectSwitch(s *accessory.Switch, g Gadget, k string) {
+	s.Switch.On.OnValueRemoteUpdate(func(on bool) {
+		if on == true {
+			g.SendCommand(fmt.Sprintf("turn on %s", k))
+		} else {
+			g.SendCommand(fmt.Sprintf("turn off %s", k))
 		}
 	})
-	c.ch = make(chan gogadgets.Message)
+	ch := make(chan gogadgets.Message)
 	uuid := gogadgets.GetUUID()
-	Clients.Add(g.Host, uuid, c.ch)
-	go c.listen()
-	return c
-}
-
-func (c *cmd) listen() {
-	for {
-		msg := <-c.ch
-		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
-		if key == c.k {
-			c.s.Switch.On.SetValue(msg.Value.Value.(bool))
+	Clients.Add(g.Host, uuid, ch)
+	go func(ch chan gogadgets.Message, k string, s *accessory.Switch) {
+		for {
+			msg := <-ch
+			key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
+			if key == k {
+				s.Switch.On.SetValue(msg.Value.Value.(bool))
+			}
 		}
-	}
+	}(ch, k, s)
 }

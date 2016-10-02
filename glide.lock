@@ -1,12 +1,12 @@
 hash: d6bfa5b2d010e51ec8b1ca87ef609cde8369573752762c5f02541c900e551293
-updated: 2016-09-16T09:50:01.318737021-06:00
+updated: 2016-10-02T12:57:57.917153406-06:00
 imports:
 - name: github.com/aead/chacha20
-  version: 89264ae06c28bcefe4da0280ab1fb6d8f7a0025f
+  version: ba19b6a364967b510e6cc40a0068138621774b80
   subpackages:
   - chacha
 - name: github.com/aead/poly1305
-  version: 6145bf188f408e57e4a256eab2e0989eb8b92f53
+  version: 0b78569f677869a916f02f72a24d9ef45a5478fa
 - name: github.com/agl/ed25519
   version: 278e1ec8e8a6e017cd07577924d6766039146ced
   subpackages:
@@ -24,20 +24,20 @@ imports:
   subpackages:
   - accessory
   - characteristic
+  - crypto
+  - crypto/chacha20poly1305
+  - crypto/curve25519
+  - crypto/hkdf
   - db
   - event
   - hap
-  - hap/http
-  - util
-  - service
-  - crypto
-  - hap/data
   - hap/controller
+  - hap/data
   - hap/endpoint
+  - hap/http
   - hap/pair
-  - crypto/chacha20poly1305
-  - crypto/hkdf
-  - crypto/curve25519
+  - service
+  - util
 - name: github.com/brutella/log
   version: 4f6ff0661a5e6af8856e018841cd275e7121f8bf
 - name: github.com/cswank/brewery
@@ -45,7 +45,7 @@ imports:
   subpackages:
   - recipes
 - name: github.com/cswank/gogadgets
-  version: 83b06610e160f31d6c192516abda853fcb5bd95a
+  version: 4223d26131c2429541baa222f249793fb716aaf5
   subpackages:
   - utils
 - name: github.com/cswank/rex
@@ -87,25 +87,58 @@ imports:
   subpackages:
   - crypto/srp
 - name: golang.org/x/crypto
-  version: 81372b2fc2f10bef2a7f338da115c315a56b2726
+  version: 84e98f45760e87786b7f24603b8166a6fa09811d
   subpackages:
   - bcrypt
   - blowfish
-  - ssh/terminal
-  - hkdf
   - curve25519
+  - hkdf
+  - ssh/terminal
 - name: golang.org/x/net
-  version: 71a035914f99bb58fe82eac0f1289f10963d876c
+  version: cd95c68ba21fc7ee16ee38cc420473e3d8c4afd8
   subpackages:
-  - ipv4
-  - ipv6
   - bpf
   - internal/iana
   - internal/netreflect
+  - ipv4
+  - ipv6
 - name: golang.org/x/sys
-  version: 30de6d19a3bd89a5f38ae4028e23aaa5582648af
+  version: 8f0908ab3b2457e2e15403d3697c9ef5cb4b57a9
   subpackages:
   - unix
 - name: gopkg.in/alecthomas/kingpin.v2
   version: e9044be3ab2a8e11d4e1f418d12f0790d57e8d70
-testImports: []
+testImports:
+- name: github.com/onsi/ginkgo
+  version: 45a5f6ffb2a14e4f29698c16ae4c0a34018a8951
+  subpackages:
+  - config
+  - internal/codelocation
+  - internal/containernode
+  - internal/failer
+  - internal/leafnodes
+  - internal/remote
+  - internal/spec
+  - internal/specrunner
+  - internal/suite
+  - internal/testingtproxy
+  - internal/writer
+  - reporters
+  - reporters/stenographer
+  - types
+- name: github.com/onsi/gomega
+  version: d59fa0ac68bb5dd932ee8d24eed631cdd519efc3
+  subpackages:
+  - format
+  - internal/assertion
+  - internal/asyncassertion
+  - internal/oraclematcher
+  - internal/testingtsupport
+  - matchers
+  - matchers/support/goraph/bipartitegraph
+  - matchers/support/goraph/edge
+  - matchers/support/goraph/node
+  - matchers/support/goraph/util
+  - types
+- name: gopkg.in/yaml.v2
+  version: a5b47d31c556af34a302ce5d659e6fea44d90de0
