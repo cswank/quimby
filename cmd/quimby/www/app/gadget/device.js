@@ -29,6 +29,7 @@ angular.module('quimby.services')
                 name: '=',
                 value: '=',
                 location: '=',
+                target: '=',
                 direction: '=',
                 decimals: '='
             },
@@ -56,15 +57,6 @@ angular.module('quimby.services')
                 $scope.showHistory = function(location, device) {
                     var url = "/gadgets/" + $routeParams.id + "/history/";
                     $location.path(url).search({location: location, device: device});
-                }
-
-                $scope.checkio = function(io) {
-                    angular.forEach(io, function(value, key) {
-                        if (value) {
-                            return true;
-                        }
-                    });
-                    return false;
                 }
             }
         }

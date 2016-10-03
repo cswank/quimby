@@ -3,12 +3,14 @@ package quimby
 import (
 	"fmt"
 	"log"
+	"math"
 	"os"
 	"path"
 
 	"github.com/boltdb/bolt"
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
+	"github.com/brutella/hc/characteristic"
 	"github.com/cswank/gogadgets"
 )
 
@@ -36,10 +38,10 @@ func (h *HomeKit) Start() {
 		LG.Println("didn't set QUIMBY_USER or QUIMBY_HOMEKIT_PATH, homekit exiting")
 		return
 	}
-	h.getSwitches()
+	h.getDevices()
 }
 
-func (h *HomeKit) getSwitches() {
+func (h *HomeKit) getDevices() {
 	gadgets, err := GetGadgets(h.db)
 	if err != nil {
 		log.Fatal(err)
@@ -64,21 +66,9 @@ func (h *HomeKit) getSwitches() {
 		}
 		for name, dev := range devices {
 			if dev.Info.Direction == "output" {
-				info := accessory.Info{
-					Name:         name,
-					Manufacturer: "gogadgets",
-				}
-				s := accessory.NewSwitch(info)
-				accessories = append(accessories, s.Accessory)
-				connect(s, g, name)
-			} else if dev.Info.Direction == "input" && dev.Info.Type == "thermometer" {
-				info := accessory.Info{
-					Name:         name,
-					Manufacturer: "gogadgets",
-				}
-				t := accessory.NewTemperatureSensor(info, dev.Value.Value.(float64), 0.0, 212.0, 0.1)
-				accessories = append(accessories, t.Accessory)
-				connect(t, g, name)
+				accessories = getOutputDevice(name, dev, g, accessories)
+			} else if dev.Info.Direction == "input" {
+				accessories = getInputDevice(name, dev, g, accessories)
 			}
 		}
 
@@ -98,12 +88,51 @@ func (h *HomeKit) getSwitches() {
 	}
 }
 
+func getInputDevice(name string, dev gogadgets.Message, g Gadget, accessories []*accessory.Accessory) []*accessory.Accessory {
+	if dev.Info.Type != "thermometer" {
+		return accessories
+	}
+
+	info := accessory.Info{
+		Name:         name,
+		Manufacturer: "gogadgets",
+	}
+	t := accessory.NewTemperatureSensor(info, dev.Value.Value.(float64), 0.0, 212.0, 0.1)
+	connect(t, g, name)
+	return append(accessories, t.Accessory)
+}
+
+func getOutputDevice(name string, dev gogadgets.Message, g Gadget, accessories []*accessory.Accessory) []*accessory.Accessory {
+	if dev.Info.Type == "thermostat" {
+		return getThermostat(name, dev, g, accessories)
+	}
+	info := accessory.Info{
+		Name:         name,
+		Manufacturer: "gogadgets",
+	}
+	s := accessory.NewSwitch(info)
+	connect(s, g, name)
+	return append(accessories, s.Accessory)
+}
+
+func getThermostat(name string, dev gogadgets.Message, g Gadget, accessories []*accessory.Accessory) []*accessory.Accessory {
+	info := accessory.Info{
+		Name:         name,
+		Manufacturer: "gogadgets",
+	}
+	s := accessory.NewThermostat(info, 70.0, 0.0, 90.0, 0.1)
+	connect(s, g, name)
+	return append(accessories, s.Accessory)
+}
+
 func connect(a interface{}, g Gadget, k string) {
 	switch a.(type) {
 	case *accessory.Switch:
 		connectSwitch(a.(*accessory.Switch), g, k)
 	case *accessory.Thermometer:
 		connectThermometer(a.(*accessory.Thermometer), g, k)
+	case *accessory.Thermostat:
+		connectThermostat(a.(*accessory.Thermostat), g, k)
 	}
 }
 
@@ -143,4 +172,56 @@ func connectSwitch(s *accessory.Switch, g Gadget, k string) {
 			}
 		}
 	}(ch, k, s)
+}
+
+func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
+	//message from homekit
+	t.Thermostat.TargetHeatingCoolingState.OnValueRemoteUpdate(func(state int) {
+		switch state {
+		case characteristic.TargetHeatingCoolingStateOff:
+			g.SendCommand("turn off furnace")
+		case characteristic.TargetHeatingCoolingStateHeat:
+			v := t.Thermostat.TargetTemperature.GetValue()
+			v = math.Floor(1.8*v + 32.0 + .5)
+			g.SendCommand(fmt.Sprintf("heat home to %d F", int(v)))
+		case characteristic.TargetHeatingCoolingStateCool:
+			v := t.Thermostat.TargetTemperature.GetValue()
+			v = math.Floor(1.8*v + 32.0 + .5)
+			g.SendCommand(fmt.Sprintf("cool home to %d F", int(v)))
+		}
+	})
+
+	t.Thermostat.TargetTemperature.OnValueRemoteUpdate(func(c float64) {
+		f := int(math.Floor(1.8*c + 32.0 + .5))
+		s := t.Thermostat.TargetHeatingCoolingState.GetValue()
+		switch s {
+		case characteristic.TargetHeatingCoolingStateOff:
+			g.SendCommand("turn off furnace")
+		case characteristic.TargetHeatingCoolingStateHeat:
+			g.SendCommand(fmt.Sprintf("heat home to %d F", f))
+		case characteristic.TargetHeatingCoolingStateCool:
+			fmt.Println("sending command", g.SendCommand(fmt.Sprintf("cool home to %d F", f)))
+		}
+	})
+
+	// ch := make(chan gogadgets.Message)
+	// uuid := gogadgets.GetUUID()
+	// Clients.Add(g.Host, uuid, ch)
+	// go func(ch chan gogadgets.Message, k string, t *accessory.Thermostat) {
+	// 	for {
+	// 		msg := <-ch
+	// 		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
+	// 		if key == k {
+	// 			fmt.Println("update from furnace", msg)
+	// 			// if msg.Value.Cmd == "turn off home furnace" {
+	// 			// 	t.Thermostat.TargetHeatingCoolingState.SetValue(characteristic.TargetHeatingCoolingStateOff)
+	// 			// } else {
+
+	// 			// case  "":
+	// 			// 	fmt.Println("somebody turned on the furnace")
+	// 		} // else if key == thermometer {
+	// 		//fmt.Println("tell homekit thermostat that the temperature has changed")
+	// 		//}
+	// 	}
+	// }(ch, k, t)
 }

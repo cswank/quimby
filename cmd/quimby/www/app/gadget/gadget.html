@@ -37,7 +37,7 @@
           <a>{{name}}</a>
           <ul>
             <li ng-repeat="(device, value) in location">
-              <device location="name" name="device" value="value" decimals="decimals" direction="directions[name + ' ' + device]"></device>
+              <device location="name" name="device" value="value" decimals="decimals" direction="directions[name + ' ' + device]" target="targets[name][device]"></device>
             </li>
           </ul>
         </li>

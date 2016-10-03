@@ -1,9 +1,9 @@
 <div>
-  <div ng-show="direction=='output'">
+  <div ng-if="direction=='output'">
     <a href="" ng-click="args()">{{name}}:</a>
-    <a ng-click="toggle()" ng-style="{ 'color': (value.value | onoffColor) }">{{value.value | onoff }}<a ng-if="checkio(value.io)">*</a></a>
+    <a ng-click="toggle()" ng-style="{ 'color': (value.value | onoffColor) }">{{value | onoff: target }}</a>
   </div>
-  <div ng-show="direction=='input'">
+  <div ng-if="direction=='input'">
     <a ng-click="showHistory(location, name)" class="graph-link">{{name}}: {{value.value | number : decimals}}</a>
   </div>
 </div>
