@@ -119,7 +119,7 @@ func getThermostat(name string, dev gogadgets.Message, g Gadget, accessories []*
 		Name:         name,
 		Manufacturer: "gogadgets",
 	}
-	s := accessory.NewThermostat(info, 0.0, 0.0, 90.0, 0.1)
+	s := accessory.NewThermostat(info, 70.0, 0.0, 90.0, 0.1)
 	connect(s, g, name)
 	return append(accessories, s.Accessory)
 }
@@ -176,30 +176,32 @@ func connectSwitch(s *accessory.Switch, g Gadget, k string) {
 func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
 	//message from homekit
 	t.Thermostat.TargetHeatingCoolingState.OnValueRemoteUpdate(func(state int) {
+		t.Thermostat.TargetHeatingCoolingState.SetValue(state)
 		switch state {
 		case characteristic.TargetHeatingCoolingStateOff:
 			g.SendCommand("turn off furnace")
 		case characteristic.TargetHeatingCoolingStateHeat:
 			v := t.Thermostat.TargetTemperature.GetValue()
-			g.SendCommand(fmt.Sprintf("heat home to %d", int(v)))
+			g.SendCommand(fmt.Sprintf("heat home to %d F", int(v)))
 		case characteristic.TargetHeatingCoolingStateCool:
 			v := t.Thermostat.TargetTemperature.GetValue()
-			g.SendCommand(fmt.Sprintf("cool home to %d", int(v)))
+			g.SendCommand(fmt.Sprintf("cool home to %d F", int(v)))
 		}
 	})
 
 	t.Thermostat.TargetTemperature.OnValueRemoteUpdate(func(temp float64) {
 		temp = 1.8*temp + 32.0
 		s := t.Thermostat.TargetHeatingCoolingState.GetValue()
+		fmt.Println("set thermostat temperature", temp, s, g)
 		switch s {
 		case characteristic.TargetHeatingCoolingStateOff:
 			g.SendCommand("turn off furnace")
 		case characteristic.TargetHeatingCoolingStateHeat:
-			g.SendCommand(fmt.Sprintf("heat home to %d", int(temp)))
+			g.SendCommand(fmt.Sprintf("heat home to %d F", int(temp)))
 		case characteristic.TargetHeatingCoolingStateCool:
-			g.SendCommand(fmt.Sprintf("cool home to %d", int(temp)))
+			fmt.Println(fmt.Sprintf("cool home to %d", int(temp)))
+			fmt.Println("sending command", g.SendCommand(fmt.Sprintf("cool home to %d F", int(temp))))
 		}
-		fmt.Println("set thermostat temperature", temp, s)
 	})
 
 	// ch := make(chan gogadgets.Message)
