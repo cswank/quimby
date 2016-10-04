@@ -190,16 +190,14 @@ func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
 	})
 
 	t.Thermostat.TargetTemperature.OnValueRemoteUpdate(func(temp float64) {
-		temp = 1.8*temp + 32.0
+		//temp = 1.8*temp + 32.0
 		s := t.Thermostat.TargetHeatingCoolingState.GetValue()
-		fmt.Println("set thermostat temperature", temp, s, g)
 		switch s {
 		case characteristic.TargetHeatingCoolingStateOff:
 			g.SendCommand("turn off furnace")
 		case characteristic.TargetHeatingCoolingStateHeat:
 			g.SendCommand(fmt.Sprintf("heat home to %d F", int(temp)))
 		case characteristic.TargetHeatingCoolingStateCool:
-			fmt.Println(fmt.Sprintf("cool home to %d", int(temp)))
 			fmt.Println("sending command", g.SendCommand(fmt.Sprintf("cool home to %d F", int(temp))))
 		}
 	})
@@ -212,8 +210,13 @@ func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
 	// 		msg := <-ch
 	// 		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
 	// 		if key == k {
-	// 			fmt.Println("somebody turned on the furnace")
-	// 			//s.Switch.On.SetValue(msg.Value.Value.(bool))
+	// 			fmt.Println("update from furnace", msg)
+	// 			// if msg.Value.Cmd == "turn off home furnace" {
+	// 			// 	t.Thermostat.TargetHeatingCoolingState.SetValue(characteristic.TargetHeatingCoolingStateOff)
+	// 			// } else {
+
+	// 			// case  "":
+	// 			// 	fmt.Println("somebody turned on the furnace")
 	// 		} // else if key == thermometer {
 	// 		//fmt.Println("tell homekit thermostat that the temperature has changed")
 	// 		//}
