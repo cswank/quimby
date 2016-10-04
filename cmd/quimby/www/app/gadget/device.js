@@ -57,15 +57,6 @@ angular.module('quimby.services')
                     var url = "/gadgets/" + $routeParams.id + "/history/";
                     $location.path(url).search({location: location, device: device});
                 }
-
-                $scope.checkio = function(io) {
-                    angular.forEach(io, function(value, key) {
-                        if (value) {
-                            return true;
-                        }
-                    });
-                    return false;
-                }
             }
         }
     }])
