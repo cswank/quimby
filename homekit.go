@@ -182,15 +182,17 @@ func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
 			g.SendCommand("turn off furnace")
 		case characteristic.TargetHeatingCoolingStateHeat:
 			v := t.Thermostat.TargetTemperature.GetValue()
+			v = 1.8*v + 32.0
 			g.SendCommand(fmt.Sprintf("heat home to %d F", int(v)))
 		case characteristic.TargetHeatingCoolingStateCool:
 			v := t.Thermostat.TargetTemperature.GetValue()
+			v = 1.8*v + 32.0
 			g.SendCommand(fmt.Sprintf("cool home to %d F", int(v)))
 		}
 	})
 
 	t.Thermostat.TargetTemperature.OnValueRemoteUpdate(func(temp float64) {
-		//temp = 1.8*temp + 32.0
+		temp = 1.8*temp + 32.0
 		s := t.Thermostat.TargetHeatingCoolingState.GetValue()
 		switch s {
 		case characteristic.TargetHeatingCoolingStateOff:
