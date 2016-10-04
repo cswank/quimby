@@ -119,7 +119,7 @@ func getThermostat(name string, dev gogadgets.Message, g Gadget, accessories []*
 		Name:         name,
 		Manufacturer: "gogadgets",
 	}
-	s := accessory.NewThermostat(info, 0.0, 0.0, 212.0, 0.1)
+	s := accessory.NewThermostat(info, 0.0, 0.0, 90.0, 0.1)
 	connect(s, g, name)
 	return append(accessories, s.Accessory)
 }
@@ -178,31 +178,43 @@ func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
 	t.Thermostat.TargetHeatingCoolingState.OnValueRemoteUpdate(func(state int) {
 		switch state {
 		case characteristic.TargetHeatingCoolingStateOff:
-			g.SendCommand(fmt.Sprintf("turn off %s", k))
+			g.SendCommand("turn off furnace")
 		case characteristic.TargetHeatingCoolingStateHeat:
-			fmt.Println("turn on heater")
+			v := t.Thermostat.TargetTemperature.GetValue()
+			g.SendCommand(fmt.Sprintf("heat home to %d", int(v)))
 		case characteristic.TargetHeatingCoolingStateCool:
-			fmt.Println("turn on ac")
+			v := t.Thermostat.TargetTemperature.GetValue()
+			g.SendCommand(fmt.Sprintf("cool home to %d", int(v)))
 		}
 	})
 
 	t.Thermostat.TargetTemperature.OnValueRemoteUpdate(func(temp float64) {
-		fmt.Println("set thermostat temperature", temp)
+		temp = 1.8*temp + 32.0
+		s := t.Thermostat.TargetHeatingCoolingState.GetValue()
+		switch s {
+		case characteristic.TargetHeatingCoolingStateOff:
+			g.SendCommand("turn off furnace")
+		case characteristic.TargetHeatingCoolingStateHeat:
+			g.SendCommand(fmt.Sprintf("heat home to %d", int(temp)))
+		case characteristic.TargetHeatingCoolingStateCool:
+			g.SendCommand(fmt.Sprintf("cool home to %d", int(temp)))
+		}
+		fmt.Println("set thermostat temperature", temp, s)
 	})
 
-	ch := make(chan gogadgets.Message)
-	uuid := gogadgets.GetUUID()
-	Clients.Add(g.Host, uuid, ch)
-	go func(ch chan gogadgets.Message, k string, t *accessory.Thermostat) {
-		for {
-			msg := <-ch
-			key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
-			if key == k {
-				fmt.Println("somebody turned on the furnace")
-				//s.Switch.On.SetValue(msg.Value.Value.(bool))
-			} else if key == thermometer {
-				fmt.Println("tell homekit thermostat that the temperature has changed")
-			}
-		}
-	}(ch, k, t)
+	// ch := make(chan gogadgets.Message)
+	// uuid := gogadgets.GetUUID()
+	// Clients.Add(g.Host, uuid, ch)
+	// go func(ch chan gogadgets.Message, k string, t *accessory.Thermostat) {
+	// 	for {
+	// 		msg := <-ch
+	// 		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
+	// 		if key == k {
+	// 			fmt.Println("somebody turned on the furnace")
+	// 			//s.Switch.On.SetValue(msg.Value.Value.(bool))
+	// 		} // else if key == thermometer {
+	// 		//fmt.Println("tell homekit thermostat that the temperature has changed")
+	// 		//}
+	// 	}
+	// }(ch, k, t)
 }
