@@ -29,6 +29,7 @@ angular.module('quimby.services')
                 name: '=',
                 value: '=',
                 location: '=',
+                target: '=',
                 direction: '=',
                 decimals: '='
             },

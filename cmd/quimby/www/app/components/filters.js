@@ -2,14 +2,19 @@
 
 angular.module('quimby.filters', [])
     .filter('onoff', function() {
-        return function(value) {
+        return function(value, target) {
             var io = "";
             angular.forEach(value.io, function(value, key) {
                 if (value == true) {
                     return io = "*";
                 }
             });
-            return value.value ? 'on' + io : 'off';
+            
+            var t = "";
+            if (target != undefined) {
+                t = " (" + target.value + ")";
+            }
+            return value.value ? 'on' + io + t : 'off';
         };
     })
     .filter('onoffColor', function() {

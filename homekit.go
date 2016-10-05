@@ -177,7 +177,6 @@ func connectSwitch(s *accessory.Switch, g Gadget, k string) {
 func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
 	//message from homekit
 	t.Thermostat.TargetHeatingCoolingState.OnValueRemoteUpdate(func(state int) {
-		t.Thermostat.TargetHeatingCoolingState.SetValue(state)
 		switch state {
 		case characteristic.TargetHeatingCoolingStateOff:
 			g.SendCommand("turn off furnace")
