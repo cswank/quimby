@@ -43,9 +43,7 @@ func GenerateCookie(username string) *http.Cookie {
 }
 
 func GetUserFromCookie(r *http.Request) (*User, error) {
-	user := &User{
-		DB: DB,
-	}
+	user := NewUser("", UserDB(DB))
 	cookie, err := r.Cookie("quimby")
 	if err != nil {
 		return nil, err

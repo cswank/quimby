@@ -29,12 +29,12 @@ var _ = Describe("Users", func() {
 		db, err = GetDB(pth)
 		Expect(err).To(BeNil())
 
-		u = &User{
-			Username:   "inspector",
-			Password:   "abc123bs",
-			Permission: "write",
-			DB:         db,
-		}
+		u = NewUser(
+			"inspector",
+			UserPassword("abc123bs"),
+			UserPermission("write"),
+			UserDB(db),
+		)
 		err = u.Save()
 		Expect(err).To(BeNil())
 	})
@@ -45,12 +45,8 @@ var _ = Describe("Users", func() {
 	})
 
 	It("can save", func() {
-		u2 := &User{
-			Username: "inspector",
-			DB:       db,
-		}
-		err := u2.Fetch()
-		Expect(err).To(BeNil())
+		u2 := NewUser("inspector", UserDB(db))
+		Expect(u2.Fetch()).To(BeNil())
 		Expect(u2.Password).To(Equal(""))
 		Expect(len(u2.HashedPassword)).ToNot(Equal(0))
 		Expect(u2.Permission).To(Equal("write"))
@@ -59,52 +55,31 @@ var _ = Describe("Users", func() {
 	It("can delete", func() {
 		err := u.Delete()
 		Expect(err).To(BeNil())
-
-		u2 := &User{
-			Username: "inspector",
-			DB:       db,
-		}
+		u2 := NewUser("inspector", UserDB(db))
 		err = u2.Fetch()
 		Expect(err).ToNot(BeNil())
 		Expect(u2.Permission).To(Equal(""))
 	})
 
 	It("is authorized", func() {
-		u2 := &User{
-			Username: "inspector",
-			DB:       db,
-		}
+		u2 := NewUser("inspector", UserDB(db))
 
 		Expect(u2.IsAuthorized("write")).To(BeTrue())
 	})
 
 	It("is not authorized", func() {
-		u2 := &User{
-			Username: "inspector",
-			DB:       db,
-		}
-
+		u2 := NewUser("inspector", UserDB(db))
 		Expect(u2.IsAuthorized("admin")).To(BeFalse())
 	})
 
 	It("is not authorized after a delete", func() {
 		u.Delete()
-
-		u2 := &User{
-			Username: "inspector",
-			DB:       db,
-		}
-
+		u2 := NewUser("inspector", UserDB(db))
 		Expect(u2.IsAuthorized("write")).To(BeFalse())
 	})
 
 	It("checks its password", func() {
-		u2 := &User{
-			Username: "inspector",
-			Password: "abc123bs",
-			DB:       db,
-		}
-
+		u2 := NewUser("inspector", UserDB(db), UserPassword("abc123bs"))
 		good, err := u2.CheckPassword()
 		Expect(err).To(BeNil())
 		Expect(good).To(BeTrue())
@@ -112,13 +87,7 @@ var _ = Describe("Users", func() {
 
 	It("checks a deleted password", func() {
 		u.Delete()
-
-		u2 := &User{
-			Username: "inspector",
-			Password: "abc123bs",
-			DB:       db,
-		}
-
+		u2 := NewUser("inspector", UserDB(db), UserPassword("abc123bs"))
 		good, err := u2.CheckPassword()
 		Expect(err).ToNot(BeNil())
 		Expect(good).To(BeFalse())

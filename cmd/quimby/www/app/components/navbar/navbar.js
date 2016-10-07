@@ -4,7 +4,8 @@ function LoginController($scope, $mdDialog, message) {
     $scope.message = message;
     $scope.user = {
         'username': '',
-        'password': ''
+        'password': '',
+        'tfa':''
     };
     $scope.cancel = function() {
         $mdDialog.cancel();
@@ -65,7 +66,7 @@ angular.module('quimby.directives')
                         if (result == "forgot") {
                             $location.path("/reset-password");
                         } else if (result) {
-                            $auth.login(result.username, result.password, function(user) {
+                            $auth.login(result.username, result.password, result.tfa, function(user) {
                                 $scope.message = "";
                                 $scope.user = user;
                                 $scope.loggedIn = true;

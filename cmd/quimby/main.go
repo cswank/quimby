@@ -103,12 +103,12 @@ func getDB() *bolt.DB {
 
 func doUser(f userNeeder) {
 	db := getDB()
-	u := &quimby.User{
-		DB:         db,
-		Password:   *userPW,
-		Username:   *userName,
-		Permission: *userPerm,
-	}
+	u := quimby.NewUser(
+		*userName,
+		quimby.UserDB(db),
+		quimby.UserPassword(*userPW),
+		quimby.UserPermission(*userPerm),
+	)
 	f(u)
 	defer db.Close()
 }
@@ -136,6 +136,11 @@ func startServer(db *bolt.DB) {
 		log.Fatal("you must specify a port with QUIMBY_PORT")
 	}
 
+	domain := os.Getenv("QUIMBY_DOMAIN")
+	if domain == "" {
+		log.Fatal("you must specify a domain with QUIMBY_DOMAIN")
+	}
+
 	internalPort := os.Getenv("QUIMBY_INTERNAL_PORT")
 	if port == "" {
 		log.Fatal("you must specify a port with QUIMBY_INTERNAL_PORT")
@@ -148,19 +153,21 @@ func startServer(db *bolt.DB) {
 		lg = log.New(os.Stdout, "quimby ", log.Ltime)
 	}
 	clients := quimby.NewClientHolder()
-	start(db, port, internalPort, "/", "/api", lg, clients)
+	tfa := quimby.NewTFA(domain)
+	start(db, port, internalPort, "/", "/api", lg, clients, tfa)
 }
 
 func getMiddleware(perm handlers.ACL, f http.HandlerFunc) http.Handler {
 	return alice.New(handlers.Perm(perm)).Then(http.HandlerFunc(f))
 }
 
-func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby.Logger, clients *quimby.ClientHolder) {
+func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby.Logger, clients *quimby.ClientHolder, tfa quimby.TFAer) {
 	quimby.Clients = clients
 	quimby.DB = db
 	quimby.LG = lg
 	handlers.DB = db
 	handlers.LG = lg
+	handlers.TFA = tfa
 
 	go startInternal(iRoot, db, lg, internalPort)
 	go startHomeKit(db, lg)

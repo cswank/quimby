@@ -246,6 +246,17 @@ func (g *Gui) DeleteKeybinding(viewname string, key interface{}, mod Modifier) e
 	return errors.New("keybinding not found")
 }
 
+// DeleteKeybindings deletes all keybindings of view.
+func (g *Gui) DeleteKeybindings(viewname string) {
+	var s []*keybinding
+	for _, kb := range g.keybindings {
+		if kb.viewName != viewname {
+			s = append(s, kb)
+		}
+	}
+	g.keybindings = s
+}
+
 // getKey takes an empty interface with a key and returns the corresponding
 // typed Key or rune.
 func getKey(key interface{}) (Key, rune, error) {
@@ -374,6 +385,9 @@ func (g *Gui) flush() error {
 			if err := g.drawFrame(v); err != nil {
 				return err
 			}
+			if err := g.drawCorners(v); err != nil {
+				return err
+			}
 			if v.Title != "" {
 				if err := g.drawTitle(v); err != nil {
 					return err
@@ -423,6 +437,31 @@ func (g *Gui) drawFrame(v *View) error {
 			if err := g.SetRune(v.x1, y, '│'); err != nil {
 				return err
 			}
+		}
+	}
+	return nil
+}
+
+// drawCorners draws the corners of the view.
+func (g *Gui) drawCorners(v *View) error {
+	if v.x0 >= 0 && v.y0 >= 0 && v.x0 < g.maxX && v.y0 < g.maxY {
+		if err := g.SetRune(v.x0, v.y0, '┌'); err != nil {
+			return err
+		}
+	}
+	if v.x1 >= 0 && v.y0 >= 0 && v.x1 < g.maxX && v.y0 < g.maxY {
+		if err := g.SetRune(v.x1, v.y0, '┐'); err != nil {
+			return err
+		}
+	}
+	if v.x0 >= 0 && v.y1 >= 0 && v.x0 < g.maxX && v.y1 < g.maxY {
+		if err := g.SetRune(v.x0, v.y1, '└'); err != nil {
+			return err
+		}
+	}
+	if v.x1 >= 0 && v.y1 >= 0 && v.x1 < g.maxX && v.y1 < g.maxY {
+		if err := g.SetRune(v.x1, v.y1, '┘'); err != nil {
+			return err
 		}
 	}
 	return nil
@@ -529,14 +568,6 @@ func (g *Gui) intersectionRune(x, y int) (rune, bool) {
 
 	var ch rune
 	switch {
-	case !top && bottom && !left && right:
-		ch = '┌'
-	case !top && bottom && left && !right:
-		ch = '┐'
-	case top && !bottom && !left && right:
-		ch = '└'
-	case top && !bottom && left && !right:
-		ch = '┘'
 	case top && bottom && left && right:
 		ch = '┼'
 	case top && bottom && !left && right:

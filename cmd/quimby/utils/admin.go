@@ -2,7 +2,9 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby"
@@ -35,7 +37,14 @@ func EditUser(db *bolt.DB) {
 	var i int
 	fmt.Scanf("%d\n", &i)
 	u := users[i-1]
-	u.DB = db
+
+	var d string
+	fmt.Printf("Delete user %s?  (y/N)\n ", u.Username)
+	fmt.Scanf("%s\n", &d)
+	if d == "y" {
+		u.Delete()
+		return
+	}
 
 	var p int
 	fmt.Printf("permission (%s):\n  1: read\n  2: write\n  3: admin\n ", u.Permission)
@@ -47,11 +56,43 @@ func EditUser(db *bolt.DB) {
 	u.Permission = perm
 
 	var c string
+	fmt.Print("change tfa? (y/N) ")
+	fmt.Scanf("%s\n", &c)
+	if c == "y" || c == "Y" {
+		if os.Getenv("QUIMBY_DOMAIN") == "" {
+			log.Fatal("you must set QUIMBY_DOMAIN")
+		}
+		tfa := quimby.NewTFA(os.Getenv("QUIMBY_DOMAIN"))
+		if err := u.Fetch(); err != nil {
+			log.Fatal(err)
+		}
+
+		u.SetTFA(tfa)
+
+		qr, err := u.UpdateTFA()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		tmp, err := ioutil.TempFile("", "")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if _, err := tmp.Write(qr); err != nil {
+			log.Fatal(err)
+		}
+		tmp.Close()
+		fmt.Printf("you must scan the qr at %s with google authenticator before you can log in\n", tmp.Name())
+	}
+
+	c = ""
 	fmt.Print("change password? (y/N) ")
 	fmt.Scanf("%s\n", &c)
 	if c == "y" || c == "Y" {
 		getPasswd(&u)
 	}
+
 	log.Println(u.Save())
 }
 
@@ -90,10 +131,24 @@ func genPasswd(u *quimby.User) {
 }
 
 func AddUser(u *quimby.User) {
+	fmt.Println("adding a user", u)
 	var f passworder
+
+	var issuer string
+
 	if u.Username == "" {
 		fmt.Print("username: ")
 		fmt.Scanf("%s\n", &u.Username)
+		fmt.Print("domain: ")
+
+		if os.Getenv("QUIMBY_DOMAIN") == "" {
+			fmt.Scanf("%s\n", &issuer)
+			if len(issuer) == 0 {
+				log.Fatal("you must supply the domain quimby is being served under")
+			}
+		} else {
+			issuer = os.Getenv("QUIMBY_DOMAIN")
+		}
 		fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n  4: system\n")
 		var x int
 		fmt.Scanf("%d\n", &x)
@@ -109,7 +164,25 @@ func AddUser(u *quimby.User) {
 		u.Permission = perm
 		f(u)
 	}
-	log.Println(u.Save())
+
+	tfa := quimby.NewTFA(issuer)
+	u.SetTFA(tfa)
+
+	qr, err := u.Save()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tmp, err := ioutil.TempFile("", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := tmp.Write(qr); err != nil {
+		log.Fatal(err)
+	}
+	tmp.Close()
+	fmt.Printf("you must scan the qr at %s with google authenticator before you can log in\n", tmp.Name())
 }
 
 func AddGadget(g *quimby.Gadget) {

@@ -102,12 +102,13 @@ func loginJWT(u string, p string) string {
 	usr := &quimby.User{
 		Username: u,
 		Password: p,
+		TFA:      "654321",
 	}
 	enc.Encode(usr)
 
 	r, err := http.Post(url, "application/json", &buf)
 	if err != nil || r.StatusCode != http.StatusOK {
-		log.Fatal("couldn't log in ", err)
+		log.Fatal("couldn't log in ", u, err)
 	}
 	return r.Header.Get("Authorization")
 }
@@ -119,11 +120,12 @@ func loginCookie(u string, p string) *http.Cookie {
 	usr := &quimby.User{
 		Username: u,
 		Password: p,
+		TFA:      "654321",
 	}
 	enc.Encode(usr)
 	r, err := http.Post(url, "application/json", &buf)
 	if err != nil || r.StatusCode != http.StatusOK {
-		log.Fatal("couldn't log in", err)
+		log.Fatal("couldn't log in ", u, err)
 	}
 	return r.Cookies()[0]
 }

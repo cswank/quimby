@@ -12,6 +12,10 @@
       <label>Password</label>
       <input type="password" ng-model="user.password" ng-enter="login()" id="login-password"/>
     </md-input-container>
+    <md-input-container>
+      <label>Google Authenticator Token</label>
+      <input ng-model="user.tfa" ng-enter="login()" id="login-tfa-token"/>
+    </md-input-container>
     <div layout="row">
       <span flex></span>
       <md-button aria-label="Cancel" ng-click="cancel()">Cancel</md-button>

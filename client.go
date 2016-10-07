@@ -136,13 +136,14 @@ func (c *Client) getDevices(i map[string]gogadgets.Message) map[string]map[strin
 	return m
 }
 
-func (c *Client) Login(username, password string) (string, error) {
+func (c *Client) Login(username, password, tfaToken string) (string, error) {
 	url := fmt.Sprintf(c.addr, "login?auth=jwt")
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	usr := &User{
 		Username: username,
 		Password: password,
+		TFA:      tfaToken,
 	}
 	enc.Encode(usr)
 
