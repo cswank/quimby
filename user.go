@@ -3,7 +3,6 @@ package quimby
 import (
 	"encoding/json"
 	"errors"
-	"os"
 
 	"github.com/boltdb/bolt"
 
@@ -11,13 +10,48 @@ import (
 )
 
 type User struct {
-	Username       string   `json:"username"`
-	Password       string   `json:"password,omitempty"`
-	HashedPassword []byte   `json:"hashed_password,omitempty"`
-	TFA            string   `json:"tfa,omitempty"`
-	TFAData        []byte   `json:"tfa_data,omitempty"`
-	Permission     string   `json:"permission"`
-	DB             *bolt.DB `json:"-"`
+	Username       string `json:"username"`
+	Password       string `json:"password,omitempty"`
+	HashedPassword []byte `json:"hashed_password,omitempty"`
+	TFA            string `json:"tfa,omitempty"`
+	TFAData        []byte `json:"tfa_data,omitempty"`
+	Permission     string `json:"permission"`
+	db             *bolt.DB
+	tfa            TFAer
+}
+
+type UserOpt func(*User)
+
+func UserDB(db *bolt.DB) UserOpt {
+	return func(u *User) {
+		u.db = db
+	}
+}
+
+func UserPassword(pw string) UserOpt {
+	return func(u *User) {
+		u.Password = pw
+	}
+}
+
+func UserPermission(perm string) UserOpt {
+	return func(u *User) {
+		u.Permission = perm
+	}
+}
+
+func UserTFA(tfa TFAer) UserOpt {
+	return func(u *User) {
+		u.tfa = tfa
+	}
+}
+
+func NewUser(username string, opts ...UserOpt) *User {
+	u := &User{}
+	for _, o := range opts {
+		o(u)
+	}
+	return u
 }
 
 func GetUsers(db *bolt.DB) ([]User, error) {
@@ -33,6 +67,9 @@ func GetUsers(db *bolt.DB) ([]User, error) {
 				return err
 			}
 			u.HashedPassword = []byte{}
+			u.TFAData = []byte{}
+			u.TFA = ""
+			u.db = db
 			users = append(users, u)
 		}
 		return nil
@@ -40,8 +77,16 @@ func GetUsers(db *bolt.DB) ([]User, error) {
 	return users, err
 }
 
+func (u *User) SetDB(db *bolt.DB) {
+	u.db = db
+}
+
+func (u *User) SetTFA(tfa TFAer) {
+	u.tfa = tfa
+}
+
 func (u *User) Fetch() error {
-	return u.DB.View(func(tx *bolt.Tx) error {
+	return u.db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		v := b.Get([]byte(u.Username))
 		if len(v) == 0 {
@@ -61,20 +106,59 @@ func (u *User) IsAuthorized(perm string) bool {
 	return u.Permission == perm && perm != ""
 }
 
-func (u *User) Save() error {
+func (u *User) UpdateTFA() ([]byte, error) {
+	if u.tfa == nil {
+		return nil, errors.New("can't save user, no tfa")
+	}
+
+	var qr []byte
+	var err error
+	u.TFAData, qr, err = u.tfa.Get(u)
+	return qr, err
+}
+
+func (u *User) Save() ([]byte, error) {
+	if u.tfa == nil {
+		return nil, errors.New("can't save user, no tfa")
+	}
 	if len(u.HashedPassword) == 0 && len(u.Password) < 8 {
-		return errors.New("password is too short")
+		return nil, errors.New("password is too short")
 	}
 	u.hashPassword()
-	return u.DB.Update(func(tx *bolt.Tx) error {
+	var qr []byte
+
+	if !u.Exists() {
+		var err error
+		u.TFAData, qr, err = u.tfa.Get(u)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return qr, u.db.Update(func(tx *bolt.Tx) error {
 		d, _ := json.Marshal(u)
 		b := tx.Bucket([]byte("users"))
 		return b.Put([]byte(u.Username), d)
 	})
 }
 
+func (u *User) Exists() bool {
+	err := u.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("users"))
+		v := b.Get([]byte(u.Username))
+		if len(v) == 0 {
+			return NotFound
+		}
+		return json.Unmarshal(v, u)
+	})
+	if err == NotFound {
+		return false
+	}
+	return err == nil
+}
+
 func (u *User) Delete() error {
-	return u.DB.Update(func(tx *bolt.Tx) error {
+	return u.db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		return b.Delete([]byte(u.Username))
 	})
@@ -89,7 +173,7 @@ func (u *User) CheckPassword() (bool, error) {
 		}
 	}
 
-	if err := Check2FAToken(u, os.Getenv("QUIMBY_DOMAIN")); err != nil {
+	if err := u.tfa.Check(u); err != nil {
 		LG.Println(err)
 		return false, nil
 	}

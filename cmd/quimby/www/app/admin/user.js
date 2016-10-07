@@ -40,6 +40,10 @@ angular.module('quimby.admin')
             }
         });
 
+        $scope.done = function() {
+            $location.path("/admin");
+        };
+
         $scope.save = function() {
             if ($scope.isNew) {
                 if ($scope.password.first != $scope.password.second) {
@@ -50,8 +54,9 @@ angular.module('quimby.admin')
                 } else {
                     $scope.editUser.password = $scope.password.first;
                 }
-                $users.save($scope.editUser, function() {
-                    $location.path("/admin");
+                
+                $users.save($scope.editUser, function(data) {
+                    $scope.qrData = data;
                 });
             } else {
                 $users.updatePermission($scope.editUser, function() {

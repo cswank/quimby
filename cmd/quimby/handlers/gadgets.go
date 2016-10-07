@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/csv"
 	"encoding/json"
 	"fmt"
@@ -59,55 +60,65 @@ func GetUsers(w http.ResponseWriter, req *http.Request) {
 func DeleteUser(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	username := args.Vars["username"]
-	u := quimby.User{DB: args.DB, Username: username}
+	u := quimby.NewUser(username, quimby.UserDB(args.DB))
 	context.Set(req, "error", u.Delete())
 }
 
 func UpdateUserPassword(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	username := args.Vars["username"]
-	u := quimby.User{DB: args.DB}
+	u := quimby.NewUser(username, quimby.UserDB(args.DB))
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&u); err != nil {
 		context.Set(req, "error", err)
 		return
 	}
-	savedU := quimby.User{DB: args.DB, Username: username}
+	savedU := quimby.NewUser(username, quimby.UserDB(args.DB))
 	if err := savedU.Fetch(); err != nil {
 		context.Set(req, "error", err)
 		return
 	}
 	savedU.Password = u.Password
-	context.Set(req, "error", savedU.Save())
+	_, err := savedU.Save()
+	context.Set(req, "error", err)
 }
 
 func UpdateUserPermission(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	username := args.Vars["username"]
-	u := quimby.User{DB: args.DB}
+	u := quimby.NewUser("", quimby.UserDB(args.DB))
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&u); err != nil {
 		context.Set(req, "error", err)
 		return
 	}
-	savedU := quimby.User{DB: args.DB, Username: username}
+	savedU := quimby.NewUser(username, quimby.UserDB(DB))
 	if err := savedU.Fetch(); err != nil {
 		context.Set(req, "error", err)
 		return
 	}
 	savedU.Permission = u.Permission
-	context.Set(req, "error", savedU.Save())
+	_, err := savedU.Save()
+	context.Set(req, "error", err)
 }
 
 func AddUser(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	u := quimby.User{DB: args.DB}
+
+	u := quimby.NewUser("", quimby.UserDB(args.DB), quimby.UserTFA(TFA))
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&u); err != nil {
 		context.Set(req, "error", err)
 		return
 	}
-	context.Set(req, "error", u.Save())
+	qr, err := u.Save()
+	if err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	str := base64.StdEncoding.EncodeToString(qr)
+	w.Header().Set("Content-Type", "image/png")
+	w.Write([]byte(str))
 }
 
 func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
@@ -118,16 +129,15 @@ func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
 
 func GetUser(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	u := quimby.User{
-		DB:       args.DB,
-		Username: args.Vars["username"],
-	}
+	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB))
 	err := u.Fetch()
 	if err != nil {
 		context.Set(req, "error", err)
 		return // err
 	}
 	u.HashedPassword = []byte{}
+	u.TFAData = []byte{}
+	u.TFA = ""
 	enc := json.NewEncoder(w)
 	enc.Encode(u)
 }

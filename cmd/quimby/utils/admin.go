@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
+	"os"
 
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby"
@@ -36,7 +37,14 @@ func EditUser(db *bolt.DB) {
 	var i int
 	fmt.Scanf("%d\n", &i)
 	u := users[i-1]
-	u.DB = db
+
+	var d string
+	fmt.Printf("Delete user %s?  (y/N)\n ", u.Username)
+	fmt.Scanf("%s\n", &d)
+	if d == "y" {
+		u.Delete()
+		return
+	}
 
 	var p int
 	fmt.Printf("permission (%s):\n  1: read\n  2: write\n  3: admin\n ", u.Permission)
@@ -48,11 +56,43 @@ func EditUser(db *bolt.DB) {
 	u.Permission = perm
 
 	var c string
+	fmt.Print("change tfa? (y/N) ")
+	fmt.Scanf("%s\n", &c)
+	if c == "y" || c == "Y" {
+		if os.Getenv("QUIMBY_DOMAIN") == "" {
+			log.Fatal("you must set QUIMBY_DOMAIN")
+		}
+		tfa := quimby.NewTFA(os.Getenv("QUIMBY_DOMAIN"))
+		if err := u.Fetch(); err != nil {
+			log.Fatal(err)
+		}
+
+		u.SetTFA(tfa)
+
+		qr, err := u.UpdateTFA()
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		tmp, err := ioutil.TempFile("", "")
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		if _, err := tmp.Write(qr); err != nil {
+			log.Fatal(err)
+		}
+		tmp.Close()
+		fmt.Printf("you must scan the qr at %s with google authenticator before you can log in\n", tmp.Name())
+	}
+
+	c = ""
 	fmt.Print("change password? (y/N) ")
 	fmt.Scanf("%s\n", &c)
 	if c == "y" || c == "Y" {
 		getPasswd(&u)
 	}
+
 	log.Println(u.Save())
 }
 
@@ -118,25 +158,24 @@ func AddUser(u *quimby.User) {
 	u.Permission = perm
 	f(u)
 
-	d, err := quimby.GetQRA(u, issuer)
+	tfa := quimby.NewTFA(issuer)
+	u.SetTFA(tfa)
+
+	qr, err := u.Save()
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	tmp, err := ioutil.TempFile("", "")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	if _, err := tmp.Write(d); err != nil {
+	if _, err := tmp.Write(qr); err != nil {
 		log.Fatal(err)
 	}
 	tmp.Close()
-
-	fmt.Printf("scan the qr at %s with google authenticator before proceeding\n", tmp.Name())
-	fmt.Println("hit enter to proceed")
-	fmt.Scanf("%d\n", &x)
-
-	log.Println(u.Save())
+	fmt.Printf("you must scan the qr at %s with google authenticator before you can log in\n", tmp.Name())
 }
 
 func AddGadget(g *quimby.Gadget) {

@@ -24,9 +24,8 @@ angular.module('quimby.services')
                         });
                 }
             },
-            login: function(username, password, callback, errorCallback) {
-                var u = {username:username, password: password};
-                console.log("loggin in", username, password);
+            login: function(username, password, token, callback, errorCallback) {
+                var u = {username:username, password: password, tfa: token};
                 $http({
                     url: '/api/login',
                     method: "POST",

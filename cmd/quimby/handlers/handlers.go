@@ -6,6 +6,7 @@ import (
 )
 
 var (
-	DB *bolt.DB
-	LG quimby.Logger
+	DB  *bolt.DB
+	LG  quimby.Logger
+	TFA quimby.TFAer
 )

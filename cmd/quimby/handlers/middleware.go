@@ -64,7 +64,8 @@ func Auth(db *bolt.DB, lg quimby.Logger, name string) alice.Constructor {
 				return
 			}
 
-			user.DB = db
+			user.SetDB(db)
+
 			if err := user.Fetch(); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte("Internal server error"))
