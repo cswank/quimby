@@ -3,6 +3,7 @@ package quimby
 import (
 	"encoding/json"
 	"errors"
+	"os"
 
 	"github.com/boltdb/bolt"
 
@@ -13,6 +14,8 @@ type User struct {
 	Username       string   `json:"username"`
 	Password       string   `json:"password,omitempty"`
 	HashedPassword []byte   `json:"hashed_password,omitempty"`
+	TFA            string   `json:"tfa,omitempty"`
+	TFAData        []byte   `json:"tfa_data,omitempty"`
 	Permission     string   `json:"permission"`
 	DB             *bolt.DB `json:"-"`
 }
@@ -79,10 +82,16 @@ func (u *User) Delete() error {
 
 func (u *User) CheckPassword() (bool, error) {
 	pw := u.Password
-	if len(u.HashedPassword) == 0 {
+	if len(u.HashedPassword) == 0 || len(u.TFAData) == 0 {
 		if err := u.Fetch(); err != nil {
+			LG.Println(err)
 			return false, err
 		}
+	}
+
+	if err := Check2FAToken(u, os.Getenv("QUIMBY_DOMAIN")); err != nil {
+		LG.Println(err)
+		return false, nil
 	}
 	return bcrypt.CompareHashAndPassword(u.HashedPassword, []byte(pw)) == nil, nil
 }

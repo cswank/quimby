@@ -39,10 +39,11 @@ var (
 )
 
 func init() {
-	if os.Getenv("QUIMBY_USERNAME") != "" {
-		username = os.Getenv("QUIMBY_USERNAME")
-	} else if *userArg != "" {
+	kingpin.Parse()
+	if *userArg != "" {
 		username = *userArg
+	} else if os.Getenv("QUIMBY_USERNAME") != "" {
+		username = os.Getenv("QUIMBY_USERNAME")
 	} else {
 		log.Fatal("you must either set the QUIMBY_USERNAME env var or pass it in with the --username arg")
 	}
@@ -50,8 +51,6 @@ func init() {
 }
 
 func main() {
-	kingpin.Parse()
-
 	login()
 
 	g = ui.NewGui()
@@ -399,11 +398,15 @@ func login() {
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		var tfa string
+		fmt.Printf("tfa: ")
+		fmt.Scanf("%s\n", &tfa)
 		cli, err = quimby.NewClient(*addr)
 		if err != nil {
 			log.Fatal(err)
 		}
-		token, err := cli.Login(username, string(pw))
+		token, err := cli.Login(username, string(pw), tfa)
 		if err != nil {
 			log.Fatal(err)
 		}

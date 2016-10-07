@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 
 	"github.com/boltdb/bolt"
@@ -91,24 +92,50 @@ func genPasswd(u *quimby.User) {
 
 func AddUser(u *quimby.User) {
 	var f passworder
-	if u.Username == "" {
-		fmt.Print("username: ")
-		fmt.Scanf("%s\n", &u.Username)
-		fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n  4: system\n")
-		var x int
-		fmt.Scanf("%d\n", &x)
-		if x == 4 {
-			f = genPasswd
-		} else {
-			f = getPasswd
-		}
-		perm, ok := permissions[x]
-		if !ok {
-			log.Fatal("select 1, 2, 3, or 4")
-		}
-		u.Permission = perm
-		f(u)
+	if u.Username != "" {
+		return
 	}
+	var issuer string
+	fmt.Print("username: ")
+	fmt.Scanf("%s\n", &u.Username)
+	fmt.Print("domain: ")
+	fmt.Scanf("%s\n", &issuer)
+	if len(issuer) == 0 {
+		log.Fatal("you must supply the domain quimby is being served under")
+	}
+	fmt.Print("permission:\n  1: read\n  2: write\n  3: admin\n  4: system\n")
+	var x int
+	fmt.Scanf("%d\n", &x)
+	if x == 4 {
+		f = genPasswd
+	} else {
+		f = getPasswd
+	}
+	perm, ok := permissions[x]
+	if !ok {
+		log.Fatal("select 1, 2, 3, or 4")
+	}
+	u.Permission = perm
+	f(u)
+
+	d, err := quimby.GetQRA(u, issuer)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tmp, err := ioutil.TempFile("", "")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if _, err := tmp.Write(d); err != nil {
+		log.Fatal(err)
+	}
+	tmp.Close()
+
+	fmt.Printf("scan the qr at %s with google authenticator before proceeding\n", tmp.Name())
+	fmt.Println("hit enter to proceed")
+	fmt.Scanf("%d\n", &x)
+
 	log.Println(u.Save())
 }
 
