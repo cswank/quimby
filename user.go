@@ -47,7 +47,7 @@ func UserTFA(tfa TFAer) UserOpt {
 }
 
 func NewUser(username string, opts ...UserOpt) *User {
-	u := &User{}
+	u := &User{Username: username}
 	for _, o := range opts {
 		o(u)
 	}

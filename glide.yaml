@@ -21,3 +21,4 @@ import:
   subpackages:
   - bcrypt
 - package: gopkg.in/alecthomas/kingpin.v2
+- package: github.com/sec51/twofactor
