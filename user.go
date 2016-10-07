@@ -173,8 +173,8 @@ func (u *User) CheckPassword() (bool, error) {
 		}
 	}
 
-	if err := u.tfa.Check(u.TFAData, u.Username); err != nil {
-		LG.Println(err)
+	if err := u.tfa.Check(u.TFAData, u.TFA); err != nil {
+		LG.Println("tfa error", err)
 		return false, nil
 	}
 	return bcrypt.CompareHashAndPassword(u.HashedPassword, []byte(pw)) == nil, nil
