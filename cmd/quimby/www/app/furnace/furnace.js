@@ -10,7 +10,6 @@ angular.module('quimby.furnace', ['ngRoute'])
 
     .controller('FurnaceCtrl', ['$scope', '$rootScope', '$gadgets', '$sockets', '$routeParams', function($scope, $rootScope, $gadgets, $sockets, $routeParams) {
         
-        $scope.done = false;
         $scope.method = {};
         $scope.id = $routeParams.id;
         $scope.decimals = 1;
@@ -21,6 +20,10 @@ angular.module('quimby.furnace', ['ngRoute'])
                 {href:"#/gadget" + $scope.id, name:data.name},
             ]
         });
+
+        $scope.doneSliding = function() {
+            console.log("done!!!!!!!!!1");
+        }
         
         $gadgets.getStatus($scope.id, function(statuses) {
             var furnace = statuses["home furnace"];

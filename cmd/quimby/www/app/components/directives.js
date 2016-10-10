@@ -4,12 +4,11 @@ angular.module('quimby.directives', [])
     .directive('dragEnd', function() {
         return {
             attrs: {
-                callback: '&doneDragging'
+                callback: '&doneSliding'
             },
             link: function(scope, element, attrs) {
                 element.on('$md.dragend', function() {
-                    console.log(attrs);
-                    attrs.doneDragging = true;
+                    scope.doneSliding();
                 })
             }
         }
