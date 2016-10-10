@@ -5,17 +5,16 @@
         <md-radio-button value="off" class="md-primary">off</md-radio-button>
         <md-radio-button value="heat">heat</md-radio-button>
         <md-radio-button value="cool">cool</md-radio-button>
-        <md-radio-button value="fan">fan</md-radio-button>
       </md-radio-group>
     </div>
     <div flex>
       <md-slider-container flex=20>
-        <span>{{target}}<span/>
-          <md-slider ng-model="target" min="60" max="80" drag-end done-dragging="done()"></md-slider>
+        <span>Set Point: {{target}}<span/>
+          <md-slider aria-label="set temperature" ng-model="target" min="60" max="80" drag-end="{{doneSliding}}"></md-slider>
       </md-slider-container>
     </div>
     <div>
-      <a ng-click="showHistory('home', 'temperature')" class="graph-link">temperature: {{temperature | number : 1}}</a>
+      <a ng-click="showHistory('home', 'temperature')" class="graph-link">Temperature: {{temperature | number : 1}}</a>
     </div>
   </div>
 </div>

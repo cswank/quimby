@@ -10,7 +10,6 @@ angular.module('quimby.furnace', ['ngRoute'])
 
     .controller('FurnaceCtrl', ['$scope', '$rootScope', '$gadgets', '$sockets', '$routeParams', function($scope, $rootScope, $gadgets, $sockets, $routeParams) {
         
-        
         $scope.method = {};
         $scope.id = $routeParams.id;
         $scope.decimals = 1;
@@ -21,6 +20,13 @@ angular.module('quimby.furnace', ['ngRoute'])
                 {href:"#/gadget" + $scope.id, name:data.name},
             ]
         });
+
+        $scope.doneSliding = function() {
+            if ($scope.mode == "off") {
+                return
+            }
+            $scope.change();
+        }
         
         $gadgets.getStatus($scope.id, function(statuses) {
             var furnace = statuses["home furnace"];
@@ -43,19 +49,15 @@ angular.module('quimby.furnace', ['ngRoute'])
             }
         });
 
-        $scope.done = function() {
-            console.log("done sliding");
-        };
-
         $scope.change = function() {
             var cmd = "turn off furnace";
             if ($scope.mode == "heat") {
                 cmd = "heat home to " + $scope.target + " F";
             } else if ($scope.mode == "cool") {
                 cmd = "cool home to " + $scope.target + " F";
-            } else if ($scope.mode == "fan") {
-                cmd = "trun on furnace fan";
             }
+            console.log("sending command", cmd);
+            $sockets.send("turn off furnace");
             $sockets.send(cmd);
         };
         
