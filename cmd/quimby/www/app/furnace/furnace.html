@@ -9,12 +9,12 @@
     </div>
     <div flex>
       <md-slider-container flex=20>
-        <span>{{target}}<span/>
-          <md-slider ng-model="target" min="60" max="80" drag-end="{{doneSliding}}"></md-slider>
+        <span>Set Point: {{target}}<span/>
+          <md-slider aria-label="set temperature" ng-model="target" min="60" max="80" drag-end="{{doneSliding}}"></md-slider>
       </md-slider-container>
     </div>
     <div>
-      <a ng-click="showHistory('home', 'temperature')" class="graph-link">temperature: {{temperature | number : 1}}</a>
+      <a ng-click="showHistory('home', 'temperature')" class="graph-link">Temperature: {{temperature | number : 1}}</a>
     </div>
   </div>
 </div>

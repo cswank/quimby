@@ -22,7 +22,10 @@ angular.module('quimby.furnace', ['ngRoute'])
         });
 
         $scope.doneSliding = function() {
-            console.log("done!!!!!!!!!1");
+            if ($scope.mode == "off") {
+                return
+            }
+            $scope.change();
         }
         
         $gadgets.getStatus($scope.id, function(statuses) {
@@ -46,24 +49,15 @@ angular.module('quimby.furnace', ['ngRoute'])
             }
         });
 
-        $scope.$watch(
-            function() {
-                return $scope.done;
-            },
-            function(newValue, oldValue) {
-                console.log(newValue, oldValue);
-            }
-        );
-
         $scope.change = function() {
             var cmd = "turn off furnace";
             if ($scope.mode == "heat") {
                 cmd = "heat home to " + $scope.target + " F";
             } else if ($scope.mode == "cool") {
                 cmd = "cool home to " + $scope.target + " F";
-            } else if ($scope.mode == "fan") {
-                cmd = "trun on furnace fan";
             }
+            console.log("sending command", cmd);
+            $sockets.send("turn off furnace");
             $sockets.send(cmd);
         };
         
