@@ -5,13 +5,12 @@
         <md-radio-button value="off" class="md-primary">off</md-radio-button>
         <md-radio-button value="heat">heat</md-radio-button>
         <md-radio-button value="cool">cool</md-radio-button>
-        <md-radio-button value="fan">fan</md-radio-button>
       </md-radio-group>
     </div>
     <div flex>
       <md-slider-container flex=20>
         <span>{{target}}<span/>
-          <md-slider ng-model="target" min="60" max="80" drag-end done-dragging="done()"></md-slider>
+          <md-slider ng-model="target" min="60" max="80" drag-end done-dragging="{{done}}"></md-slider>
       </md-slider-container>
     </div>
     <div>

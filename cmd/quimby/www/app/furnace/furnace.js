@@ -10,7 +10,7 @@ angular.module('quimby.furnace', ['ngRoute'])
 
     .controller('FurnaceCtrl', ['$scope', '$rootScope', '$gadgets', '$sockets', '$routeParams', function($scope, $rootScope, $gadgets, $sockets, $routeParams) {
         
-        
+        $scope.done = false;
         $scope.method = {};
         $scope.id = $routeParams.id;
         $scope.decimals = 1;
@@ -43,9 +43,14 @@ angular.module('quimby.furnace', ['ngRoute'])
             }
         });
 
-        $scope.done = function() {
-            console.log("done sliding");
-        };
+        $scope.$watch(
+            function() {
+                return $scope.done;
+            },
+            function(newValue, oldValue) {
+                console.log(newValue, oldValue);
+            }
+        );
 
         $scope.change = function() {
             var cmd = "turn off furnace";
