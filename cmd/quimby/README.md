@@ -15,7 +15,7 @@ DONT FORGET TO ADD QUIMBY_USER TO DB WITH WRITE PERMISSION
 Secure Websockets on IOS
 ========================
 
-((make me nice))
+((make me nice, seriously))
 wws doesn't work on iphone unless your certificate organization name matches
 your dyn domain and you install the cert on the phone by exporting a .cer file
 and emailing it to the phone where it can be installed.
