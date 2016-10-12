@@ -3,6 +3,7 @@ package quimby
 import (
 	"crypto"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/cswank/quimby/mocks"
@@ -23,7 +24,7 @@ func NewTFA(issuer string) TFAer {
 		return &TFA{issuer}
 	}
 
-	LG.Println("warning, QUIMBY_TEST is set so bypassing two factor authentication")
+	log.Println("warning, QUIMBY_TEST is set so bypassing two factor authentication")
 	return mocks.NewTFA()
 }
 
