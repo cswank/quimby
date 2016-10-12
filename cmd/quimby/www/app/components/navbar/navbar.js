@@ -50,7 +50,7 @@ angular.module('quimby.directives')
                                 $rootScope.user = {};
                                 $scope.user = {};
                                 $scope.loggedIn = false;
-                                $location.path("/admin");
+                                $location.path("/gadgets");
                             });
                         }
                     });
