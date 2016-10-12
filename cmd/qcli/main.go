@@ -260,11 +260,15 @@ func printNode(g *ui.Gui) {
 
 		for _, name := range names {
 			val := loc[name]
+			if val.Value.Value == nil {
+				continue
+			}
 			var l string
 			l, i = getLink(val, i)
 			f(v, fmt.Sprintf("    %s: %s %s", name, getVal(val.Value), l))
 			if l != "" {
-				if val.Value.Value.(bool) {
+				v, ok := val.Value.Value.(bool)
+				if ok && v {
 					links = append(links, val.Info.Off)
 				} else {
 					links = append(links, val.Info.On)

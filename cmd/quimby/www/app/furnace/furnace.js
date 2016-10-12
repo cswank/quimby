@@ -56,7 +56,6 @@ angular.module('quimby.furnace', ['ngRoute'])
             } else if ($scope.mode == "cool") {
                 cmd = "cool home to " + $scope.target + " F";
             }
-            console.log("sending command", cmd);
             $sockets.send("turn off furnace");
             $sockets.send(cmd);
         };
