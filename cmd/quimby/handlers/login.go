@@ -38,6 +38,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Location", "/api/currentuser")
 	params := r.URL.Query()
 	methods, ok := params["auth"]
+	user.TFAData = []byte{}
 	if ok && methods[0] == "jwt" {
 		setToken(w, user)
 	} else {

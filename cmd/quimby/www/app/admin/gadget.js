@@ -12,7 +12,7 @@ function DeleteGadgetController($scope, $mdDialog, name) {
 
 
 angular.module('quimby.admin')
-    .controller('AdminCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$routeParams', '$location', '$mdDialog', function($scope, $rootScope, $gadgets, $auth, $routeParams, $location, $mdDialog) {
+    .controller('GadgetAdminCtrl', ['$scope', '$rootScope', '$gadgets', '$auth', '$routeParams', '$location', '$mdDialog', function($scope, $rootScope, $gadgets, $auth, $routeParams, $location, $mdDialog) {
         var id = $routeParams.id;
         $scope.gadget = {};
         

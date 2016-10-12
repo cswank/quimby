@@ -15,7 +15,7 @@ angular.module('quimby.admin', ['ngRoute'])
         
         $routeProvider.when('/admin/:id', {
             templateUrl: 'admin/gadget.html',
-            controller: 'AdminCtrl'
+            controller: 'GadgetAdminCtrl'
         });
         
         $routeProvider.when('/admin/users/:id', {

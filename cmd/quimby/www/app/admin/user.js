@@ -29,11 +29,11 @@ angular.module('quimby.admin')
         }
 
         $rootScope.$watch('user', function(user) {
-            if (user != {} && $scope.gadget != {} && $scope.editUser.username != "new-user") {
+            if (user != {} && $scope.editUser != {} && $scope.editUser.username != "new-user") {
                 $users.get($scope.editUser.username, function(data) {
                     $rootScope.links = [
                         {href:"#/admin", name:"admin"},
-                        {href:"#/admin/users/" + $scope.editUser.username, name:data.name}
+                        {href:"#/admin/users/" + $scope.editUser.username, name:$scope.editUser.username}
                     ];
                     $scope.editUser = data;
                 });

@@ -124,6 +124,7 @@ func AddUser(w http.ResponseWriter, req *http.Request) {
 func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
 	enc := json.NewEncoder(w)
 	args := GetArgs(req)
+	args.User.TFAData = []byte{}
 	enc.Encode(args.User)
 }
 
