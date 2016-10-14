@@ -3,8 +3,8 @@
     <div flex>
       <md-radio-group ng-model="mode" ng-change="change()">
         <md-radio-button value="off" class="md-primary">off</md-radio-button>
-        <md-radio-button value="heat">heat</md-radio-button>
-        <md-radio-button value="cool">cool</md-radio-button>
+        <md-radio-button ng-style="{ 'color': (value.io.heat | ioColor) }" value="heat">heat</md-radio-button>
+        <md-radio-button ng-style="{ 'color': (value.io.cool | ioColor) }" value="cool">cool</md-radio-button>
       </md-radio-group>
     </div>
     <div flex>

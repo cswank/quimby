@@ -30,6 +30,7 @@ angular.module('quimby.furnace', ['ngRoute'])
         
         $gadgets.getStatus($scope.id, function(statuses) {
             var furnace = statuses["home furnace"];
+            $scope.value = furnace.value.value;
             if (furnace.value.value) {
                 if (furnace.value.command == "cool home") {
                     $scope.mode = "cool";
@@ -65,7 +66,10 @@ angular.module('quimby.furnace', ['ngRoute'])
                 $scope.$apply(function() {
                     if (msg.name == "temperature") {
                         $scope.temperature = msg.value.value;
+                    } else if (msg.name == "furnace") {
+                        $scope.value = msg.value;
                     }
+                    
                 });
             }
         });

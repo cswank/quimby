@@ -6,7 +6,7 @@ angular.module('quimby.filters', [])
             var io = "";
             angular.forEach(value.io, function(value, key) {
                 if (value == true) {
-                    return io = "*";
+                    io = "*";
                 }
             });
             
@@ -20,5 +20,10 @@ angular.module('quimby.filters', [])
     .filter('onoffColor', function() {
         return function(input) {
             return input ? 'green' : 'red';
+        };
+    })
+    .filter('ioColor', function() {
+        return function(value) {
+            return value ? 'green' : 'black';
         };
     });
