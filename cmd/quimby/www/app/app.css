@@ -14,6 +14,10 @@ md-icon.settings {
     cursor: hand;
 }
 
+md-dialog-content.auth {
+    margin: 10px;
+}
+
 .navlinks a {
     text-decoration: none;
     margin-left:5px;
