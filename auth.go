@@ -45,6 +45,7 @@ func GenerateCookie(username string) *http.Cookie {
 func GetUserFromCookie(r *http.Request) (*User, error) {
 	user := NewUser("", UserDB(DB))
 	cookie, err := r.Cookie("quimby")
+
 	if err != nil {
 		return nil, err
 	}
@@ -59,6 +60,7 @@ func GetUserFromCookie(r *http.Request) (*User, error) {
 	user.Username = m["user"]
 	err = user.Fetch()
 	user.HashedPassword = []byte{}
+	user.TFAData = []byte{}
 	return user, err
 }
 

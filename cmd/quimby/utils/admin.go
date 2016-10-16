@@ -50,10 +50,9 @@ func EditUser(db *bolt.DB) {
 	fmt.Printf("permission (%s):\n  1: read\n  2: write\n  3: admin\n ", u.Permission)
 	fmt.Scanf("%d\n", &p)
 	perm, ok := permissions[p]
-	if !ok {
-		log.Fatal("select 1, 2, or 3")
+	if ok {
+		u.Permission = perm
 	}
-	u.Permission = perm
 
 	var c string
 	fmt.Print("change tfa? (y/N) ")

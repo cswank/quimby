@@ -117,22 +117,59 @@ func (u *User) UpdateTFA() ([]byte, error) {
 	return qr, err
 }
 
-func (u *User) Save() ([]byte, error) {
-	if u.tfa == nil {
-		return nil, errors.New("can't save user, no tfa")
-	}
-	if len(u.HashedPassword) == 0 && len(u.Password) < 8 {
-		return nil, errors.New("password is too short")
-	}
-	u.hashPassword()
-	var qr []byte
-
-	if !u.Exists() {
+func (u *User) saveTFAData(savedUser *User) ([]byte, error) {
+	//new user
+	if savedUser == nil && u.TFAData == nil {
+		if u.tfa == nil {
+			return nil, errors.New("can't save user, no tfa")
+		}
 		var err error
+		var qr []byte
 		u.TFAData, qr, err = u.tfa.Get(u.Username)
 		if err != nil {
 			return nil, err
 		}
+		return qr, nil
+	}
+
+	//existing user
+	if savedUser != nil && u.TFAData == nil {
+		u.TFAData = savedUser.TFAData
+	}
+	return nil, nil
+}
+
+func (u *User) savePassword(savedUser *User) error {
+
+	//new user
+	if savedUser == nil && len(u.Password) == 0 {
+		return errors.New("password is too short")
+	}
+
+	// new user with no password update
+	if savedUser != nil && len(u.Password) == 0 {
+		u.HashedPassword = savedUser.HashedPassword
+		return nil
+	}
+	u.hashPassword()
+	return nil
+}
+
+func (u *User) Save() ([]byte, error) {
+	savedUser := &User{Username: u.Username, db: u.db}
+	if err := savedUser.Fetch(); err != nil && err != NotFound {
+		return nil, err
+	} else if err == NotFound {
+		savedUser = nil
+	}
+
+	qr, err := u.saveTFAData(savedUser)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := u.savePassword(savedUser); err != nil {
+		return nil, err
 	}
 
 	return qr, u.db.Update(func(tx *bolt.Tx) error {

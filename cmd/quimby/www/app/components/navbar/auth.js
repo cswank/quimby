@@ -32,7 +32,6 @@ angular.module('quimby.services')
                     data: JSON.stringify(u),
                     headers: {'Content-Type': 'application/json'}
                 }).success(function (data, status, headers, config) {
-                    console.log("logged in good", data, status, headers('Location'));
                     loggedIn = true;
                     $http.get(headers('Location')).success(function(data) {
                         user = data;

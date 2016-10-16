@@ -82,7 +82,7 @@ export QUIMBY_JWT_PRIV=$QUIMBY_JWT_PRIV
 export QUIMBY_JWT_PUB=$QUIMBY_JWT_PUB
 export QUIMBY_TLS_KEY=$QUIMBY_TLS_KEY
 export QUIMBY_TLS_CERT=$QUIMBY_TLS_CERT
-export QUIMBY_USER=quimby" > /etc/quimby/quimby.env
+export QUIMBY_USER=quimby" > /etc/quimby.env
 
 echo "[Unit]
 Description=Gogadgets web interface
