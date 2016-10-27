@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
 
@@ -30,13 +31,18 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	goodPassword, err := user.CheckPassword()
-	if !goodPassword {
+	if err := doLogin(user, w, r); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
-		return
 	}
-	w.Header().Set("Location", "/api/currentuser")
-	params := r.URL.Query()
+}
+
+func doLogin(user *quimby.User, w http.ResponseWriter, req *http.Request) error {
+	goodPassword, err := user.CheckPassword()
+	if !goodPassword || err != nil {
+		return fmt.Errorf("bad request")
+	}
+
+	params := req.URL.Query()
 	methods, ok := params["auth"]
 	user.TFAData = []byte{}
 	if ok && methods[0] == "jwt" {
@@ -44,6 +50,7 @@ func Login(w http.ResponseWriter, r *http.Request) {
 	} else {
 		setCookie(w, user)
 	}
+	return nil
 }
 
 func setToken(w http.ResponseWriter, user *quimby.User) {

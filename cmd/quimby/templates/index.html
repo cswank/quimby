@@ -1,15 +1,4 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="UTF-8">
-    <title>{{.Title}}</title>
-    <link href="css/surface_styles.css" rel="stylesheet"/>
-  </head>
-  <body>
-    <div class="container g--12 no-margin-vertical color--paper bg--green">
-      <div class="g--10 m-0 color--paper">Quimby</div>
-      <div class="g--2 m-0 color--paper">Welcome {{.User}}</div>
-    </div>
-    <div class="g--6">{{.Body}}</div>
-  </body>
-</html>
+{{define "content"}}
+<div class="g--6">{{.Body}}</div>
+{{end}}
+

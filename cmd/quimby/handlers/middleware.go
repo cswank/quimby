@@ -46,7 +46,8 @@ func Auth(db *bolt.DB, lg quimby.Logger, name string) alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			pth := req.URL.Path
-			if pth == "/api/login" || strings.Index(pth, "/css") == 0 {
+			fmt.Println("auth", pth)
+			if pth == "/api/login" || strings.Index(pth, "/css") == 0 || strings.Index(pth, "/login.html") == 0 {
 				h.ServeHTTP(w, req)
 				return
 			}

@@ -174,6 +174,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 
 	r := rex.New("main")
 	r.Get("/", getMiddleware(handlers.Read, handlers.Index))
+	r.Get("/login.html", getMiddleware(handlers.Anyone, handlers.LoginPage))
+	r.Post("/login.html", getMiddleware(handlers.Anyone, handlers.LoginForm))
 
 	//api
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))
