@@ -1,0 +1,10 @@
+{{define "device"}}
+<li>
+  <span>{{ .Name }}</span>
+  {{if eq .Info.Direction "output"}}
+  <span id="{{.Location}}-{{.Name}}" onClick="sendCommand('{{.Location}}-{{.Name}}', {{.Info}})">{{ .Value.Value }}</span>
+  {{else}}
+  <span id="{{.Location}}-{{.Name}}">{{ .Value.Value }}</span>
+  {{end}}
+</li>
+{{end}}

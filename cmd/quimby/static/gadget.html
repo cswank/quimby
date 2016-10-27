@@ -1,0 +1,16 @@
+{{define "content"}}
+<div class="m--1">
+  <h1>{{.Gadget.Name}}</h1>
+  {{ range $location, $devices := .Locations }}
+  <div>{{ $location }} </div>
+    <ul>
+      {{ range $device := $devices }}
+        {{ template "device" $device }}
+      {{ end }}
+    </ul>
+  {{ end }}
+</div>
+<script>
+  {{template "gadget-js" .}}
+</script>
+{{end}}

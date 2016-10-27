@@ -1,0 +1,19 @@
+{{define "content"}}
+<div class="m--1">
+  <form action="/admin/gadgets/{{.Gadget.Id}}" method="post">
+    <input name="name" type="text" required placeholder="Name" value="{{.Gadget.Name}}"/>
+    <input name="host" type="text" required placeholder="Host" value="{{.Gadget.Host}}"/>
+    <div>
+      {{if .Gadget.Disabled}}
+      <input name="disabled" type="checkbox" placeholder="Disabled" checked="checked"/>
+      {{else}}
+      <input name="disabled" type="checkbox" placeholder="Disabled"/>
+      {{end}}
+      <label for="disabled">Disabled</label>
+    </div>
+    <div class="nudge--down">
+      <button type="submit" class="btn--raised btn--green nudge--down">Submit</button>
+    </div>
+  </form>
+</div>
+{{end}}

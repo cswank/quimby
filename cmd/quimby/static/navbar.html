@@ -1,0 +1,31 @@
+{{define "navbar"}}
+<header class="container--baseline bg--green">
+  <div id="links" class="container m--1 g--9">
+    {{range $index, $link := .Links}}
+    {{ if $index }}
+    <h4 class="color--paper">
+      <a class="nudge--right link">&#8594;</a>
+      <a class="nudge--right link" href="{{ index .Path }}">{{ .Name }}</a>
+    </h4>
+    {{ else }}
+    <h4 class="color--paper">
+      <a class="nudge--right link" href="{{ index .Path }}">{{ .Name }}</a>
+    </h4>
+      {{ end }}
+    {{ end }}
+  </div>
+  <nav class="g--3 nav--horizontal">
+    <ul>
+      <li class="dropdown"><a href="/">Welcome {{.User}}</a>
+        <ul>
+          {{ if .Admin }}
+          <li><a href="/admin.html">Admin</a></li>
+          {{ end }}
+          <li><a href="/logout.html">Logout</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+</header>
+{{end}}
+{{template "base.html"}}

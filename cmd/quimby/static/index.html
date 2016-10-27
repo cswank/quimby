@@ -1,0 +1,16 @@
+{{define "content"}}
+<div>
+  <ul>
+  {{with .Gadgets}}
+  {{range .}}
+  {{ if not .Disabled}}
+  <li>
+    <a href="/gadgets/{{.Id}}">{{.Name}}</a>
+  </li>
+  {{end}}
+  {{end}}
+  {{end}}
+  </ul>
+</div>
+{{end}}
+

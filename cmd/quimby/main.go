@@ -51,6 +51,8 @@ var (
 	keyPath  = os.Getenv("QUIMBY_TLS_KEY")
 	certPath = os.Getenv("QUIMBY_TLS_CERT")
 	iface    = os.Getenv("QUIMBY_INTERFACE")
+
+	box *rice.Box
 )
 
 func main() {
@@ -79,6 +81,8 @@ func main() {
 	case "bootstrap":
 		utils.Bootstrap()
 	case "serve":
+		box = rice.MustFindBox("static")
+		handlers.Init(box)
 		addDB(startServer)
 	case "setup":
 		utils.SetupServer(*setupDomain, *net)
@@ -162,6 +166,7 @@ func getMiddleware(perm handlers.ACL, f http.HandlerFunc) http.Handler {
 }
 
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby.Logger, clients *quimby.ClientHolder, tfa quimby.TFAer) {
+
 	quimby.Clients = clients
 	quimby.DB = db
 	quimby.LG = lg
@@ -173,6 +178,23 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	go startHomeKit(db, lg)
 
 	r := rex.New("main")
+	r.Get("/", getMiddleware(handlers.Read, handlers.IndexPage))
+	r.Get("/gadgets/{id}", getMiddleware(handlers.Read, handlers.GadgetPage))
+	r.Get("/login.html", getMiddleware(handlers.Anyone, handlers.LoginPage))
+	r.Get("/logout.html", getMiddleware(handlers.Read, handlers.LogoutPage))
+	r.Post("/login.html", getMiddleware(handlers.Anyone, handlers.LoginForm))
+	r.Get("/admin.html", getMiddleware(handlers.Admin, handlers.AdminPage))
+	r.Get("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetEditPage))
+	r.Post("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetForm))
+	r.Get("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserEditPage))
+	r.Get("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserPasswordPage))
+	r.Post("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserChangePasswordPage))
+	r.Post("/admin/users/{username}/tfa", getMiddleware(handlers.Admin, handlers.UserTFAPage))
+	r.Post("/admin/users/{username}/do-delete", getMiddleware(handlers.Admin, handlers.DeleteUserPage))
+	r.Get("/admin/users/{username}/delete", getMiddleware(handlers.Admin, handlers.DeleteUserConfirmPage))
+	r.Post("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserForm))
+
+	//api
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))
 	r.Post("/api/logout", http.HandlerFunc(handlers.Logout))
 	r.Get("/api/ping", getMiddleware(handlers.Read, handlers.Ping))
@@ -202,10 +224,9 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/api/beer/{name}", getMiddleware(handlers.Read, handlers.GetRecipe))
 	r.Get("/api/admin/clients", getMiddleware(handlers.Admin, handlers.GetClients))
 
-	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
+	r.ServeFiles(http.FileServer(box.HTTPBox()))
 
 	chain := alice.New(handlers.Auth(db, lg, "main"), handlers.FetchGadget(), handlers.Error(lg)).Then(r)
-
 	http.Handle(root, chain)
 
 	addr := fmt.Sprintf("%s:%s", iface, port)

@@ -1,0 +1,17 @@
+
+#links h4 a {
+    text-decoration: none;
+    background-image: none;
+    font-size: large;
+}
+
+#login-error {
+    color: red;
+}
+
+.center {
+    text-align: center;
+    margin: auto;
+    width: 50%;
+    padding: 10px;
+}

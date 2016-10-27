@@ -3,6 +3,7 @@ package quimby
 import (
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/boltdb/bolt"
 
@@ -146,7 +147,7 @@ func (u *User) savePassword(savedUser *User) error {
 		return errors.New("password is too short")
 	}
 
-	// new user with no password update
+	// existing user with no password update
 	if savedUser != nil && len(u.Password) == 0 {
 		u.HashedPassword = savedUser.HashedPassword
 		return nil
@@ -212,6 +213,7 @@ func (u *User) CheckPassword() (bool, error) {
 
 	if err := u.tfa.Check(u.TFAData, u.TFA); err != nil {
 		LG.Println("tfa error", err)
+		time.Sleep(500 * time.Millisecond)
 		return false, nil
 	}
 	return bcrypt.CompareHashAndPassword(u.HashedPassword, []byte(pw)) == nil, nil
