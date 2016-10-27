@@ -173,6 +173,9 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	go startHomeKit(db, lg)
 
 	r := rex.New("main")
+	r.Get("/", getMiddleware(handlers.Read, handlers.Index))
+
+	//api
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))
 	r.Post("/api/logout", http.HandlerFunc(handlers.Logout))
 	r.Get("/api/ping", getMiddleware(handlers.Read, handlers.Ping))
@@ -202,10 +205,9 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/api/beer/{name}", getMiddleware(handlers.Read, handlers.GetRecipe))
 	r.Get("/api/admin/clients", getMiddleware(handlers.Admin, handlers.GetClients))
 
-	r.ServeFiles(http.FileServer(rice.MustFindBox("www/dist").HTTPBox()))
+	r.ServeFiles(http.FileServer(rice.MustFindBox("static").HTTPBox()))
 
 	chain := alice.New(handlers.Auth(db, lg, "main"), handlers.FetchGadget(), handlers.Error(lg)).Then(r)
-
 	http.Handle(root, chain)
 
 	addr := fmt.Sprintf("%s:%s", iface, port)
