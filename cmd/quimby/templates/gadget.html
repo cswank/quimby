@@ -5,15 +5,13 @@
   {{ range $location, $devices := .Locations }}
   <div>{{ $location }} </div>
     <ul>
-    {{ with $devices }}
-      {{ range . }}
-        <li><strong>{{ .Name }}</strong></li>
+      {{ range $device := $devices }}
+        {{ template "device" $device }}
       {{ end }}
-    {{ end }}
     </ul>
   {{ end }}
   <script>
-    {{template "gadget-js"}}
+    {{template "gadget-js" .}}
   </script>
 </div>
 {{end}}

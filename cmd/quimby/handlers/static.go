@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"html/template"
 	"net/http"
 
@@ -16,8 +17,9 @@ var (
 func init() {
 	parts := []string{"templates/head.html", "templates/base.html", "templates/navbar.html"}
 	index = template.Must(template.ParseFiles(append(parts, "templates/index.html")...))
-	gadget = template.Must(template.ParseFiles(append(parts, "templates/gadget.html", "templates/gadget.js")...))
+	gadget = template.Must(template.ParseFiles(append(parts, "templates/gadget.html", "templates/gadget.js", "templates/device.html")...))
 	login = template.Must(template.ParseFiles(append(parts, "templates/login.html")...))
+
 }
 
 type indexPage struct {
@@ -28,6 +30,7 @@ type indexPage struct {
 type gadgetPage struct {
 	User      string
 	Gadget    *quimby.Gadget
+	Websocket template.URL
 	Locations map[string][]gogadgets.Message
 }
 
@@ -61,9 +64,12 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 		l[msg.Location] = msgs
 	}
 
+	u := "ws://localhost:8111"
+
 	g := gadgetPage{
 		User:      args.User.Username,
 		Gadget:    args.Gadget,
+		Websocket: template.URL(fmt.Sprintf("%s/api/gadgets/%s/websocket", u, args.Gadget.Id)),
 		Locations: l,
 	}
 	gadget.ExecuteTemplate(w, "base", g)
