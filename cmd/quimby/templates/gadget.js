@@ -29,5 +29,16 @@ doConnect(function(msg) {
     }
 });
 
+function getValue(v) {
+    if (isNumeric(v)) {
+        return num.toFixed(v);
+    }
+    return v
+}
+
+function isNumeric(n) {
+  return !isNaN(parseFloat(n)) && isFinite(n);
+}
+
 {{end}}
 
