@@ -1,0 +1,16 @@
+{{define "content"}}
+<div class="g--12 m--5">
+  <div class="container g--12">
+    <h3 class="center">Really log out?</h3>
+  </div>
+  <div class="container g--12">
+    <form action="/api/logout?web=true" method="post">
+      <button type="submit" class="btn--raised btn--green">Log Out</button>
+    </form>
+    <form action="/" method="get">
+      <button type="submit" class="btn--raised btn--green">Cancel</button>
+    </form>
+  </div>
+</div>
+{{end}}
+{{template "base.html"}}
