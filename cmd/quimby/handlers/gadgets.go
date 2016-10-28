@@ -369,7 +369,6 @@ func Connect(w http.ResponseWriter, req *http.Request) {
 	}
 
 	conn, err := upgrader.Upgrade(w, req, nil)
-	fmt.Println("websocket connect", conn, err)
 	if err != nil {
 		context.Set(req, "error", err)
 		return // err
@@ -393,7 +392,6 @@ func Connect(w http.ResponseWriter, req *http.Request) {
 //Send a message via the web socket.
 func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
 	d, _ := json.Marshal(m)
-	fmt.Println("writing message out", m)
 	conn.WriteMessage(websocket.TextMessage, d)
 }
 

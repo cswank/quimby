@@ -9,7 +9,6 @@ function getWebsocket() {
 
 
 function doConnect(callback) {
-    console.log("connecting");
     if(ws != undefined) {
         ws.close();
         ws = null;
@@ -24,10 +23,8 @@ function doConnect(callback) {
 }
 
 doConnect(function(msg) {
-    console.log("ws:", msg);
     if (msg.type == "update") {
         var id = msg.location + "-" + msg.name;
-        console.log(id);
         document.getElementById(id).textContent = msg.value.value;
     }
 });
