@@ -350,7 +350,6 @@ func randString(n int) string {
 //a websocket.  It pushes new messages from the
 //instance to the websocket and vice versa.
 func Connect(w http.ResponseWriter, req *http.Request) {
-	fmt.Println("websocket connect")
 	args := GetArgs(req)
 	if err := quimby.Register(*args.Gadget); err != nil {
 		context.Set(req, "error", err)

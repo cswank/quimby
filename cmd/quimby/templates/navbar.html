@@ -5,7 +5,9 @@
     <ul>
       <li class="dropdown"><a href="http://www.g.com">Welcome {{.User}}</a>
         <ul>
-          <li><a href="/admin/html">Admin</a></li>
+          {{ if .Admin }}
+          <li><a href="/admin.html">Admin</a></li>
+          {{ end }}
           <li><a href="/logout.html">Logout</a></li>
         </ul>
       </li>

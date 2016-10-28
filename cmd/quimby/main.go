@@ -173,10 +173,12 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	go startHomeKit(db, lg)
 
 	r := rex.New("main")
-	r.Get("/", getMiddleware(handlers.Read, handlers.Index))
+	r.Get("/", getMiddleware(handlers.Read, handlers.IndexPage))
 	r.Get("/gadgets/{id}", getMiddleware(handlers.Read, handlers.GadgetPage))
 	r.Get("/login.html", getMiddleware(handlers.Anyone, handlers.LoginPage))
+	r.Get("/logout.html", getMiddleware(handlers.Read, handlers.LogoutPage))
 	r.Post("/login.html", getMiddleware(handlers.Anyone, handlers.LoginForm))
+	r.Get("/admin.html", getMiddleware(handlers.Admin, handlers.AdminPage))
 
 	//api
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))

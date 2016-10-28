@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"fmt"
 	"net/http"
 	"strings"
 
@@ -46,7 +45,6 @@ func Auth(db *bolt.DB, lg quimby.Logger, name string) alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			pth := req.URL.Path
-			fmt.Println("auth", pth)
 			if pth == "/api/login" || strings.Index(pth, "/css") == 0 || strings.Index(pth, "/login.html") == 0 {
 				h.ServeHTTP(w, req)
 				return
@@ -58,15 +56,16 @@ func Auth(db *bolt.DB, lg quimby.Logger, name string) alice.Constructor {
 			}
 
 			user, err := f(req)
-
 			if err != nil {
-				fmt.Println("xxx")
-				w.Header().Set("Location", "/login.html")
-				w.WriteHeader(http.StatusMovedPermanently)
-				//w.Write([]byte("Not Authorized"))
+				if strings.Index(pth, "/api") > -1 {
+					w.WriteHeader(http.StatusUnauthorized)
+					w.Write([]byte("Not Authorized"))
+				} else {
+					w.Header().Set("Location", "/login.html")
+					w.WriteHeader(http.StatusMovedPermanently)
+				}
 				return
 			}
-			fmt.Println("user", user)
 
 			user.SetDB(db)
 

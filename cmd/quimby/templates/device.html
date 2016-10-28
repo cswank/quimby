@@ -1,6 +1,6 @@
 {{define "device"}}
 <li>
   <span>{{ .Name }}</span>
-  <span id="{{.Location}}-{{.Name}}"></span>
+  <span id="{{.Location}}-{{.Name}}">{{ .Value.Value }}</span>
 </li>
 {{end}}

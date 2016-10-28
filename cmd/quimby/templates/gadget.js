@@ -24,7 +24,12 @@ function doConnect(callback) {
 }
 
 doConnect(function(msg) {
-    console.log(msg);
+    console.log("ws:", msg);
+    if (msg.type == "update") {
+        var id = msg.location + "-" + msg.name;
+        console.log(id);
+        document.getElementById(id).textContent = msg.value.value;
+    }
 });
 
 {{end}}
