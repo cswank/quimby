@@ -1,7 +1,16 @@
 {{define "navbar"}}
-<div class="container g--12 no-margin-vertical color--paper bg--green">
-  <div class="g--10 m-0 color--paper">Quimby</div>
-  <div class="g--2 m-0 color--paper">Welcome {{.User}}</div>
-</div>
+<header class="container--baseline bg--green">
+  <div class="m--1 g--9"><h5 class="color--paper">Quimby</h5></div>
+  <nav class="g--3 nav--horizontal">
+    <ul>
+      <li class="dropdown"><a href="http://www.g.com">Welcome {{.User}}</a>
+        <ul>
+          <li><a href="/admin/html">Admin</a></li>
+          <li><a href="/logout.html">Logout</a></li>
+        </ul>
+      </li>
+    </ul>
+  </nav>
+</header>
 {{end}}
 {{template "base.html"}}
