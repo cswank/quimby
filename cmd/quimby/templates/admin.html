@@ -1,6 +1,22 @@
 {{define "content"}}
-<div>
-  <h1>Admin</h1>
+<div class="nudge--left">
+  <h5>Gadgets</h5>
+  <ul>
+    {{ with .Gadgets }}
+    {{ range . }}
+    <li><a href="{{ .Path }}">{{ .Name }}</a></li>
+    {{ end }}
+    {{ end }}
+  </ul>
+
+  <h5>Users</h5>
+  <ul>
+    {{ with .Users }}
+    {{ range . }}
+    <li><a href="{{ .Path }}">{{ .Name }}</a></li>
+    {{ end }}
+    {{ end }}
+  </ul>
 </div>
 {{end}}
 

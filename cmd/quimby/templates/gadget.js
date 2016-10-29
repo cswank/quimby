@@ -7,7 +7,6 @@ function getWebsocket() {
     return new WebSocket(url);
 }
 
-
 function doConnect(callback) {
     if(ws != undefined) {
         ws.close();

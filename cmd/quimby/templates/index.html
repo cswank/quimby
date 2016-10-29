@@ -2,11 +2,13 @@
 <div>
   <ul>
   {{with .Gadgets}}
-    {{range .}}
-      <li>
-        <a href="/gadgets/{{.Id}}">{{.Name}}</a>
-      </li>
-    {{end}}
+  {{range .}}
+  {{ if not .Disabled}}
+  <li>
+    <a href="/gadgets/{{.Id}}">{{.Name}}</a>
+  </li>
+  {{end}}
+  {{end}}
   {{end}}
   </ul>
 </div>

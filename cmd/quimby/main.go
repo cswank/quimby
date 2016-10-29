@@ -179,6 +179,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/logout.html", getMiddleware(handlers.Read, handlers.LogoutPage))
 	r.Post("/login.html", getMiddleware(handlers.Anyone, handlers.LoginForm))
 	r.Get("/admin.html", getMiddleware(handlers.Admin, handlers.AdminPage))
+	r.Get("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetEditPage))
+	r.Post("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetForm))
 
 	//api
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))
