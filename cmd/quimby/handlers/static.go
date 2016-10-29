@@ -52,6 +52,7 @@ type gadgetPage struct {
 	Gadget    *quimby.Gadget
 	Websocket template.URL
 	Locations map[string][]gogadgets.Message
+	Error     string
 }
 
 func IndexPage(w http.ResponseWriter, req *http.Request) {
@@ -196,7 +197,12 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 }
 
 func LoginPage(w http.ResponseWriter, req *http.Request) {
-	login.ExecuteTemplate(w, "base", nil)
+	q := req.URL.Query()
+	var p gadgetPage
+	if q.Get("error") != "" {
+		p.Error = "Invalid username or password"
+	}
+	login.ExecuteTemplate(w, "base", p)
 }
 
 func LogoutPage(w http.ResponseWriter, req *http.Request) {
@@ -223,7 +229,7 @@ func LoginForm(w http.ResponseWriter, req *http.Request) {
 	user.Password = req.PostFormValue("password")
 	user.TFA = req.PostFormValue("tfa")
 	if err := doLogin(user, w, req); err != nil {
-		w.Header().Set("Location", "/login.html")
+		w.Header().Set("Location", "/login.html?error=invalidlogin")
 	} else {
 		w.Header().Set("Location", "/index.html")
 	}

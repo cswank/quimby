@@ -4,3 +4,7 @@
     background-image: none;
     font-size: large;
 }
+
+#login-error {
+    color: red;
+}
