@@ -25,13 +25,13 @@ function doConnect(callback) {
 doConnect(function(msg) {
     if (msg.type == "update") {
         var id = msg.location + "-" + msg.name;
-        document.getElementById(id).textContent = msg.value.value;
+        document.getElementById(id).textContent = getValue(msg.value.value);
     }
 });
 
 function getValue(v) {
     if (isNumeric(v)) {
-        return num.toFixed(v);
+        return v.toFixed(1);
     }
     return v
 }
