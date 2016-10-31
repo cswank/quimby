@@ -1,0 +1,25 @@
+{{define "content"}}
+<div class="m--1">
+  <h4>{{.EditUser.Username}}</h4>
+  <form id="user-form" action="/admin/users/{{.EditUser.Username}}" method="post">
+    {{$permission := .EditUser.Permission}}
+    {{range .Permissions}}
+    {{if eq . $permission}}
+    <input type="radio" name="permission" value="{{.}}" checked="checked"/>{{.}}<br/>
+    {{else}}
+    <input type="radio" name="permission" value="{{.}}"/>{{.}}<br/>
+    {{end}}
+    {{end}}
+    <div class="nudge--down">
+      <button type="submit" class="btn--raised btn--green nudge--down">Save</button>
+      <button type="submit" onClick="setAction('delete')" class="btn--raised btn--green nudge--down">Delete</button>
+      <button type="submit" onClick="setAction('update-password')" class="btn--raised btn--green nudge--down">Update Password</button>
+      <button type="submit" onClick="setAction('update-tfa')" class="btn--raised btn--green nudge--down">Update TFA</button>
+      <button type="submit" onClick="setAction('cancel')" class="btn--raised btn--green nudge--down">Cancel</button>
+    </div>
+  </form>
+</div>
+<script>
+  {{template "edit-user-js" .}}
+</script>
+{{end}}

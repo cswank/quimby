@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"encoding/base64"
+	"errors"
 	"fmt"
 	"html/template"
 	"net/http"
@@ -11,7 +13,18 @@ import (
 )
 
 var (
-	index, login, logout, gadget, editGadget, admin *template.Template
+	index         *template.Template
+	login         *template.Template
+	logout        *template.Template
+	gadget        *template.Template
+	editGadget    *template.Template
+	editUser      *template.Template
+	deleteConfirm *template.Template
+	newUser       *template.Template
+	qrCode        *template.Template
+	admin         *template.Template
+
+	ErrPasswordsDoNotMatch = errors.New("passwords do not match")
 )
 
 func init() {
@@ -19,6 +32,10 @@ func init() {
 	index = template.Must(template.ParseFiles(append(parts, "templates/index.html")...))
 	gadget = template.Must(template.ParseFiles(append(parts, "templates/gadget.html", "templates/gadget.js", "templates/device.html")...))
 	editGadget = template.Must(template.ParseFiles(append(parts, "templates/edit-gadget.html")...))
+	editUser = template.Must(template.ParseFiles(append(parts, "templates/edit-user.html", "templates/edit-user.js")...))
+	deleteConfirm = template.Must(template.ParseFiles(append(parts, "templates/delete.html", "templates/edit-user.js")...))
+	newUser = template.Must(template.ParseFiles(append(parts, "templates/new-user.html", "templates/edit-user.js")...))
+	qrCode = template.Must(template.ParseFiles(append(parts, "templates/qr-code.html")...))
 	admin = template.Must(template.ParseFiles(append(parts, "templates/admin.html")...))
 	login = template.Must(template.ParseFiles(append(parts, "templates/login.html")...))
 	logout = template.Must(template.ParseFiles(append(parts, "templates/logout.html")...))
@@ -30,10 +47,24 @@ type link struct {
 	Path string
 }
 
+type action struct {
+	Name   string
+	URI    template.URL
+	Method string
+}
+
 type userPage struct {
 	User  string
 	Admin bool
 	Links []link
+}
+
+type editUserPage struct {
+	userPage
+	EditUser    *quimby.User
+	Permissions []string
+	Actions     []action
+	End         int
 }
 
 type indexPage struct {
@@ -138,6 +169,119 @@ func GadgetEditPage(w http.ResponseWriter, req *http.Request) {
 	editGadget.ExecuteTemplate(w, "base", g)
 }
 
+func UserEditPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	username := args.Vars["username"]
+	page := editUserPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+		},
+		Permissions: []string{"read", "write", "admin"},
+	}
+	if username == "new-user" {
+		page.Links = []link{
+			{"quimby", "/"},
+			{"admin", "/admin.html"},
+			{"new user", "/admin/users/new-user"},
+		}
+		page.Actions = []action{
+			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
+		}
+		page.End = 0
+	} else {
+		u := quimby.NewUser(username, quimby.UserDB(args.DB))
+		if err := u.Fetch(); err != nil {
+			context.Set(req, "error", err)
+			return
+		}
+		page.EditUser = u
+		page.Links = []link{
+			{"quimby", "/"},
+			{"admin", "/admin.html"},
+			{u.Username, fmt.Sprintf("/admin/users/%s", u.Username)},
+		}
+		page.Actions = []action{
+			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
+			{Name: "delete", URI: template.URL(fmt.Sprintf("/admin/users/%s", username)), Method: "delete"},
+			{Name: "update-password", URI: template.URL(fmt.Sprintf("/admin/users/%s/password", username)), Method: "get"},
+			{Name: "update-tfa", URI: template.URL(fmt.Sprintf("/admin/users/%s/tfa", username)), Method: "get"},
+		}
+		page.End = 3
+	}
+
+	if username == "new-user" {
+		newUser.ExecuteTemplate(w, "base", page)
+	} else {
+		editUser.ExecuteTemplate(w, "base", page)
+	}
+}
+
+func DeleteUserConfirmPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	username := args.Vars["username"]
+	page := editUserPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+				{"admin", "/admin.html"},
+				{"new user", "/admin/users/new-user"},
+			},
+		},
+		Actions: []action{
+			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
+		},
+	}
+	deleteConfirm.ExecuteTemplate(w, "base", page)
+}
+
+func DeletePage(w http.ResponseWriter, req *http.Request) {
+
+}
+
+type qrPage struct {
+	userPage
+	QR template.HTMLAttr
+}
+
+func UserForm(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+
+	err := req.ParseForm()
+	if err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+
+	u := quimby.NewUser(req.PostFormValue("username"), quimby.UserDB(args.DB), quimby.UserTFA(TFA))
+	u.Password = req.PostFormValue("password")
+	pw := req.PostFormValue("password_confirm")
+	if pw != u.Password {
+		context.Set(req, "error", ErrPasswordsDoNotMatch)
+		return
+	}
+	u.Permission = req.PostFormValue("permission")
+	qrData, err := u.Save()
+	if err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	qr := qrPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+				{"admin", "/admin.html"},
+			},
+		},
+		QR: template.HTMLAttr(base64.StdEncoding.EncodeToString(qrData)),
+	}
+	qrCode.ExecuteTemplate(w, "base", qr)
+}
+
 func GadgetForm(w http.ResponseWriter, req *http.Request) {
 	err := req.ParseForm()
 	if err != nil {
@@ -151,7 +295,6 @@ func GadgetForm(w http.ResponseWriter, req *http.Request) {
 	s := req.PostFormValue("disabled")
 
 	d := s == "on"
-	fmt.Println("dis", s, d)
 	g.Disabled = d
 	context.Set(req, "error", g.Save())
 	w.Header().Set("Location", "/admin.html")
