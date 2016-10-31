@@ -182,6 +182,8 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetEditPage))
 	r.Post("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetForm))
 	r.Get("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserEditPage))
+	r.Post("/admin/users/{username}/do-delete", getMiddleware(handlers.Admin, handlers.DeleteUserPage))
+	r.Get("/admin/users/{username}/delete", getMiddleware(handlers.Admin, handlers.DeleteUserConfirmPage))
 	r.Post("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserForm))
 
 	//api

@@ -203,7 +203,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 		}
 		page.Actions = []action{
 			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
-			{Name: "delete", URI: template.URL(fmt.Sprintf("/admin/users/%s", username)), Method: "delete"},
+			{Name: "delete", URI: template.URL(fmt.Sprintf("/admin/users/%s/delete", username)), Method: "get"},
 			{Name: "update-password", URI: template.URL(fmt.Sprintf("/admin/users/%s/password", username)), Method: "get"},
 			{Name: "update-tfa", URI: template.URL(fmt.Sprintf("/admin/users/%s/tfa", username)), Method: "get"},
 		}
@@ -219,7 +219,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 
 func DeleteUserConfirmPage(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	username := args.Vars["username"]
+	u := quimby.NewUser(args.Vars["username"])
 	page := editUserPage{
 		userPage: userPage{
 			User:  args.User.Username,
@@ -230,15 +230,23 @@ func DeleteUserConfirmPage(w http.ResponseWriter, req *http.Request) {
 				{"new user", "/admin/users/new-user"},
 			},
 		},
+		EditUser: u,
 		Actions: []action{
-			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
+			{Name: "cancel", URI: template.URL(fmt.Sprintf("/admin/users/%s", u.Username)), Method: "get"},
 		},
 	}
 	deleteConfirm.ExecuteTemplate(w, "base", page)
 }
 
-func DeletePage(w http.ResponseWriter, req *http.Request) {
-
+func DeleteUserPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB))
+	if err := u.Delete(); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	w.Header().Set("Location", "/admin.html")
+	w.WriteHeader(http.StatusMovedPermanently)
 }
 
 type qrPage struct {
