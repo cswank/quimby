@@ -147,7 +147,7 @@ func (u *User) savePassword(savedUser *User) error {
 		return errors.New("password is too short")
 	}
 
-	// new user with no password update
+	// existing user with no password update
 	if savedUser != nil && len(u.Password) == 0 {
 		u.HashedPassword = savedUser.HashedPassword
 		return nil

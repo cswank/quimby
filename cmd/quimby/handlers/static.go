@@ -13,16 +13,17 @@ import (
 )
 
 var (
-	index         *template.Template
-	login         *template.Template
-	logout        *template.Template
-	gadget        *template.Template
-	editGadget    *template.Template
-	editUser      *template.Template
-	deleteConfirm *template.Template
-	newUser       *template.Template
-	qrCode        *template.Template
-	admin         *template.Template
+	index          *template.Template
+	login          *template.Template
+	logout         *template.Template
+	gadget         *template.Template
+	editGadget     *template.Template
+	editUser       *template.Template
+	deleteConfirm  *template.Template
+	changePassword *template.Template
+	newUser        *template.Template
+	qrCode         *template.Template
+	admin          *template.Template
 
 	ErrPasswordsDoNotMatch = errors.New("passwords do not match")
 )
@@ -34,6 +35,7 @@ func init() {
 	editGadget = template.Must(template.ParseFiles(append(parts, "templates/edit-gadget.html")...))
 	editUser = template.Must(template.ParseFiles(append(parts, "templates/edit-user.html", "templates/edit-user.js")...))
 	deleteConfirm = template.Must(template.ParseFiles(append(parts, "templates/delete.html", "templates/edit-user.js")...))
+	changePassword = template.Must(template.ParseFiles(append(parts, "templates/password.html", "templates/edit-user.js")...))
 	newUser = template.Must(template.ParseFiles(append(parts, "templates/new-user.html", "templates/edit-user.js")...))
 	qrCode = template.Must(template.ParseFiles(append(parts, "templates/qr-code.html")...))
 	admin = template.Must(template.ParseFiles(append(parts, "templates/admin.html")...))
@@ -245,6 +247,55 @@ func DeleteUserPage(w http.ResponseWriter, req *http.Request) {
 		context.Set(req, "error", err)
 		return
 	}
+	w.Header().Set("Location", "/admin.html")
+	w.WriteHeader(http.StatusMovedPermanently)
+}
+
+func UserPasswordPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	u := quimby.NewUser(args.Vars["username"])
+	page := editUserPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+				{"admin", "/admin.html"},
+				{u.Username, fmt.Sprintf("/admin/users/%s", u.Username)},
+			},
+		},
+		EditUser: u,
+		Actions: []action{
+			{Name: "cancel", URI: template.URL(fmt.Sprintf("/admin/users/%s", u.Username)), Method: "get"},
+		},
+	}
+	changePassword.ExecuteTemplate(w, "base", page)
+}
+
+func UserChangePasswordPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB))
+	if err := u.Fetch(); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+	if err := req.ParseForm(); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+
+	u.Password = req.PostFormValue("password")
+	pw := req.PostFormValue("password_confirm")
+	if pw != u.Password {
+		context.Set(req, "error", ErrPasswordsDoNotMatch)
+		return
+	}
+
+	if _, err := u.Save(); err != nil {
+		context.Set(req, "error", ErrPasswordsDoNotMatch)
+		return
+	}
+
 	w.Header().Set("Location", "/admin.html")
 	w.WriteHeader(http.StatusMovedPermanently)
 }
