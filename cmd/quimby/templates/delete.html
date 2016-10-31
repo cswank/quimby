@@ -1,7 +1,7 @@
 {{define "content"}}
 <div class="g--12 m--1">
   <h3>Really Delete {{.EditUser.Username}}</h3>
-  <form action="/admin/users/{{.EditUser.Username}}/do-delete" method="post">
+  <form id="user-form" action="/admin/users/{{.EditUser.Username}}/do-delete" method="post">
     <button type="submit" class="btn--raised btn--green">Delete</button>
     <button type="submit" onClick="setAction('cancel')" class="btn--raised btn--green">Cancel</button>
   </form>
