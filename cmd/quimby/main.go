@@ -184,6 +184,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserEditPage))
 	r.Get("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserPasswordPage))
 	r.Post("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserChangePasswordPage))
+	r.Post("/admin/users/{username}/tfa", getMiddleware(handlers.Admin, handlers.UserTFAPage))
 	r.Post("/admin/users/{username}/do-delete", getMiddleware(handlers.Admin, handlers.DeleteUserPage))
 	r.Get("/admin/users/{username}/delete", getMiddleware(handlers.Admin, handlers.DeleteUserConfirmPage))
 	r.Post("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserForm))

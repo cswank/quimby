@@ -207,7 +207,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
 			{Name: "delete", URI: template.URL(fmt.Sprintf("/admin/users/%s/delete", username)), Method: "get"},
 			{Name: "update-password", URI: template.URL(fmt.Sprintf("/admin/users/%s/password", username)), Method: "get"},
-			{Name: "update-tfa", URI: template.URL(fmt.Sprintf("/admin/users/%s/tfa", username)), Method: "get"},
+			{Name: "update-tfa", URI: template.URL(fmt.Sprintf("/admin/users/%s/tfa", username)), Method: "post"},
 		}
 		page.End = 3
 	}
@@ -298,6 +298,40 @@ func UserChangePasswordPage(w http.ResponseWriter, req *http.Request) {
 
 	w.Header().Set("Location", "/admin.html")
 	w.WriteHeader(http.StatusMovedPermanently)
+}
+
+func UserTFAPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+
+	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB), quimby.UserTFA(TFA))
+	if err := u.Fetch(); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+
+	qrData, err := u.UpdateTFA()
+	if err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+
+	if _, err := u.Save(); err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+
+	qr := qrPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+				{"admin", "/admin.html"},
+			},
+		},
+		QR: template.HTMLAttr(base64.StdEncoding.EncodeToString(qrData)),
+	}
+	qrCode.ExecuteTemplate(w, "base", qr)
 }
 
 type qrPage struct {
