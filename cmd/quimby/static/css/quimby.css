@@ -24,6 +24,15 @@
     color: red;
 }
 
-.value {
-    text-align: right;
+label{
+    font-size:14px;
+    vertical-align: middle;
+}
+
+input[type="radio"] {
+    float:left;
+}
+
+#temperature-holder {
+    padding-top: 10px;
 }

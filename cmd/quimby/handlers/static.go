@@ -27,7 +27,7 @@ type tmpl struct {
 
 func Init(box *rice.Box) {
 	data := map[string]string{}
-	for _, pth := range []string{"head.html", "base.html", "navbar.html", "index.html", "gadget.html", "gadget.js", "device.html", "edit-gadget.html", "edit-user.html", "edit-user.js", "delete.html", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
+	for _, pth := range []string{"head.html", "base.html", "navbar.html", "index.html", "gadget.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "device.html", "edit-gadget.html", "edit-user.html", "edit-user.js", "delete.html", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
 		s, err := box.String(pth)
 		if err != nil {
 			log.Fatal(err)
@@ -37,7 +37,8 @@ func Init(box *rice.Box) {
 
 	templates = map[string]tmpl{
 		"index.html":       {files: []string{"index.html"}},
-		"gadget.html":      {files: []string{"gadget.html", "gadget.js", "device.html"}},
+		"gadget.html":      {files: []string{"gadget.html", "base.js", "gadget.js", "device.html"}},
+		"furnace.html":     {files: []string{"furnace.html", "base.js", "furnace.js", "device.html"}},
 		"edit-gadget.html": {files: []string{"edit-gadget.html"}},
 		"edit-user.html":   {files: []string{"edit-user.html", "edit-user.js"}},
 		"delete.html":      {files: []string{"delete.html", "edit-user.js"}},
@@ -107,6 +108,14 @@ type gadgetPage struct {
 	Websocket template.URL
 	Locations map[string][]gogadgets.Message
 	Error     string
+}
+
+type furnacePage struct {
+	gadgetPage
+	States      []string
+	Furnace     gogadgets.Message
+	Thermometer gogadgets.Message
+	SetPoint    float64
 }
 
 func IndexPage(w http.ResponseWriter, req *http.Request) {
@@ -457,7 +466,30 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 		Websocket: template.URL(fmt.Sprintf("%s/api/gadgets/%s/websocket", u, args.Gadget.Id)),
 		Locations: l,
 	}
-	templates["gadget.html"].template.ExecuteTemplate(w, "base", g)
+	if args.Gadget.View == "furnace" {
+		var f, t gogadgets.Message
+		for _, m := range g.Locations["home"] {
+			if m.Name == "furnace" {
+				f = m
+			} else {
+				t = m
+			}
+		}
+		var setPoint = 70.0
+		if f.TargetValue != nil {
+			setPoint = f.TargetValue.Value.(float64)
+		}
+		p := furnacePage{
+			gadgetPage:  g,
+			States:      []string{"heat", "cool", "off"},
+			Furnace:     f,
+			Thermometer: t,
+			SetPoint:    setPoint,
+		}
+		templates["furnace.html"].template.ExecuteTemplate(w, "base", p)
+	} else {
+		templates["gadget.html"].template.ExecuteTemplate(w, "base", g)
+	}
 }
 
 func LoginPage(w http.ResponseWriter, req *http.Request) {
