@@ -39,5 +39,19 @@ function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
+function sendCommand(id, info) {
+    var cmd;
+    if (document.getElementById(id).text == "true") {
+        cmd = info.off[0];
+    } else {
+        cmd = info.on[0];
+    }
+    var msg = JSON.stringify({
+        sender: "quimby",
+        type: "command",
+        body: cmd,
+    });
+    ws.send(msg);
+}
 {{end}}
 
