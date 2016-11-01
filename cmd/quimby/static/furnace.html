@@ -1,0 +1,12 @@
+{{define "content"}}
+<div class="m--1 g--8">
+  <h1>{{.Gadget.Name}}</h1>
+  <input type="radio" name="value" value="off"/>Off<br/>
+  <input type="radio" name="value" value="heat"/>Heat<br/>
+  <input type="radio" name="value" value="cool"/>Cool<br/>
+  <input type="number" name="set-point" min="60" max="80" value="{{}}"/>
+</div>
+<script>
+  {{template "furnace-js" .}}
+</script>
+{{end}}
