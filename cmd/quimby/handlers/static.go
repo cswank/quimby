@@ -46,7 +46,7 @@ func Init(box *rice.Box) {
 		"qr-code.html":     {files: []string{"qr-code.html"}},
 		"admin.html":       {files: []string{"admin.html"}},
 		"login.html":       {files: []string{"login.html"}},
-		"logout.html":      {files: []string{"logout.html"}},
+		"logout.html":      {files: []string{"logout.html", "edit-user.js"}},
 	}
 
 	base := []string{"head.html", "base.html", "navbar.html"}
@@ -269,7 +269,7 @@ func DeleteUserPage(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.Header().Set("Location", "/admin.html")
-	w.WriteHeader(http.StatusMovedPermanently)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func UserPasswordPage(w http.ResponseWriter, req *http.Request) {
@@ -318,7 +318,7 @@ func UserChangePasswordPage(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("Location", "/admin.html")
-	w.WriteHeader(http.StatusMovedPermanently)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func UserTFAPage(w http.ResponseWriter, req *http.Request) {
@@ -412,7 +412,7 @@ func GadgetForm(w http.ResponseWriter, req *http.Request) {
 	g.Disabled = d
 	context.Set(req, "error", g.Save())
 	w.Header().Set("Location", "/admin.html")
-	w.WriteHeader(http.StatusMovedPermanently)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }
 
 func GadgetPage(w http.ResponseWriter, req *http.Request) {
@@ -471,14 +471,19 @@ func LoginPage(w http.ResponseWriter, req *http.Request) {
 
 func LogoutPage(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	p := userPage{
-		User:  args.User.Username,
-		Admin: Admin(args),
-		Links: []link{
-			{"quimby", "/"},
+	p := editUserPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+			},
+		},
+		Actions: []action{
+			{Name: "cancel", URI: template.URL("/"), Method: "get"},
 		},
 	}
-	templates["logout"].template.ExecuteTemplate(w, "base", p)
+	templates["logout.html"].template.ExecuteTemplate(w, "base", p)
 }
 
 func LoginForm(w http.ResponseWriter, req *http.Request) {
@@ -497,5 +502,5 @@ func LoginForm(w http.ResponseWriter, req *http.Request) {
 	} else {
 		w.Header().Set("Location", "/index.html")
 	}
-	w.WriteHeader(http.StatusMovedPermanently)
+	w.WriteHeader(http.StatusTemporaryRedirect)
 }

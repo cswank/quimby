@@ -1,10 +1,16 @@
 {{define "device"}}
 <li>
-  <span>{{ .Name }}</span>
-  {{if eq .Info.Direction "output"}}
-  <span id="{{.Location}}-{{.Name}}" onClick="sendCommand('{{.Location}}-{{.Name}}', {{.Info}})">{{ .Value.Value }}</span>
-  {{else}}
-  <span id="{{.Location}}-{{.Name}}">{{ .Value.Value }}</span>
-  {{end}}
+  <div>
+    <span>{{ .Name }}</span>
+    {{if eq .Info.Direction "output"}}
+    {{if eq .Value.Value true}}
+    <span id="{{.Location}}-{{.Name}}" class="on" onClick="sendCommand('{{.Location}}-{{.Name}}', {{.Info}})">{{ .Value.Value }}</span>
+    {{else}}
+    <span id="{{.Location}}-{{.Name}}" class="off" onClick="sendCommand('{{.Location}}-{{.Name}}', {{.Info}})">{{ .Value.Value }}</span>
+    {{end}}
+    {{else}}
+    <span id="{{.Location}}-{{.Name}}">{{ .Value.Value }}</span>
+    {{end}}
+  </div>
 </li>
 {{end}}
