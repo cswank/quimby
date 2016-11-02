@@ -7,7 +7,7 @@ doConnect(function(msg) {
         if (msg.info.direction == "output") {
             var c = "off";
             if (msg.value.value == true) {
-                color = "on";
+                c = "on";
             }
             document.getElementById(id).setAttribute("class", c);
         }
