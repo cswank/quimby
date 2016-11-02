@@ -3,14 +3,25 @@
   <form action="/admin/gadgets/{{.Gadget.Id}}" method="post">
     <input name="name" type="text" required placeholder="Name" value="{{.Gadget.Name}}"/>
     <input name="host" type="text" required placeholder="Host" value="{{.Gadget.Host}}"/>
-    <div>
-      {{if .Gadget.Disabled}}
-      <input name="disabled" type="checkbox" placeholder="Disabled" checked="checked"/>
+    <div class="nudge--down">
+      <h5>View</h5>
+      {{if eq .Gadget.View "furnace"}}
+      <input name="view" type="radio" value="default" placeholder="View"/>Default</br>
+      <input name="view" type="radio" value="furnace" placeholder="View" checked="checked"/>Furnace</br>
       {{else}}
-      <input name="disabled" type="checkbox" placeholder="Disabled"/>
+      <input name="view" type="radio" value="default" placeholder="View" checked="checked"/>Default</br>
+      <input name="view" type="radio" value="furnace" placeholder="View"/>Furnace</br>
       {{end}}
-      <label for="disabled">Disabled</label>
     </div>
+    <br/>
+    <div class="nudge--down">
+      {{if .Gadget.Disabled}}
+      <label for="disabled"><input name="disabled" type="checkbox" placeholder="Disabled" checked="checked"/>Disabled</label>
+      {{else}}
+      <label for="disabled"><input for="disabled"name="disabled" type="checkbox" placeholder="Disabled"/>Disabled</label>
+      {{end}}
+    </div>
+    <br/>
     <div class="nudge--down">
       <button type="submit" class="btn--raised btn--green nudge--down">Submit</button>
     </div>

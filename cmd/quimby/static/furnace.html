@@ -1,12 +1,19 @@
 {{define "content"}}
-<div class="m--1 g--8">
+<form id="furnace-control" class="m--1 g--8">
   <h1>{{.Gadget.Name}}</h1>
-  <input type="radio" name="value" value="off"/>Off<br/>
-  <input type="radio" name="value" value="heat"/>Heat<br/>
-  <input type="radio" name="value" value="cool"/>Cool<br/>
-  <input type="number" name="set-point" min="60" max="80" value="{{}}"/>
-</div>
+  <input onChange="updateState()" type="radio" name="state" value="heat" id="furnace-heat"/>Heat<br/>
+  <input onChange="updateState()" type="radio" name="state" value="cool" id="furnace-cool"/>Cool<br/>
+  <input onChange="updateState()" type="radio" name="state" value="off" id="furnace-off"/>Off<br/>
+  <br/>
+  <span>Set Point: <span id="set-point-display">{{.SetPoint}}</span></span><br/>
+  <input type="range" id="set-point" min="60" max="80" value="" onInput="updateSetPointDisplay()" onChange="setPointChange()"/>
+  <div id="temperature-holder">
+    <span>Temperature: <span id="home-temperature">{{.Thermometer.Value.Value}}</span></span>
+  </div>
+</form>
+
 <script>
+  {{template "base-js" .}}
   {{template "furnace-js" .}}
 </script>
 {{end}}
