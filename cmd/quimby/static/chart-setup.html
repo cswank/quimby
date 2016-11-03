@@ -1,0 +1,29 @@
+{{define "content"}}
+<form id="chart-setup" class="m--1 g--6" action="{{.Action}}" method="get">
+  <ul>
+    {{range $key, $value := .Inputs}}
+    <input type="checkbox" name="source" value="{{$value}}"/>{{$key}}<br/>
+    {{ end }}
+  </ul>
+
+  <ul>
+    <input type="radio" name="summarize" value="0" checked="checked"/>0 minute summary<br/>
+    <input type="radio" name="summarize" value="10"/>10 minute summary<br/>
+    <input type="radio" name="summarize" value="30"/>30 minute summary<br/>
+    <input type="radio" name="summarize" value="60"/>60 minute summary<br/>
+  </ul>
+
+  <ul>
+    {{range .Spans}}
+    {{if eq . "hour"}}
+    <input type="radio" name="span" value="{{.}}" checked="checked"/>{{.}}<br/>
+    {{else}}
+    <input type="radio" name="span" value="{{.}}"/>{{.}}<br/>
+    {{end}}
+    {{ end }}
+  </ul>
+  <button type="submit" class="btn--raised btn--green">Submit</button>
+</form>
+<script>
+</script>
+{{end}}

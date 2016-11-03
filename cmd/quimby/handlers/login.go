@@ -24,7 +24,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 	args := GetArgs(r)
 	if args.Args.Get("web") == "true" {
 		w.Header().Set("Location", "/login.html")
-		w.WriteHeader(http.StatusMovedPermanently)
+		w.WriteHeader(http.StatusTemporaryRedirect)
 	}
 }
 

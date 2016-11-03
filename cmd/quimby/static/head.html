@@ -4,6 +4,9 @@
   <title>Quimby</title>
   <link href="/css/surface_styles.css" rel="stylesheet"/>
   <link href="/css/quimby.css" rel="stylesheet"/>
+  {{range .CSS}}
+  <link href="{{.}}" rel="stylesheet"/>
+  {{end}}
 </head>
 {{end}}
 {{template "base.html"}}

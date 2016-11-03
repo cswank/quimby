@@ -191,7 +191,7 @@ func AddDataPoint(w http.ResponseWriter, req *http.Request) {
 
 func GetDataPointsCSV(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	points, err := getDataPoints(w, args)
+	points, err := getDataPoints(args)
 	if err != nil {
 		context.Set(req, "error", err)
 		return
@@ -201,21 +201,22 @@ func GetDataPointsCSV(w http.ResponseWriter, req *http.Request) {
 
 func GetDataPoints(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	points, err := getDataPoints(w, args)
+	points, err := getDataPoints(args)
 	if err != nil {
 		context.Set(req, "error", err)
 		return
 	}
 	if req.Header.Get("accept") == "application/csv" {
 		getCSV(w, points, args.Vars["name"])
-
 	} else {
-		enc := json.NewEncoder(w)
-		enc.Encode(points)
+		json.NewEncoder(w).Encode(map[string]interface{}{
+			"name": args.Vars["name"],
+			"data": points,
+		})
 	}
 }
 
-func getDataPoints(w http.ResponseWriter, args *Args) ([]quimby.DataPoint, error) {
+func getDataPoints(args *Args) ([]quimby.DataPoint, error) {
 	start := beginning
 	end := time.Now()
 	var d time.Duration

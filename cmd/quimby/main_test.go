@@ -817,15 +817,20 @@ var _ = Describe("Quimby", func() {
 				r = getReq()
 				defer r.Body.Close()
 
-				var points []quimby.DataPoint
-				dec := json.NewDecoder(r.Body)
-				Expect(dec.Decode(&points)).To(BeNil())
-				Expect(len(points)).To(Equal(2))
+				type dataPoints struct {
+					Name string             `json:"name"`
+					Data []quimby.DataPoint `json:"data"`
+				}
 
-				p1 := points[0]
+				var data dataPoints
+				dec := json.NewDecoder(r.Body)
+				Expect(dec.Decode(&data)).To(BeNil())
+				Expect(len(data.Data)).To(Equal(2))
+
+				p1 := data.Data[0]
 				Expect(p1.Value).To(Equal(33.3))
 
-				p2 := points[1]
+				p2 := data.Data[1]
 				Expect(p2.Value).To(Equal(33.5))
 
 				//Get them as csv
@@ -1305,20 +1310,26 @@ var _ = Describe("Quimby", func() {
 
 				getMethod = func() string { return "GET" }
 				getBuf = func() io.Reader { return nil }
-				var points []quimby.DataPoint
+
+				type dataPoints struct {
+					Name string             `json:"name"`
+					Data []quimby.DataPoint `json:"data"`
+				}
+
+				var data dataPoints
 
 				Eventually(func() int {
 					r = getReq()
 					defer r.Body.Close()
 					dec := json.NewDecoder(r.Body)
-					Expect(dec.Decode(&points)).To(BeNil())
-					return len(points)
+					Expect(dec.Decode(&data)).To(BeNil())
+					return len(data.Data)
 				}).Should(Equal(2))
 
-				p1 := points[0]
+				p1 := data.Data[0]
 				Expect(p1.Value).To(Equal(33.3))
 
-				p2 := points[1]
+				p2 := data.Data[1]
 				Expect(p2.Value).To(Equal(33.5))
 
 				//Get them as csv

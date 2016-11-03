@@ -36,3 +36,21 @@ input[type="radio"] {
 #temperature-holder {
     padding-top: 10px;
 }
+
+header {
+    margin-bottom: 0px;
+}
+
+.toggle-holder {
+    vertical-align: middle;
+    margin-left: 10px;
+}
+
+.device {
+    vertical-align: middle;
+}
+
+#chart svg {
+    height: 600px;
+    width: 100%;
+}

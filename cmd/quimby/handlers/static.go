@@ -27,7 +27,7 @@ type tmpl struct {
 
 func Init(box *rice.Box) {
 	data := map[string]string{}
-	for _, pth := range []string{"head.html", "base.html", "navbar.html", "index.html", "gadget.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "device.html", "edit-gadget.html", "edit-user.html", "edit-user.js", "delete.html", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
+	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-user.html", "edit-user.js", "delete.html", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
 		s, err := box.String(pth)
 		if err != nil {
 			log.Fatal(err)
@@ -37,7 +37,10 @@ func Init(box *rice.Box) {
 
 	templates = map[string]tmpl{
 		"index.html":       {files: []string{"index.html"}},
+		"links.html":       {files: []string{"links.html"}},
 		"gadget.html":      {files: []string{"gadget.html", "base.js", "gadget.js", "device.html"}},
+		"chart.html":       {files: []string{"chart.html", "chart.js"}},
+		"chart-setup.html": {files: []string{"chart-setup.html"}},
 		"furnace.html":     {files: []string{"furnace.html", "base.js", "furnace.js", "device.html"}},
 		"edit-gadget.html": {files: []string{"edit-gadget.html"}},
 		"edit-user.html":   {files: []string{"edit-user.html", "edit-user.js"}},
@@ -81,6 +84,21 @@ type userPage struct {
 	User  string
 	Admin bool
 	Links []link
+	CSS   []string
+}
+
+type chartPage struct {
+	gadgetPage
+	Span      string
+	Sources   []string
+	Summarize string
+}
+
+type chartSetupPage struct {
+	gadgetPage
+	Inputs map[string]string
+	Spans  []string
+	Action string
 }
 
 type editUserPage struct {
@@ -108,6 +126,7 @@ type gadgetPage struct {
 	Websocket template.URL
 	Locations map[string][]gogadgets.Message
 	Error     string
+	URI       string
 }
 
 type furnacePage struct {
@@ -137,6 +156,20 @@ func IndexPage(w http.ResponseWriter, req *http.Request) {
 		},
 	}
 	templates["index.html"].template.ExecuteTemplate(w, "base", i)
+}
+
+func LinksPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	i := indexPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+			},
+		},
+	}
+	templates["links.html"].template.ExecuteTemplate(w, "base", i)
 }
 
 func AdminPage(w http.ResponseWriter, req *http.Request) {
@@ -459,12 +492,13 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 			Admin: Admin(args),
 			Links: []link{
 				{"quimby", "/"},
-				{args.Gadget.Name, fmt.Sprintf("/admin/gadgets/%s", args.Gadget.Id)},
+				{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
 			},
 		},
 		Gadget:    args.Gadget,
 		Websocket: template.URL(fmt.Sprintf("%s/api/gadgets/%s/websocket", u, args.Gadget.Id)),
 		Locations: l,
+		URI:       fmt.Sprintf("/gadgets/%s", args.Gadget.Id),
 	}
 	if args.Gadget.View == "furnace" {
 		var f, t gogadgets.Message
@@ -492,6 +526,75 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func ChartSetupPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+
+	inputs := map[string]string{}
+	s, err := args.Gadget.Status()
+
+	if err != nil {
+		context.Set(req, "error", err)
+		return
+	}
+
+	for _, msg := range s {
+		if msg.Info.Direction == "input" {
+			inputs[fmt.Sprintf("%s %s", msg.Location, msg.Name)] = fmt.Sprintf("/api/gadgets/%s/sources/%s%%20%s", args.Gadget.Id, msg.Location, msg.Name)
+		}
+	}
+
+	p := chartSetupPage{
+		gadgetPage: gadgetPage{
+			userPage: userPage{
+				User:  args.User.Username,
+				Admin: Admin(args),
+				Links: []link{
+					{"quimby", "/"},
+					{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
+					{"chart-setup", fmt.Sprintf("/gadgets/%s/chart-setup.html", args.Gadget.Id)},
+				},
+			},
+			Gadget: args.Gadget,
+		},
+		Inputs: inputs,
+		Spans:  []string{"hour", "day", "week", "month"},
+		Action: fmt.Sprintf("/gadgets/%s/chart.html", args.Gadget.Id),
+	}
+	templates["chart-setup.html"].template.ExecuteTemplate(w, "base", p)
+}
+
+func ChartPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	span := args.Args.Get("span")
+	if span == "" {
+		span = "day"
+	}
+	summarize := args.Args.Get("summarize")
+	if summarize == "" {
+		summarize = "0"
+	}
+	sources := args.Args["source"]
+	p := chartPage{
+		gadgetPage: gadgetPage{
+			userPage: userPage{
+				User:  args.User.Username,
+				Admin: Admin(args),
+				Links: []link{
+					{"quimby", "/"},
+					{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
+					{"chart", fmt.Sprintf("/gadgets/%s/chart.html", args.Gadget.Id)},
+				},
+				CSS: []string{"/css/nv.d3.css"},
+			},
+			Gadget: args.Gadget,
+		},
+		Span:      span,
+		Sources:   sources,
+		Summarize: summarize,
+	}
+	templates["chart.html"].template.ExecuteTemplate(w, "base", p)
+}
+
 func LoginPage(w http.ResponseWriter, req *http.Request) {
 	q := req.URL.Query()
 	var p gadgetPage
@@ -499,23 +602,6 @@ func LoginPage(w http.ResponseWriter, req *http.Request) {
 		p.Error = "Invalid username or password"
 	}
 	templates["login.html"].template.ExecuteTemplate(w, "base", p)
-}
-
-func LogoutPage(w http.ResponseWriter, req *http.Request) {
-	args := GetArgs(req)
-	p := editUserPage{
-		userPage: userPage{
-			User:  args.User.Username,
-			Admin: Admin(args),
-			Links: []link{
-				{"quimby", "/"},
-			},
-		},
-		Actions: []action{
-			{Name: "cancel", URI: template.URL("/"), Method: "get"},
-		},
-	}
-	templates["logout.html"].template.ExecuteTemplate(w, "base", p)
 }
 
 func LoginForm(w http.ResponseWriter, req *http.Request) {
@@ -535,4 +621,21 @@ func LoginForm(w http.ResponseWriter, req *http.Request) {
 		w.Header().Set("Location", "/index.html")
 	}
 	w.WriteHeader(http.StatusTemporaryRedirect)
+}
+
+func LogoutPage(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	p := editUserPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+			},
+		},
+		Actions: []action{
+			{Name: "cancel", URI: template.URL("/"), Method: "get"},
+		},
+	}
+	templates["logout.html"].template.ExecuteTemplate(w, "base", p)
 }

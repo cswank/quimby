@@ -32,13 +32,7 @@ function isNumeric(n) {
   return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-function sendCommand(id, info) {
-    var cmd;
-    if (document.getElementById(id).textContent == "true") {
-        cmd = info.off[0];
-    } else {
-        cmd = info.on[0];
-    }
+function doSendComamnd(cmd) {
     var msg = JSON.stringify({
         sender: "quimby",
         type: "command",
@@ -46,5 +40,6 @@ function sendCommand(id, info) {
     });
     ws.send(msg);
 }
+
 {{end}}
 

@@ -12,12 +12,7 @@ function setState(val) {
 
 function updateState() {
     var cmd = getCommand();
-    var msg = JSON.stringify({
-        sender: "quimby",
-        type: "command",
-        body: cmd,
-    });
-    ws.send(msg);
+    doSendComamnd(cmd);
 }
 
 function setPointChange() {
