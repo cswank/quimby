@@ -27,7 +27,7 @@ type tmpl struct {
 
 func Init(box *rice.Box) {
 	data := map[string]string{}
-	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-user.html", "edit-user.js", "delete.html", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
+	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-gadget.js", "edit-user.html", "edit-user.js", "delete.html", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
 		s, err := box.String(pth)
 		if err != nil {
 			log.Fatal(err)
@@ -42,7 +42,7 @@ func Init(box *rice.Box) {
 		"chart.html":       {files: []string{"chart.html", "chart.js"}},
 		"chart-setup.html": {files: []string{"chart-setup.html"}},
 		"furnace.html":     {files: []string{"furnace.html", "base.js", "furnace.js", "device.html"}},
-		"edit-gadget.html": {files: []string{"edit-gadget.html"}},
+		"edit-gadget.html": {files: []string{"edit-gadget.html", "edit-gadget.js"}},
 		"edit-user.html":   {files: []string{"edit-user.html", "edit-user.js"}},
 		"delete.html":      {files: []string{"delete.html", "edit-user.js"}},
 		"password.html":    {files: []string{"password.html", "edit-user.js"}},
@@ -127,6 +127,8 @@ type gadgetPage struct {
 	Locations map[string][]gogadgets.Message
 	Error     string
 	URI       string
+	Actions   []action
+	End       int
 }
 
 type furnacePage struct {
@@ -219,19 +221,37 @@ func displayValues(msg *gogadgets.Message) {
 
 func GadgetEditPage(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	g := gadgetPage{
+	id := args.Vars["gadgetid"]
+	g := &quimby.Gadget{Id: id, DB: args.DB}
+	if id == "new-gadget" {
+		g.Id = ""
+		g.Name = "new-gadget"
+	} else {
+		if err := g.Fetch(); err != nil {
+			context.Set(req, "error", err)
+			return
+		}
+	}
+
+	p := gadgetPage{
 		userPage: userPage{
 			User:  args.User.Username,
 			Admin: Admin(args),
 			Links: []link{
 				{"quimby", "/"},
 				{"admin", "/admin.html"},
-				{args.Gadget.Name, fmt.Sprintf("/admin/gadgets/%s", args.Gadget.Id)},
+				{g.Name, fmt.Sprintf("/admin/gadgets/%s", g.Id)},
 			},
 		},
-		Gadget: args.Gadget,
+		Gadget: g,
+		Actions: []action{
+			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
+			{Name: "delete", URI: template.URL(fmt.Sprintf("/admin/gadgets/%s/delete", g.Id)), Method: "get"},
+		},
+		End: 2,
 	}
-	templates["edit-gadget.html"].template.ExecuteTemplate(w, "base", g)
+
+	templates["edit-gadget.html"].template.ExecuteTemplate(w, "base", p)
 }
 
 func UserEditPage(w http.ResponseWriter, req *http.Request) {
