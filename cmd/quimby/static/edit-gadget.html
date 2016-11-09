@@ -1,8 +1,8 @@
 {{define "content"}}
 <div class="m--1">
-  <form action="/admin/gadgets/{{.Gadget.Id}}" method="post">
-    <input name="name" type="text" required placeholder="Name" value="{{.Gadget.Name}}"/>
-    <input name="host" type="text" required placeholder="Host" value="{{.Gadget.Host}}"/>
+  <form id="gadget-form" action="/admin/gadgets/{{.Gadget.Id}}" method="post">
+    <input id="name" name="name" type="text" required placeholder="Name" value="{{.Gadget.Name}}"/>
+    <input id="host" name="host" type="text" required placeholder="Host" value="{{.Gadget.Host}}"/>
     <div class="nudge--down">
       <h5>View</h5>
       {{if eq .Gadget.View "furnace"}}
@@ -24,7 +24,12 @@
     <br/>
     <div class="nudge--down">
       <button type="submit" class="btn--raised btn--green nudge--down">Submit</button>
+      <button type="submit" onClick="setAction('delete')" class="btn--raised btn--green nudge--down">Delete</button>
+      <button type="submit" onClick="setAction('cancel')" class="btn--raised btn--green nudge--down">Cancel</button>
     </div>
   </form>
 </div>
+<script>
+  {{template "edit-gadget-js" .}}
+</script>
 {{end}}

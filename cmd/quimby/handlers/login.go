@@ -36,12 +36,12 @@ func Login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request", http.StatusBadRequest)
 		return
 	}
-	if err := doLogin(user, w, r); err != nil {
+	if err := DoLogin(user, w, r); err != nil {
 		http.Error(w, "bad request", http.StatusBadRequest)
 	}
 }
 
-func doLogin(user *quimby.User, w http.ResponseWriter, req *http.Request) error {
+func DoLogin(user *quimby.User, w http.ResponseWriter, req *http.Request) error {
 	goodPassword, err := user.CheckPassword()
 	if !goodPassword || err != nil {
 		return fmt.Errorf("bad request")

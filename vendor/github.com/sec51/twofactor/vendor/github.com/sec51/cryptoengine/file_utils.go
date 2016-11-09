@@ -6,29 +6,22 @@ import (
 	"io/ioutil"
 	"log"
 	"os"
-	"path/filepath"
+	"strconv"
 )
 
 const (
+	keyPath     = "keys"
 	testKeyPath = "test_keys"
 )
 
 var (
-	keyPath                    string
-	keysFolderPrefixFormat     string
-	testKeysFolderPrefixFormat string
+	osSeparator, _             = strconv.Unquote(strconv.QuoteRuneToASCII(os.PathSeparator))
+	keysFolderPrefixFormat     = fmt.Sprintf("%s%s", keyPath, osSeparator) + "%s"
+	testKeysFolderPrefixFormat = fmt.Sprintf("%s%s", testKeyPath, osSeparator) + "%s"
 )
 
 // create the keys folder if it does not exist, with the proper permission
 func init() {
-	if os.Getenv("SEC51_KEYPATH") != "" {
-		keyPath = os.Getenv("SEC51_KEYPATH")
-	} else {
-		keyPath = "keys"
-	}
-
-	keysFolderPrefixFormat = filepath.Join(keyPath, "%s")
-	testKeysFolderPrefixFormat = filepath.Join(testKeyPath, "%s")
 	if err := createBaseKeyFolder(keyPath); err != nil {
 		log.Println(err)
 	}

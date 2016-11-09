@@ -11,6 +11,7 @@ import (
 	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby"
 	"github.com/cswank/quimby/cmd/quimby/handlers"
+	"github.com/cswank/quimby/cmd/quimby/handlers/webapp"
 	"github.com/cswank/quimby/cmd/quimby/utils"
 	"github.com/cswank/rex"
 	"github.com/justinas/alice"
@@ -82,7 +83,7 @@ func main() {
 		utils.Bootstrap()
 	case "serve":
 		box = rice.MustFindBox("static")
-		handlers.Init(box)
+		webapp.Init(box)
 		addDB(startServer)
 	case "setup":
 		utils.SetupServer(*setupDomain, *net)
@@ -178,24 +179,25 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	go startHomeKit(db, lg)
 
 	r := rex.New("main")
-	r.Get("/", getMiddleware(handlers.Read, handlers.IndexPage))
-	r.Get("/gadgets/{id}", getMiddleware(handlers.Read, handlers.GadgetPage))
-	r.Get("/gadgets/{id}/chart.html", getMiddleware(handlers.Read, handlers.ChartPage))
-	r.Get("/gadgets/{id}/chart-setup.html", getMiddleware(handlers.Read, handlers.ChartSetupPage))
-	r.Get("/login.html", getMiddleware(handlers.Anyone, handlers.LoginPage))
-	r.Post("/login.html", getMiddleware(handlers.Anyone, handlers.LoginForm))
-	r.Get("/logout.html", getMiddleware(handlers.Read, handlers.LogoutPage))
-	r.Get("/links.html", getMiddleware(handlers.Read, handlers.LinksPage))
-	r.Get("/admin.html", getMiddleware(handlers.Admin, handlers.AdminPage))
-	r.Get("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetEditPage))
-	r.Post("/admin/gadgets/{id}", getMiddleware(handlers.Admin, handlers.GadgetForm))
-	r.Get("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserEditPage))
-	r.Get("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserPasswordPage))
-	r.Post("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserChangePasswordPage))
-	r.Post("/admin/users/{username}/tfa", getMiddleware(handlers.Admin, handlers.UserTFAPage))
-	r.Post("/admin/users/{username}/do-delete", getMiddleware(handlers.Admin, handlers.DeleteUserPage))
-	r.Get("/admin/users/{username}/delete", getMiddleware(handlers.Admin, handlers.DeleteUserConfirmPage))
-	r.Post("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserForm))
+	r.Get("/", getMiddleware(handlers.Read, webapp.IndexPage))
+	r.Get("/gadgets/{id}", getMiddleware(handlers.Read, webapp.GadgetPage))
+	r.Get("/gadgets/{id}/chart.html", getMiddleware(handlers.Read, webapp.ChartPage))
+	r.Get("/gadgets/{id}/chart-setup.html", getMiddleware(handlers.Read, webapp.ChartSetupPage))
+	r.Get("/login.html", getMiddleware(handlers.Anyone, webapp.LoginPage))
+	r.Post("/login.html", getMiddleware(handlers.Anyone, webapp.LoginForm))
+	r.Get("/logout.html", getMiddleware(handlers.Read, webapp.LogoutPage))
+	r.Get("/links.html", getMiddleware(handlers.Read, webapp.LinksPage))
+	r.Get("/admin.html", getMiddleware(handlers.Admin, webapp.AdminPage))
+	r.Get("/admin/confirmation", getMiddleware(handlers.Admin, webapp.DeleteConfirmPage))
+	r.Get("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.GadgetEditPage))
+	r.Post("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.GadgetForm))
+	r.Delete("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.DeleteGadgetPage))
+	r.Get("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.UserEditPage))
+	r.Get("/admin/users/{username}/password", getMiddleware(handlers.Admin, webapp.UserPasswordPage))
+	r.Post("/admin/users/{username}/password", getMiddleware(handlers.Admin, webapp.UserChangePasswordPage))
+	r.Post("/admin/users/{username}/tfa", getMiddleware(handlers.Admin, webapp.UserTFAPage))
+	r.Delete("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.DeleteUserPage))
+	r.Post("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.UserForm))
 
 	//api
 	r.Post("/api/login", http.HandlerFunc(handlers.Login))
