@@ -187,14 +187,14 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r.Get("/logout.html", getMiddleware(handlers.Read, handlers.LogoutPage))
 	r.Get("/links.html", getMiddleware(handlers.Read, handlers.LinksPage))
 	r.Get("/admin.html", getMiddleware(handlers.Admin, handlers.AdminPage))
+	r.Get("/admin/confirmation", getMiddleware(handlers.Admin, handlers.DeleteConfirmPage))
 	r.Get("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, handlers.GadgetEditPage))
 	r.Post("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, handlers.GadgetForm))
 	r.Get("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserEditPage))
 	r.Get("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserPasswordPage))
 	r.Post("/admin/users/{username}/password", getMiddleware(handlers.Admin, handlers.UserChangePasswordPage))
 	r.Post("/admin/users/{username}/tfa", getMiddleware(handlers.Admin, handlers.UserTFAPage))
-	r.Post("/admin/users/{username}/do-delete", getMiddleware(handlers.Admin, handlers.DeleteUserPage))
-	r.Get("/admin/users/{username}/delete", getMiddleware(handlers.Admin, handlers.DeleteUserConfirmPage))
+	r.Delete("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.DeleteUserPage))
 	r.Post("/admin/users/{username}", getMiddleware(handlers.Admin, handlers.UserForm))
 
 	//api

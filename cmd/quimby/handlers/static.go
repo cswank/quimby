@@ -7,6 +7,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 
 	"github.com/GeertJohan/go.rice"
@@ -27,7 +28,7 @@ type tmpl struct {
 
 func Init(box *rice.Box) {
 	data := map[string]string{}
-	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-gadget.js", "edit-user.html", "edit-user.js", "delete.html", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
+	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-gadget.js", "edit-user.html", "edit-user.js", "delete.html", "delete.js", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
 		s, err := box.String(pth)
 		if err != nil {
 			log.Fatal(err)
@@ -44,7 +45,7 @@ func Init(box *rice.Box) {
 		"furnace.html":     {files: []string{"furnace.html", "base.js", "furnace.js", "device.html"}},
 		"edit-gadget.html": {files: []string{"edit-gadget.html", "edit-gadget.js"}},
 		"edit-user.html":   {files: []string{"edit-user.html", "edit-user.js"}},
-		"delete.html":      {files: []string{"delete.html", "edit-user.js"}},
+		"delete.html":      {files: []string{"delete.html", "delete.js"}},
 		"password.html":    {files: []string{"password.html", "edit-user.js"}},
 		"new-user.html":    {files: []string{"new-user.html", "edit-user.js"}},
 		"qr-code.html":     {files: []string{"qr-code.html"}},
@@ -107,6 +108,14 @@ type editUserPage struct {
 	Permissions []string
 	Actions     []action
 	End         int
+}
+
+type confirmPage struct {
+	userPage
+	Resource string
+	Name     string
+	Actions  []action
+	End      int
 }
 
 type indexPage struct {
@@ -280,6 +289,10 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 			context.Set(req, "error", err)
 			return
 		}
+
+		q := url.Values{}
+		q.Add("resource", fmt.Sprintf("/admin/users/%s", username))
+		q.Add("name", username)
 		page.EditUser = u
 		page.Links = []link{
 			{"quimby", "/"},
@@ -288,7 +301,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 		}
 		page.Actions = []action{
 			{Name: "cancel", URI: template.URL("/admin.html"), Method: "get"},
-			{Name: "delete", URI: template.URL(fmt.Sprintf("/admin/users/%s/delete", username)), Method: "get"},
+			{Name: "delete", URI: template.URL(fmt.Sprintf("/admin/confirmation?%s", q.Encode())), Method: "get"},
 			{Name: "update-password", URI: template.URL(fmt.Sprintf("/admin/users/%s/password", username)), Method: "get"},
 			{Name: "update-tfa", URI: template.URL(fmt.Sprintf("/admin/users/%s/tfa", username)), Method: "post"},
 		}
@@ -302,10 +315,9 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func DeleteUserConfirmPage(w http.ResponseWriter, req *http.Request) {
+func DeleteConfirmPage(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
-	u := quimby.NewUser(args.Vars["username"])
-	page := editUserPage{
+	page := confirmPage{
 		userPage: userPage{
 			User:  args.User.Username,
 			Admin: Admin(args),
@@ -315,10 +327,11 @@ func DeleteUserConfirmPage(w http.ResponseWriter, req *http.Request) {
 				{"new user", "/admin/users/new-user"},
 			},
 		},
-		EditUser: u,
 		Actions: []action{
-			{Name: "cancel", URI: template.URL(fmt.Sprintf("/admin/users/%s", u.Username)), Method: "get"},
+			{Name: "delete", URI: template.URL(args.Args.Get("resource")), Method: "delete"},
 		},
+		Resource: args.Args.Get("resource"),
+		Name:     args.Args.Get("name"),
 	}
 	templates["delete.html"].template.ExecuteTemplate(w, "base", page)
 }

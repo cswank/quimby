@@ -1,13 +1,13 @@
 {{define "content"}}
 <div class="g--12 m--1">
-  <h3>Really Delete {{.EditUser.Username}}</h3>
-  <form id="user-form" action="/admin/users/{{.EditUser.Username}}/do-delete" method="post">
-    <button type="submit" class="btn--raised btn--green">Delete</button>
-    <button type="submit" onClick="setAction('cancel')" class="btn--raised btn--green">Cancel</button>
+  <h3>Really Delete {{.Name}}</h3>
+  <form id="delete-form" action="{{.Resource}}" method="get">
+    <button type="submit" onClick="doDelete()" class="btn--raised btn--green">Delete</button>
+    <button type="submit" class="btn--raised btn--green">Cancel</button>
   </form>
 </div>
 <script>
-  {{template "edit-user-js" .}}
+  {{template "delete-js" .}}
 </script>
 {{end}}
-{{template "base.html"}}
+
