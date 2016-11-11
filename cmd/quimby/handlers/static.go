@@ -344,7 +344,7 @@ func DeleteUserPage(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	w.Header().Set("Location", "/admin.html")
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusFound)
 }
 
 func UserPasswordPage(w http.ResponseWriter, req *http.Request) {
@@ -393,7 +393,7 @@ func UserChangePasswordPage(w http.ResponseWriter, req *http.Request) {
 	}
 
 	w.Header().Set("Location", "/admin.html")
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusFound)
 }
 
 func UserTFAPage(w http.ResponseWriter, req *http.Request) {
@@ -444,12 +444,22 @@ func UserForm(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	u := quimby.NewUser(req.PostFormValue("username"), quimby.UserDB(args.DB), quimby.UserTFA(TFA))
-	u.Password = req.PostFormValue("password")
-	pw := req.PostFormValue("password_confirm")
-	if pw != u.Password {
-		context.Set(req, "error", ErrPasswordsDoNotMatch)
-		return
+	username := args.Vars["username"]
+	var u *quimby.User
+	if username == "new-user" {
+		u = quimby.NewUser(req.PostFormValue("username"), quimby.UserDB(args.DB), quimby.UserTFA(TFA))
+		u.Password = req.PostFormValue("password")
+		pw := req.PostFormValue("password_confirm")
+		if pw != u.Password {
+			context.Set(req, "error", ErrPasswordsDoNotMatch)
+			return
+		}
+	} else {
+		u = quimby.NewUser(username, quimby.UserDB(args.DB), quimby.UserTFA(TFA))
+		if err := u.Fetch(); err != nil {
+			context.Set(req, "error", ErrPasswordsDoNotMatch)
+			return
+		}
 	}
 	u.Permission = req.PostFormValue("permission")
 	qrData, err := u.Save()
@@ -457,18 +467,23 @@ func UserForm(w http.ResponseWriter, req *http.Request) {
 		context.Set(req, "error", err)
 		return
 	}
-	qr := qrPage{
-		userPage: userPage{
-			User:  args.User.Username,
-			Admin: Admin(args),
-			Links: []link{
-				{"quimby", "/"},
-				{"admin", "/admin.html"},
+	if username == "new-user" {
+		qr := qrPage{
+			userPage: userPage{
+				User:  args.User.Username,
+				Admin: Admin(args),
+				Links: []link{
+					{"quimby", "/"},
+					{"admin", "/admin.html"},
+				},
 			},
-		},
-		QR: template.HTMLAttr(base64.StdEncoding.EncodeToString(qrData)),
+			QR: template.HTMLAttr(base64.StdEncoding.EncodeToString(qrData)),
+		}
+		templates["qr-code.html"].template.ExecuteTemplate(w, "base", qr)
+	} else {
+		w.Header().Set("Location", "/admin.html")
+		w.WriteHeader(http.StatusFound)
 	}
-	templates["qr-code.html"].template.ExecuteTemplate(w, "base", qr)
 }
 
 func GadgetForm(w http.ResponseWriter, req *http.Request) {
@@ -487,7 +502,7 @@ func GadgetForm(w http.ResponseWriter, req *http.Request) {
 	g.Disabled = d
 	context.Set(req, "error", g.Save())
 	w.Header().Set("Location", "/admin.html")
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusFound)
 }
 
 func GadgetPage(w http.ResponseWriter, req *http.Request) {
@@ -653,7 +668,7 @@ func LoginForm(w http.ResponseWriter, req *http.Request) {
 	} else {
 		w.Header().Set("Location", "/index.html")
 	}
-	w.WriteHeader(http.StatusTemporaryRedirect)
+	w.WriteHeader(http.StatusFound)
 }
 
 func LogoutPage(w http.ResponseWriter, req *http.Request) {

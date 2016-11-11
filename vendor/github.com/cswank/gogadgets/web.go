@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -30,6 +33,10 @@ type Server struct {
 	clients     map[string]string
 }
 
+func init() {
+	http.DefaultClient.Timeout = 15 * time.Second
+}
+
 func NewServer(host, master string, port int, lg Logger) *Server {
 	var isMaster bool
 	clients := map[string]string{}
@@ -37,7 +44,7 @@ func NewServer(host, master string, port int, lg Logger) *Server {
 		isMaster = true
 	} else {
 		clients = map[string]string{
-			master: "",
+			fmt.Sprintf("%s/gadgets", master): "master",
 		}
 	}
 	return &Server{
@@ -56,7 +63,7 @@ func NewServer(host, master string, port int, lg Logger) *Server {
 
 func (s *Server) Start(i <-chan Message, o chan<- Message) {
 	if !s.isMaster {
-		go s.register()
+		s.register()
 	}
 	go s.startServer()
 	go s.cleanup()
@@ -75,7 +82,7 @@ func (s *Server) Start(i <-chan Message, o chan<- Message) {
 		case msg := <-s.external:
 			s.setSeen(msg)
 			o <- msg
-			if s.isMaster && msg.Sender == "client" {
+			if s.isMaster {
 				s.send(msg)
 			}
 		}
@@ -91,11 +98,15 @@ func (s *Server) send(msg Message) {
 }
 
 func (s *Server) doSend(host string, msg Message, token string) {
+	if len(msg.Host) > 0 && strings.Index(host, msg.Host) == 0 {
+		return
+	}
 	msg.Host = s.host
 	var buf bytes.Buffer
 	enc := json.NewEncoder(&buf)
 	enc.Encode(msg)
 	req, err := http.NewRequest("POST", host, &buf)
+
 	s.clientsLock.Lock()
 	defer s.clientsLock.Unlock()
 	if err != nil {
@@ -108,10 +119,10 @@ func (s *Server) doSend(host string, msg Message, token string) {
 	}
 	r, err := http.DefaultClient.Do(req)
 	if r != nil {
+		io.Copy(ioutil.Discard, r.Body)
 		r.Body.Close()
 	}
-
-	if err != nil || r.StatusCode != http.StatusOK {
+	if err != nil || r.StatusCode != http.StatusOK && token != "master" {
 		delete(s.clients, host)
 	}
 }
@@ -154,10 +165,10 @@ func (s *Server) GetDirection() string {
 func (s *Server) startServer() {
 	r := rex.New("main")
 	r.Get("/gadgets", http.HandlerFunc(s.status))
-	r.Get("/gadgets/values", http.HandlerFunc(s.values))
-	r.Get("/gadgets/locations/{location}/devices/{device}/status", http.HandlerFunc(s.deviceValue))
 	r.Put("/gadgets", http.HandlerFunc(s.update))
 	r.Post("/gadgets", http.HandlerFunc(s.update))
+	r.Get("/gadgets/values", http.HandlerFunc(s.values))
+	r.Get("/gadgets/locations/{location}/devices/{device}/status", http.HandlerFunc(s.deviceValue))
 	if s.isMaster {
 		r.Post("/clients", http.HandlerFunc(s.setClient))
 		r.Get("/clients", http.HandlerFunc(s.getClients))
@@ -165,7 +176,15 @@ func (s *Server) startServer() {
 	}
 
 	s.lg.Printf("listening on 0.0.0.0:%d\n", s.port)
-	err := http.ListenAndServe(fmt.Sprintf(":%d", s.port), r)
+
+	srv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", s.port),
+		Handler:      r,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	err := srv.ListenAndServe()
 	if err != nil {
 		s.lg.Fatal(err)
 	}

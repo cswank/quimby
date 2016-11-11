@@ -41,6 +41,11 @@ type View struct {
 	// buffer at the cursor position.
 	Editable bool
 
+	// Editor allows to define the editor that manages the edition mode,
+	// including keybindings or cursor behaviour. DefaultEditor is used by
+	// default.
+	Editor Editor
+
 	// Overwrite enables or disables the overwrite mode of the view.
 	Overwrite bool
 
@@ -98,6 +103,7 @@ func newView(name string, x0, y0, x1, y1 int) *View {
 		x1:      x1,
 		y1:      y1,
 		Frame:   true,
+		Editor:  DefaultEditor,
 		tainted: true,
 		ei:      newEscapeInterpreter(),
 	}
@@ -244,14 +250,13 @@ func (v *View) parseInput(ch rune) []cell {
 	} else {
 		if isEscape {
 			return nil
-		} else {
-			c := cell{
-				fgColor: v.ei.curFgColor,
-				bgColor: v.ei.curBgColor,
-				chr:     ch,
-			}
-			cells = append(cells, c)
 		}
+		c := cell{
+			fgColor: v.ei.curFgColor,
+			bgColor: v.ei.curBgColor,
+			chr:     ch,
+		}
+		cells = append(cells, c)
 	}
 
 	return cells
@@ -402,117 +407,6 @@ func (v *View) clearRunes() {
 				termbox.Attribute(v.FgColor), termbox.Attribute(v.BgColor))
 		}
 	}
-}
-
-// writeRune writes a rune into the view's internal buffer, at the
-// position corresponding to the point (x, y). The length of the internal
-// buffer is increased if the point is out of bounds. Overwrite mode is
-// governed by the value of View.overwrite.
-func (v *View) writeRune(x, y int, ch rune) error {
-	v.tainted = true
-
-	x, y, err := v.realPosition(x, y)
-	if err != nil {
-		return err
-	}
-
-	if x < 0 || y < 0 {
-		return errors.New("invalid point")
-	}
-
-	if y >= len(v.lines) {
-		s := make([][]cell, y-len(v.lines)+1)
-		v.lines = append(v.lines, s...)
-	}
-
-	olen := len(v.lines[y])
-	if x >= len(v.lines[y]) {
-		s := make([]cell, x-len(v.lines[y])+1)
-		v.lines[y] = append(v.lines[y], s...)
-	}
-
-	c := cell{
-		fgColor: v.FgColor,
-		bgColor: v.BgColor,
-	}
-	if !v.Overwrite && x < olen {
-		c.chr = '\x00'
-		v.lines[y] = append(v.lines[y], c)
-		copy(v.lines[y][x+1:], v.lines[y][x:])
-	}
-	c.chr = ch
-	v.lines[y][x] = c
-	return nil
-}
-
-// deleteRune removes a rune from the view's internal buffer, at the
-// position corresponding to the point (x, y).
-func (v *View) deleteRune(x, y int) error {
-	v.tainted = true
-
-	x, y, err := v.realPosition(x, y)
-	if err != nil {
-		return err
-	}
-
-	if x < 0 || y < 0 || y >= len(v.lines) || x >= len(v.lines[y]) {
-		return errors.New("invalid point")
-	}
-	v.lines[y] = append(v.lines[y][:x], v.lines[y][x+1:]...)
-	return nil
-}
-
-// mergeLines merges the lines "y" and "y+1" if possible.
-func (v *View) mergeLines(y int) error {
-	v.tainted = true
-
-	_, y, err := v.realPosition(0, y)
-	if err != nil {
-		return err
-	}
-
-	if y < 0 || y >= len(v.lines) {
-		return errors.New("invalid point")
-	}
-
-	if y < len(v.lines)-1 { // otherwise we don't need to merge anything
-		v.lines[y] = append(v.lines[y], v.lines[y+1]...)
-		v.lines = append(v.lines[:y+1], v.lines[y+2:]...)
-	}
-	return nil
-}
-
-// breakLine breaks a line of the internal buffer at the position corresponding
-// to the point (x, y).
-func (v *View) breakLine(x, y int) error {
-	v.tainted = true
-
-	x, y, err := v.realPosition(x, y)
-	if err != nil {
-		return err
-	}
-
-	if y < 0 || y >= len(v.lines) {
-		return errors.New("invalid point")
-	}
-
-	var left, right []cell
-	if x < len(v.lines[y]) { // break line
-		left = make([]cell, len(v.lines[y][:x]))
-		copy(left, v.lines[y][:x])
-		right = make([]cell, len(v.lines[y][x:]))
-		copy(right, v.lines[y][x:])
-	} else { // new empty line
-		left = v.lines[y]
-	}
-
-	lines := make([][]cell, len(v.lines)+1)
-	lines[y] = left
-	lines[y+1] = right
-	copy(lines, v.lines[:y])
-	copy(lines[y+2:], v.lines[y+1:])
-	v.lines = lines
-	return nil
 }
 
 // Buffer returns a string with the contents of the view's internal
