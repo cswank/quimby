@@ -26,7 +26,18 @@
 
 label{
     font-size:14px;
-    vertical-align: middle;
+    vertical-align: top;
+    margin-left: 5px;
+}
+
+label.checkbox{
+    font-size:14px;
+    vertical-align: bottom;
+    margin-left: 10px;
+}
+
+.buttons {
+    margin-top: 10px;
 }
 
 input[type="radio"] {

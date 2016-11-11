@@ -5,12 +5,12 @@
     {{$permission := .EditUser.Permission}}
     {{range .Permissions}}
     {{if eq . $permission}}
-    <input type="radio" name="permission" value="{{.}}" checked="checked"/>{{.}}<br/>
+    <input type="radio" name="permission" value="{{.}}" checked="checked"/><label>{{.}}</label><br/>
     {{else}}
-    <input type="radio" name="permission" value="{{.}}"/>{{.}}<br/>
+    <input type="radio" name="permission" value="{{.}}"/><label>{{.}}</label><br/>
     {{end}}
     {{end}}
-    <div class="nudge--down">
+    <div class="buttons">
       <button type="submit" class="btn--raised btn--green nudge--down">Save</button>
       <button type="submit" onClick="setAction('delete', false)" class="btn--raised btn--green nudge--down">Delete</button>
       <button type="submit" onClick="setAction('update-password', false)" class="btn--raised btn--green nudge--down">Update Password</button>

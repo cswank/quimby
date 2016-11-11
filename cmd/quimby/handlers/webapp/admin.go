@@ -131,6 +131,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 			{Name: "update-password", URI: template.URL(fmt.Sprintf("/admin/users/%s/password", username)), Method: "get"},
 			{Name: "update-tfa", URI: template.URL(fmt.Sprintf("/admin/users/%s/tfa", username)), Method: "post"},
 		}
+
 		page.End = 3
 	}
 
@@ -337,6 +338,7 @@ func GadgetForm(w http.ResponseWriter, req *http.Request) {
 
 	g.Host = req.PostFormValue("host")
 	g.Name = req.PostFormValue("name")
+	g.View = req.PostFormValue("view")
 	s := req.PostFormValue("disabled")
 
 	d := s == "on"

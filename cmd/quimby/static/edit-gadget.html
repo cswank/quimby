@@ -6,19 +6,19 @@
     <div class="nudge--down">
       <h5>View</h5>
       {{if eq .Gadget.View "furnace"}}
-      <input name="view" type="radio" value="default" placeholder="View"/>Default</br>
-      <input name="view" type="radio" value="furnace" placeholder="View" checked="checked"/>Furnace</br>
+      <input name="view" type="radio" value="default" placeholder="View"/><label>Default</label></br>
+      <input name="view" type="radio" value="furnace" placeholder="View" checked="checked"/><label>Furnace</label></br>
       {{else}}
-      <input name="view" type="radio" value="default" placeholder="View" checked="checked"/>Default</br>
-      <input name="view" type="radio" value="furnace" placeholder="View"/>Furnace</br>
+      <input name="view" type="radio" value="default" placeholder="View" checked="checked"/><label>Default</label></br>
+      <input name="view" type="radio" value="furnace" placeholder="View"/><label>Furnace</label></br>
       {{end}}
     </div>
     <br/>
     <div class="nudge--down">
       {{if .Gadget.Disabled}}
-      <label for="disabled"><input name="disabled" type="checkbox" placeholder="Disabled" checked="checked"/>Disabled</label>
+      <input name="disabled" type="checkbox" placeholder="Disabled" checked="checked"/><label class="checkbox" for="disabled">Disabled</label>
       {{else}}
-      <label for="disabled"><input for="disabled"name="disabled" type="checkbox" placeholder="Disabled"/>Disabled</label>
+      <input for="disabled"name="disabled" type="checkbox" placeholder="Disabled"/><label class="checkbox" for="disabled">Disabled</label>
       {{end}}
     </div>
     <br/>

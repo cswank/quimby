@@ -3,10 +3,12 @@ package rex
 import (
 	"net/http"
 	"strings"
+	"sync"
 )
 
 var (
 	routers map[string]*Router
+	lock    sync.Mutex
 )
 
 func init() {
@@ -24,7 +26,9 @@ func New(name string) *Router {
 			"HEAD":   newNode(),
 		},
 	}
+	lock.Lock()
 	routers[name] = r
+	lock.Unlock()
 	return r
 }
 
