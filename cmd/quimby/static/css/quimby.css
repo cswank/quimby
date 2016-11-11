@@ -40,6 +40,10 @@ label.checkbox{
     margin-top: 10px;
 }
 
+.confirm {
+    margin-top: 40px;
+}
+
 input[type="radio"] {
     float:left;
 }

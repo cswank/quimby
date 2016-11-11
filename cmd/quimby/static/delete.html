@@ -1,12 +1,10 @@
 {{define "content"}}
-<div class="g--12 m--5">
-  <div class="g--12">
-    <h3 class="center-text">Really Delete {{.Name}}</h3>
-    <form id="delete-form" action="{{.Resource}}" method="get">
-      <button type="submit" onClick="doDelete()" class="btn--raised btn--green">Delete</button>
-      <button type="submit" class="btn--raised btn--green">Cancel</button>
-    </form>
-  </div>
+<div class="g--12 m--5 center confirm">
+  <h3 class="center-text">Really Delete {{.Name}}</h3>
+  <form id="delete-form" action="{{.Resource}}" method="get">
+    <button type="submit" onClick="doDelete()" class="btn--raised btn--green">Delete</button>
+    <button type="submit" class="btn--raised btn--green">Cancel</button>
+  </form>
 </div>
 <script>
   {{template "delete-js" .}}
