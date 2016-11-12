@@ -3,10 +3,24 @@
 function setState(val) {
     if (val.command == "heat home") {
         document.getElementById("furnace-heat").checked = true;
+        if (val.io.heat) {
+            document.getElementById("heat-label").setAttribute("class", "on");
+        } else {
+            document.getElementById("heat-label").setAttribute("class", "off");
+        }
+        document.getElementById("cool-label").removeAttribute("class");
     } else if (val.command == "cool home") {
         document.getElementById("furnace-cool").checked = true;
+        if (val.io.heat) {
+            document.getElementById("cool-label").setAttribute("class", "on");
+        } else {
+            document.getElementById("cool-label").setAttribute("class", "off");
+        }
+        document.getElementById("heat-label").removeAttribute("class");
     } else {
         document.getElementById("furnace-off").checked = true;
+        document.getElementById("cool-label").removeAttribute("class");
+        document.getElementById("heat-label").removeAttribute("class");
     }
 }
 

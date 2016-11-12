@@ -1,9 +1,15 @@
 {{define "content"}}
 <form id="furnace-control" class="m--1 g--6">
   <h1>{{.Gadget.Name}}</h1>
-  <input onChange="updateState()" type="radio" name="state" value="heat" id="furnace-heat"/>Heat<br/>
-  <input onChange="updateState()" type="radio" name="state" value="cool" id="furnace-cool"/>Cool<br/>
-  <input onChange="updateState()" type="radio" name="state" value="off" id="furnace-off"/>Off<br/>
+  <input onChange="updateState()" type="radio" name="state" value="heat" id="furnace-heat"/>
+  <label id="heat-label">Heat</label>
+  <br/>
+  <input onChange="updateState()" type="radio" name="state" value="cool" id="furnace-cool"/>
+  <label id="cool-label">Cool</label>
+  <br/>
+  <input onChange="updateState()" type="radio" name="state" value="off" id="furnace-off"/>
+  <label>Off</label>
+  <br/>
   <br/>
   <span>Set Point: <span id="set-point-display">{{.SetPoint}}</span></span><br/>
   <input type="range" id="set-point" min="60" max="80" value="" onInput="updateSetPointDisplay()" onChange="setPointChange()"/>
