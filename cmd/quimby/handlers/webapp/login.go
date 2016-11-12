@@ -6,7 +6,6 @@ import (
 
 	"github.com/cswank/quimby"
 	"github.com/cswank/quimby/cmd/quimby/handlers"
-	"github.com/gorilla/context"
 )
 
 func LoginPage(w http.ResponseWriter, req *http.Request) {
@@ -19,14 +18,7 @@ func LoginPage(w http.ResponseWriter, req *http.Request) {
 }
 
 func LoginForm(w http.ResponseWriter, req *http.Request) {
-	args := handlers.GetArgs(req)
-	err := req.ParseForm()
-	if err != nil {
-		context.Set(req, "error", err)
-		return
-	}
-
-	user := quimby.NewUser("", quimby.UserDB(args.DB), quimby.UserTFA(handlers.TFA))
+	user := quimby.NewUser("", quimby.UserDB(handlers.DB), quimby.UserTFA(handlers.TFA))
 	user.Username = req.PostFormValue("username")
 	user.Password = req.PostFormValue("password")
 	user.TFA = req.PostFormValue("tfa")
