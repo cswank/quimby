@@ -11,7 +11,7 @@ function setState(val) {
         document.getElementById("cool-label").removeAttribute("class");
     } else if (val.command == "cool home") {
         document.getElementById("furnace-cool").checked = true;
-        if (val.io.heat) {
+        if (val.io.cool) {
             document.getElementById("cool-label").setAttribute("class", "on");
         } else {
             document.getElementById("cool-label").setAttribute("class", "off");
