@@ -181,6 +181,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	r := rex.New("main")
 	r.Get("/", getMiddleware(handlers.Read, webapp.IndexPage))
 	r.Get("/gadgets/{id}", getMiddleware(handlers.Read, webapp.GadgetPage))
+	r.Get("/gadgets/{id}/method.html", getMiddleware(handlers.Read, webapp.EditMethodPage))
 	r.Get("/gadgets/{id}/chart.html", getMiddleware(handlers.Read, webapp.ChartPage))
 	r.Get("/gadgets/{id}/chart-setup.html", getMiddleware(handlers.Read, webapp.ChartSetupPage))
 	r.Get("/login.html", getMiddleware(handlers.Anyone, webapp.LoginPage))

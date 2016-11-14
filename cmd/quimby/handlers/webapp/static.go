@@ -27,7 +27,7 @@ type tmpl struct {
 
 func Init(box *rice.Box) {
 	data := map[string]string{}
-	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-gadget.js", "edit-user.html", "edit-user.js", "delete.html", "delete.js", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
+	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "method.js", "edit-method.html", "edit-method.js", "method.html", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-gadget.js", "edit-user.html", "edit-user.js", "delete.html", "delete.js", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
 		s, err := box.String(pth)
 		if err != nil {
 			log.Fatal(err)
@@ -38,7 +38,8 @@ func Init(box *rice.Box) {
 	templates = map[string]tmpl{
 		"index.html":       {files: []string{"index.html"}},
 		"links.html":       {files: []string{"links.html"}},
-		"gadget.html":      {files: []string{"gadget.html", "base.js", "gadget.js", "device.html"}},
+		"gadget.html":      {files: []string{"gadget.html", "base.js", "gadget.js", "method.js", "method.html", "device.html"}},
+		"edit-method.html": {files: []string{"edit-method.html", "edit-method.js"}},
 		"chart.html":       {files: []string{"chart.html", "chart.js"}},
 		"chart-setup.html": {files: []string{"chart-setup.html"}},
 		"furnace.html":     {files: []string{"furnace.html", "base.js", "furnace.js", "device.html"}},
@@ -74,6 +75,11 @@ type link struct {
 	Path string
 }
 
+type dropdown struct {
+	Link string
+	Text string
+}
+
 type action struct {
 	Name   string
 	URI    template.URL
@@ -81,10 +87,11 @@ type action struct {
 }
 
 type userPage struct {
-	User  string
-	Admin bool
-	Links []link
-	CSS   []string
+	User      string
+	Admin     bool
+	Links     []link
+	CSS       []string
+	Dropdowns []dropdown
 }
 
 type chartPage struct {
@@ -188,6 +195,26 @@ func displayValues(msg *gogadgets.Message) {
 	}
 }
 
+func EditMethodPage(w http.ResponseWriter, req *http.Request) {
+	args := handlers.GetArgs(req)
+	p := gadgetPage{
+		userPage: userPage{
+			User:  args.User.Username,
+			Admin: handlers.Admin(args),
+			Links: []link{
+				{"quimby", "/"},
+				{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
+			},
+			Dropdowns: []dropdown{
+				{Link: fmt.Sprintf("/gadgets/%s/method", args.Gadget.Id), Text: "Method"},
+			},
+		},
+		Gadget: args.Gadget,
+		URI:    fmt.Sprintf("/gadgets/%s", args.Gadget.Id),
+	}
+	templates["edit-method.html"].template.ExecuteTemplate(w, "base", p)
+}
+
 func GadgetPage(w http.ResponseWriter, req *http.Request) {
 	args := handlers.GetArgs(req)
 	s, err := args.Gadget.Status()
@@ -224,6 +251,9 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 			Links: []link{
 				{"quimby", "/"},
 				{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
+			},
+			Dropdowns: []dropdown{
+				{Link: fmt.Sprintf("/gadgets/%s/method.html", args.Gadget.Id), Text: "Method"},
 			},
 		},
 		Gadget:    args.Gadget,

@@ -20,7 +20,12 @@
         <ul>
           {{ if .Admin }}
           <li><a href="/admin.html">Admin</a></li>
-          {{ end }}
+          {{end}}
+          {{with .Dropdowns}}
+          {{range .}}
+          <li><a href="{{.Link}}">{{.Text}}</a></li>
+          {{end}}
+          {{end}}
           <li><a href="/logout.html">Logout</a></li>
         </ul>
       </li>

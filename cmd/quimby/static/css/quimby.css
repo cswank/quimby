@@ -69,3 +69,22 @@ header {
     height: 600px;
     width: 100%;
 }
+
+#gadgets {
+    margin-top: 0px;
+    margin-left: 20px;
+}
+
+.complete {
+    text-decoration: line-through;
+    color: red;
+}
+
+.step {
+    margin-top: 2px;
+}
+
+.confirm {
+    margin-left: 5px;
+    color: green;
+}

@@ -2,14 +2,20 @@
 
 var id = {{.Gadget.Id}}
 
+function updateIO(msg) {
+    var id = msg.location + "-" + msg.name;
+    if (msg.info.direction == "input") {
+        document.getElementById(id).textContent = getValue(msg.value.value);
+    } else if (msg.info.direction == "output") {
+        document.getElementById(id).checked = msg.value.value;
+    }
+}
+
 doConnect(function(msg) {
     if (msg.type == "update") {
-        var id = msg.location + "-" + msg.name;
-        if (msg.info.direction == "input") {
-            document.getElementById(id).textContent = getValue(msg.value.value);
-        } else if (msg.info.direction == "output") {
-            document.getElementById(id).checked = msg.value.value;
-        }
+        updateIO(msg);
+    } else if (msg.type == "method update") {
+        showMethod(msg);
     }
 });
 
@@ -20,7 +26,7 @@ function sendCommand(id, info) {
     } else {
         cmd = info.off[0];
     }
-    doSendComamnd(msg);
+    doSendComamnd(cmd);
 }
 
 function showChart(location, name) {
