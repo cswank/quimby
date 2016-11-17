@@ -1,5 +1,14 @@
 {{define "method-js"}}
 
+var method = {};
+//     steps: [
+//         "turn on file",
+//         "wait for user to feel good",
+//         "turn off file"
+//     ],
+//     step: 1,
+// }
+
 function confirm(step) {
     var msg = {
         type: 'method update',
@@ -9,8 +18,7 @@ function confirm(step) {
     ws.send(msg);
 }
 
-function addStep(text, i, step) {
-    var ul = document.getElementById("steps");
+function addStep(ul, text, i, step) {
     var li = document.createElement("li");
     li.setAttribute("class", "step");
     var a = document.createElement("a");
@@ -29,19 +37,11 @@ function addStep(text, i, step) {
     ul.appendChild(li);
 }
 
-function showMethod(method) {
+function showMethod(data) {
+    var ul = document.getElementById("steps");
     _.each(method.steps, function(step, i) {
-        addStep(step, i, method.step);
+        addStep(ul, step, i, method.step);
     })
-}
-
-var method = {
-    steps: [
-        "turn on file",
-        "wait for user to feel good",
-        "turn off file"
-    ],
-    step: 1,
 }
 
 showMethod(method);

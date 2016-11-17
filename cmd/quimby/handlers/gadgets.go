@@ -354,7 +354,7 @@ func Connect(w http.ResponseWriter, req *http.Request) {
 	args := GetArgs(req)
 	if err := quimby.Register(*args.Gadget); err != nil {
 		context.Set(req, "error", err)
-		return // err
+		return
 	}
 	ws := make(chan gogadgets.Message)
 	q := make(chan bool)
@@ -385,9 +385,10 @@ func Connect(w http.ResponseWriter, req *http.Request) {
 			sendSocketMessage(conn, msg)
 		case <-q:
 			quimby.Clients.Delete(args.Gadget.Host, uuid)
-			return // nil
+			return
 		}
 	}
+
 }
 
 //Send a message via the web socket.

@@ -1,6 +1,7 @@
 {{define "content"}}
 <div id="gadgets" class="container g--12">
   <div class="g--5">
+    <span id="not-ready"></span>
     {{range $location, $devices := .Locations}}
     <div>{{ $location }} </div>
     <ul>
