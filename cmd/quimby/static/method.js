@@ -1,11 +1,11 @@
 {{define "method-js"}}
 
 function confirm(step) {
-    var msg = {
+    var msg = JSON.stringify({
         type: 'method update',
-        sender: 'client',
+        sender: 'quimby',
         body:step
-    };
+    });
     ws.send(msg);
 }
 

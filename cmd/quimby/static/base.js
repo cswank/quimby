@@ -9,16 +9,17 @@ window.onbeforeunload = function() {
 
 waitForSocketConnection(ws, function() {
     ready = true;
+    doSendComamnd("update");
 });
 
 ws.onerror = function(data) {console.log("error", data)};
 
 ws.onmessage = function(message) {
     msg = JSON.parse(message.data);
-    if (msg.type == "update") {
-        updateIO(msg);
-    } else if (msg.type == "method update") {
+    if ((msg.type == "update" && msg.sender == "method runner") || msg.type == "method update") {
         showMethod(msg.method);
+    } else if (msg.type == "update") {
+        updateIO(msg);
     }
 };
 

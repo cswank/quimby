@@ -204,9 +204,7 @@ func EditMethodPage(w http.ResponseWriter, req *http.Request) {
 			Links: []link{
 				{"quimby", "/"},
 				{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
-			},
-			Dropdowns: []dropdown{
-				{Link: fmt.Sprintf("/gadgets/%s/method", args.Gadget.Id), Text: "Method"},
+				{"method", fmt.Sprintf("/gadgets/%s/method.html", args.Gadget.Id)},
 			},
 		},
 		Gadget: args.Gadget,
@@ -226,6 +224,9 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 
 	l := map[string][]gogadgets.Message{}
 	for _, msg := range s {
+		if msg.Sender == "method runner" || msg.Type == "method update" {
+			continue
+		}
 		msgs, ok := l[msg.Location]
 		if !ok {
 			msgs = []gogadgets.Message{}

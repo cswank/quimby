@@ -1,5 +1,5 @@
 {{define "content"}}
-<div class="container g--12">
+<div id="method-edit" class="container g--12">
   <div class="g--6">
     <form>
       <div>
@@ -13,9 +13,12 @@
   </div>
   <div class="g--6">
     <form id="method-form" action="/gadgets/{{.Gadget.Id}}">
-      <textarea id="method" rows="10" cols="50">
-      </textarea><br/>
-      <button type="submit" class="btn--raised btn--green nudge--down" id="run-method" onClick="runMethod()">Run Method</button>
+      <input type="text" id="title" placeholder="title"/><br/>
+      <textarea id="method" rows="10" cols="50"></textarea><br/>
+      <div class="buttons">
+        <button class="btn--raised btn--green nudge--down" id="run-method" onClick="runMethod()">Run</button>
+        <button class="btn--raised btn--green nudge--down" id="run-method" onClick="deleteMethod()">Delete</button>
+      </div>
     </form>
   </div>
 </div>

@@ -4,17 +4,36 @@ var id = {{.Gadget.Id}}
 var methodUrl = "/api/gadgets/" + id + "/method";
 var key = id + "-methods";
 
-localStorage.setItem(key, JSON.stringify({test: {steps: ["turn on back yard thing", "wait for 5 seconds", "turn off back yard thing"]}}));
-
 var methods = getStoredMethods();
 showStoredMethods();
 
 function runMethod() {
     var select = document.getElementById("stored-methods");
-    var val = select.options[select.selectedIndex].value;
-    var method = methods[val];
+    var title = document.getElementById("title").value;
+    var method = {steps: document.getElementById("method").value.split("\n")};
+    methods[title] = method;
+    localStorage.setItem(key, JSON.stringify(methods));
     postMethod({method: method.steps});
     return true;
+}
+
+function deleteMethod() {
+    var select = document.getElementById("stored-methods");
+    var val = select.options[select.selectedIndex].value;
+    delete methods[val];
+    localStorage.setItem(key, JSON.stringify(methods));
+    document.getElementById("title").value = "";
+    document.getElementById("method").value = "";
+    if (select.children.length > 0) {
+        while (select.firstChild) {
+            select.removeChild(select.firstChild);
+        }
+    }
+    showStoredMethods();
+    document.getElementById('method-form').onsubmit = function() {
+        return false;
+    };
+    return false;
 }
 
 function postMethod(method) {
@@ -27,24 +46,22 @@ function postMethod(method) {
 function showMethod() {
     var select = document.getElementById("stored-methods");
     var val = select.options[select.selectedIndex].value;
+    document.getElementById("title").value = val;
     document.getElementById("method").value = methods[val].steps.join("\n");
 }
 
 function showStoredMethods() {
     var select = document.getElementById("stored-methods");
-    console.log("methods", methods);
     _.each(methods, function(val, key) {
         var opt = document.createElement("option");
         opt.setAttribute("value", key);
         opt.text = key;
-        console.log(opt);
         select.appendChild(opt);
     })
 }
 
 function getStoredMethods() {
     var m = JSON.parse(localStorage.getItem(key));
-    console.log(m);
     if (m == null) {
         m = [];
     }
