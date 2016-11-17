@@ -3,7 +3,6 @@
 var ws = new WebSocket("{{.Websocket}}");
 
 window.onbeforeunload = function() {
-    alert("closeing websocket");
     ws.onclose = function () {};
     ws.close();
 };
@@ -19,7 +18,7 @@ ws.onmessage = function(message) {
     if (msg.type == "update") {
         updateIO(msg);
     } else if (msg.type == "method update") {
-        showMethod(msg);
+        showMethod(msg.method);
     }
 };
 

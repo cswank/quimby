@@ -1,7 +1,27 @@
 {{define "content"}}
 <div class="container g--12">
-  method
+  <div class="g--6">
+    <form>
+      <div>
+        <a id="junk"></a>
+      </div>
+      <label>Select a Past Method</label><br/>
+      <select id="stored-methods" onChange="showMethod()">
+        <option value=""></option>
+      </select>
+    </form>
+  </div>
+  <div class="g--6">
+    <form id="method-form" action="/gadgets/{{.Gadget.Id}}">
+      <textarea id="method" rows="10" cols="50">
+      </textarea><br/>
+      <button type="submit" class="btn--raised btn--green nudge--down" id="run-method" onClick="runMethod()">Run Method</button>
+    </form>
+  </div>
 </div>
+
+<script src="/js/underscore-min.js"></script>
+
 <script>
   {{template "edit-method-js" .}}
 </script>
