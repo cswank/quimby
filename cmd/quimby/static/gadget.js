@@ -36,18 +36,18 @@ function showNotReady(id) {
         }, 1000);
 }
 
-function waitForSocketConnection(ws, callback) {
-    setTimeout(
-        function () {
-            if (ws.readyState === 1) {
-                if(callback != null){
-                    callback();
-                }
-                return;
-            } else {
-                waitForSocketConnection(ws, callback);
-            }
-        }, 50);
-}
+waitForSocketConnection(ws, function() {
+    ready = true;
+    doSendComamnd("update");
+});
+
+ws.onmessage = function(message) {
+    var msg = JSON.parse(message.data);
+    if ((msg.type == "update" && msg.sender == "method runner") || msg.type == "method update") {
+        showMethod(msg.method);
+    } else if (msg.type == "update") {
+        updateIO(msg);
+    }
+};
 
 {{end}}

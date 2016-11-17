@@ -1,6 +1,7 @@
 {{define "furnace-js"}}
 
 function setState(val) {
+    console.log("setState", val);
     if (val.command == "heat home") {
         document.getElementById("furnace-heat").checked = true;
         if (val.io.heat) {
@@ -49,9 +50,8 @@ function getCommand() {
     return cmd;
 }
 
-setState({{.Furnace.Value}});
-
-doConnect(function(msg) {
+ws.onmessage = function(message) {
+    var msg = JSON.parse(message.data);
     if (msg.type == "update") {
         var id = msg.location + "-" + msg.name;
         if (id == "home-temperature") {
@@ -60,6 +60,8 @@ doConnect(function(msg) {
             setState(msg.value);
         }
     }
-});
+};
+
+setState({{.Furnace.Value}});
 
 {{end}}

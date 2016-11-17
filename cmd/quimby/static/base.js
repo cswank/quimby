@@ -7,21 +7,7 @@ window.onbeforeunload = function() {
     ws.close();
 };
 
-waitForSocketConnection(ws, function() {
-    ready = true;
-    doSendComamnd("update");
-});
-
 ws.onerror = function(data) {console.log("error", data)};
-
-ws.onmessage = function(message) {
-    msg = JSON.parse(message.data);
-    if ((msg.type == "update" && msg.sender == "method runner") || msg.type == "method update") {
-        showMethod(msg.method);
-    } else if (msg.type == "update") {
-        updateIO(msg);
-    }
-};
 
 function updateIO(msg) {
     var id = msg.location + "-" + msg.name;
@@ -50,6 +36,20 @@ function doSendComamnd(cmd) {
         body: cmd,
     });
     ws.send(msg);
+}
+
+function waitForSocketConnection(ws, callback) {
+    setTimeout(
+        function () {
+            if (ws.readyState === 1) {
+                if(callback != null){
+                    callback();
+                }
+                return;
+            } else {
+                waitForSocketConnection(ws, callback);
+            }
+        }, 50);
 }
 
 {{end}}
