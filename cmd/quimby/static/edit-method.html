@@ -1,7 +1,32 @@
 {{define "content"}}
-<div class="container g--12">
-  method
+<div id="method-edit" class="container g--12">
+  <div class="g--6">
+    <label>Select a Past Method</label><br/>
+    <select id="stored-methods" onChange="showMethod()">
+      <option value=""></option>
+    </select>
+    <br/>
+    {{if eq .Gadget.Name "brewery"}}
+    <label>Get a Brew Method</label><br/>
+    <input type="text" id="brew-name" placeholder="brew name"/>
+    <input type="number" id="grain-temperature" placeholder="grain temperature" value="70"/>
+    <button class="btn--raised btn--green nudge--down" id="fetch-brew-method" onClick="getBrewMethod()">Fetch Method</button>
+    {{end}}
+  </div>
+  <div class="g--6">
+    <form id="method-form" action="/gadgets/{{.Gadget.Id}}">
+      <input type="text" id="title" placeholder="title"/><br/>
+      <textarea id="method" rows="10" cols="50"></textarea><br/>
+      <div class="buttons">
+        <button class="btn--raised btn--green nudge--down" id="run-method" onClick="runMethod()">Run</button>
+        <button class="btn--raised btn--green nudge--down" id="run-method" onClick="deleteMethod()">Delete</button>
+      </div>
+    </form>
+  </div>
 </div>
+
+<script src="/js/underscore-min.js"></script>
+
 <script>
   {{template "edit-method-js" .}}
 </script>

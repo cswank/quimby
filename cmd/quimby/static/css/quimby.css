@@ -75,6 +75,11 @@ header {
     margin-left: 20px;
 }
 
+#method-edit {
+    margin-top: 0px;
+    margin-left: 20px;
+}
+
 .complete {
     text-decoration: line-through;
     color: red;

@@ -1,24 +1,35 @@
 {{define "base-js"}}
 
-var ws;
+var ws = new WebSocket("{{.Websocket}}");
 
-function getWebsocket() {
-    var url = "{{ .Websocket }}";
-    return new WebSocket(url);
-}
+window.onbeforeunload = function() {
+    ws.onclose = function () {};
+    ws.close();
+};
 
-function doConnect(callback) {
-    if(ws != undefined) {
-        ws.close();
-        ws = null;
+waitForSocketConnection(ws, function() {
+    ready = true;
+    doSendComamnd("update");
+});
+
+ws.onerror = function(data) {console.log("error", data)};
+
+ws.onmessage = function(message) {
+    msg = JSON.parse(message.data);
+    if ((msg.type == "update" && msg.sender == "method runner") || msg.type == "method update") {
+        showMethod(msg.method);
+    } else if (msg.type == "update") {
+        updateIO(msg);
     }
-    ws = getWebsocket();
-    ws.onopen = function() {};
-    ws.onerror = function(data) {console.log("error", data)};
-    ws.onmessage = function(message) {
-        message = JSON.parse(message.data);
-        callback(message);
-    };
+};
+
+function updateIO(msg) {
+    var id = msg.location + "-" + msg.name;
+    if (msg.info.direction == "input") {
+        document.getElementById(id).textContent = getValue(msg.value.value);
+    } else if (msg.info.direction == "output") {
+        document.getElementById(id).checked = msg.value.value;
+    }
 }
 
 function getValue(v) {

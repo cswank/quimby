@@ -1,16 +1,15 @@
 {{define "method-js"}}
 
 function confirm(step) {
-    var msg = {
+    var msg = JSON.stringify({
         type: 'method update',
-        sender: 'client',
+        sender: 'quimby',
         body:step
-    };
+    });
     ws.send(msg);
 }
 
-function addStep(text, i, step) {
-    var ul = document.getElementById("steps");
+function addStep(ul, text, i, step, time) {
     var li = document.createElement("li");
     li.setAttribute("class", "step");
     var a = document.createElement("a");
@@ -25,25 +24,24 @@ function addStep(text, i, step) {
         a2.setAttribute("class", "confirm");
         a2.setAttribute("onClick", "confirm('" + text + "')");
         li.appendChild(a2);
+    } else if (i == step && time) {
+        var a2 = document.createElement("a");
+        a2.setAttribute("class", "confirm");
+        a2.text = time;
+        li.appendChild(a2);
     }
     ul.appendChild(li);
 }
 
 function showMethod(method) {
+    var ul = document.getElementById("steps");
+    while (ul.firstChild) {
+        ul.removeChild(ul.firstChild);
+    }
+
     _.each(method.steps, function(step, i) {
-        addStep(step, i, method.step);
+        addStep(ul, step, i, method.step, method.time);
     })
 }
-
-var method = {
-    steps: [
-        "turn on file",
-        "wait for user to feel good",
-        "turn off file"
-    ],
-    step: 1,
-}
-
-showMethod(method);
 
 {{end}}

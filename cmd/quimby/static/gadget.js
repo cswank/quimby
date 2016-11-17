@@ -1,25 +1,12 @@
 {{define "gadget-js"}}
 
 var id = {{.Gadget.Id}}
-
-function updateIO(msg) {
-    var id = msg.location + "-" + msg.name;
-    if (msg.info.direction == "input") {
-        document.getElementById(id).textContent = getValue(msg.value.value);
-    } else if (msg.info.direction == "output") {
-        document.getElementById(id).checked = msg.value.value;
-    }
-}
-
-doConnect(function(msg) {
-    if (msg.type == "update") {
-        updateIO(msg);
-    } else if (msg.type == "method update") {
-        showMethod(msg);
-    }
-});
+var ready = false;
 
 function sendCommand(id, info) {
+    if (!ready) {
+        showNotReady(id);
+    }
     var cmd;
     if (document.getElementById(id).checked) {
         cmd = info.on[0];
@@ -38,6 +25,29 @@ function showChart(location, name) {
 function showChartSetup() {
     window.location.href = window.location.href + "/chart-setup.html";
     return false;
+}
+
+function showNotReady(id) {
+    document.getElementById(id).checked = !document.getElementById(id).checked;
+    document.getElementById("not-ready").text = "not connected";
+    setTimeout(
+        function () {
+            document.getElementById("not-ready").text = "";
+        }, 1000);
+}
+
+function waitForSocketConnection(ws, callback) {
+    setTimeout(
+        function () {
+            if (ws.readyState === 1) {
+                if(callback != null){
+                    callback();
+                }
+                return;
+            } else {
+                waitForSocketConnection(ws, callback);
+            }
+        }, 50);
 }
 
 {{end}}
