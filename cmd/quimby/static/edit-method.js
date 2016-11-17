@@ -38,7 +38,7 @@ function deleteMethod() {
 
 function postMethod(method) {
     var xhr = new XMLHttpRequest();
-    xhr.open("POST", methodUrl, true);
+    xhr.open("POST", methodUrl, false);
     xhr.setRequestHeader("Content-type", "application/json");
     xhr.send(JSON.stringify(method));
 }
@@ -63,7 +63,7 @@ function showStoredMethods() {
 function getStoredMethods() {
     var m = JSON.parse(localStorage.getItem(key));
     if (m == null) {
-        m = [];
+        m = {};
     }
     return m
 }
