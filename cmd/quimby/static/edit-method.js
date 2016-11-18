@@ -9,11 +9,7 @@ var methods = getStoredMethods();
 showStoredMethods();
 
 function runMethod() {
-    var select = document.getElementById("stored-methods");
-    var title = document.getElementById("title").value;
-    var method = {steps: document.getElementById("method").value.split("\n")};
-    methods[title] = method;
-    localStorage.setItem(key, JSON.stringify(methods));
+    method = doSaveMethod();
     postMethod({method: method.steps});
     return true;
 }
@@ -25,6 +21,7 @@ function deleteMethod() {
     localStorage.setItem(key, JSON.stringify(methods));
     document.getElementById("title").value = "";
     document.getElementById("method").value = "";
+
     if (select.children.length > 0) {
         while (select.firstChild) {
             select.removeChild(select.firstChild);
@@ -61,17 +58,40 @@ function postMethod(method) {
     xhr.send(JSON.stringify(method));
 }
 
+function saveMethod() {
+    doSaveMethod();
+    document.getElementById('method-form').onsubmit = function() {
+        return false;
+    };
+    return false;
+}
+
+function doSaveMethod() {
+    var title = document.getElementById("title").value;
+    var method = {steps: document.getElementById("method").value.split("\n")};
+    methods[title] = method;
+    localStorage.setItem(key, JSON.stringify(methods));
+    return method;
+}
+
 function showMethod() {
     var select = document.getElementById("stored-methods");
     var val = select.options[select.selectedIndex].value;
-    document.getElementById("title").value = val;
-    document.getElementById("method").value = methods[val].steps.join("\n");
+    if (val == "") {
+        document.getElementById("title").value = "";
+        document.getElementById("method").value = "";
+    } else {
+        document.getElementById("title").value = val;
+        document.getElementById("method").value = methods[val].steps.join("\n");
+    }
 }
 
 function showStoredMethods() {
     var select = document.getElementById("stored-methods");
+    var opt = document.createElement("option");
+    select.appendChild(opt);
     _.each(methods, function(val, key) {
-        var opt = document.createElement("option");
+        opt = document.createElement("option");
         opt.setAttribute("value", key);
         opt.text = key;
         select.appendChild(opt);
