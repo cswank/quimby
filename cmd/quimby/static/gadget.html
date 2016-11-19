@@ -2,7 +2,7 @@
 <div id="gadgets" class="container g--12">
   <div class="g--5">
     {{range $location, $devices := .Locations}}
-    <div>{{ $location }} </div>
+    <div>{{ $location }}</div>
     <ul>
       {{ range $device := $devices }}
       {{ template "device" $device}}

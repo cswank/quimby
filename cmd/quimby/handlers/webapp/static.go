@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/GeertJohan/go.rice"
 	"github.com/cswank/gogadgets"
@@ -224,7 +225,7 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 
 	l := map[string][]gogadgets.Message{}
 	for _, msg := range s {
-		if msg.Sender == "method runner" || msg.Type == "method update" {
+		if msg.Sender == "method runner" || msg.Type == "method update" || strings.HasPrefix(msg.Sender, "xbee") {
 			continue
 		}
 		msgs, ok := l[msg.Location]
