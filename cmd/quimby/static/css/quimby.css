@@ -31,6 +31,8 @@ label{
 }
 
 label.checkbox{
+    position: relative;
+    top: 4px;
     font-size:14px;
     vertical-align: bottom;
     margin-left: 10px;
