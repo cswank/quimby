@@ -1,5 +1,6 @@
 {{define "content"}}
 <form id="chart-setup" class="m--1 g--6" action="{{.Action}}" method="get">
+  <input type="hidden" name="from-setup" value="true"/>
   <ul>
     {{range $key, $value := .Inputs}}
     <input type="checkbox" name="source" value="{{$value}}"/>{{$key}}<br/>

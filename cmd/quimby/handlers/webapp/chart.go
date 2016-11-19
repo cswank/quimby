@@ -55,18 +55,22 @@ func ChartPage(w http.ResponseWriter, req *http.Request) {
 	if summarize == "" {
 		summarize = "0"
 	}
+	links := []link{
+		{"quimby", "/"},
+		{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
+		{"chart", fmt.Sprintf("/gadgets/%s/chart.html", args.Gadget.Id)},
+	}
+	if args.Args.Get("from-setup") == "true" {
+		links = append(links[:2], link{"chart-setup", fmt.Sprintf("/gadgets/%s/chart-setup.html", args.Gadget.Id)}, links[2])
+	}
 	sources := args.Args["source"]
 	p := chartPage{
 		gadgetPage: gadgetPage{
 			userPage: userPage{
 				User:  args.User.Username,
 				Admin: handlers.Admin(args),
-				Links: []link{
-					{"quimby", "/"},
-					{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
-					{"chart", fmt.Sprintf("/gadgets/%s/chart.html", args.Gadget.Id)},
-				},
-				CSS: []string{"/css/nv.d3.css"},
+				Links: links,
+				CSS:   []string{"/css/nv.d3.css"},
 			},
 			Gadget: args.Gadget,
 		},
