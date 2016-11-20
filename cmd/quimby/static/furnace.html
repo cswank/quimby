@@ -1,23 +1,32 @@
 {{define "content"}}
-<form id="furnace-control" class="m--1 g--6">
-  <h1>{{.Gadget.Name}}</h1>
-  <input onChange="updateState()" type="radio" name="state" value="heat" id="furnace-heat"/>
-  <label id="heat-label">Heat</label>
-  <br/>
-  <input onChange="updateState()" type="radio" name="state" value="cool" id="furnace-cool"/>
-  <label id="cool-label">Cool</label>
-  <br/>
-  <input onChange="updateState()" type="radio" name="state" value="off" id="furnace-off"/>
-  <label>Off</label>
-  <br/>
-  <br/>
-  <span>Set Point: <span id="set-point-display">{{.SetPoint}}</span></span><br/>
-  <input type="range" id="set-point" min="60" max="80" value="" onInput="updateSetPointDisplay()" onChange="setPointChange()"/>
-  <div id="temperature-holder">
-    <span>Temperature: <span id="home-temperature">{{.Thermometer.Value.Value}}</span></span>
+<div class="g--12">
+  <form id="furnace-control" class="m--1 g--6">
+    <h1>{{.Gadget.Name}}</h1>
+    <input onChange="updateState()" type="radio" name="state" value="heat" id="furnace-heat"/>
+    <label id="heat-label">Heat</label>
+    <br/>
+    <input onChange="updateState()" type="radio" name="state" value="cool" id="furnace-cool"/>
+    <label id="cool-label">Cool</label>
+    <br/>
+    <input onChange="updateState()" type="radio" name="state" value="off" id="furnace-off"/>
+    <label>Off</label>
+    <br/>
+    <br/>
+    <span>Set Point: <span id="set-point-display">{{.SetPoint}}</span></span><br/>
+    <input type="range" id="set-point" min="60" max="80" value="" onInput="updateSetPointDisplay()" onChange="setPointChange()"/>
+    <div id="temperature-holder">
+      <span>Temperature: <span id="home-temperature">{{.Thermometer.Value.Value}}</span></span>
+    </div>
+    <a href="/gadgets/{{.Gadget.Id}}/chart-setup.html">chart setup</a>
+  </form>
+  <div class="m--1 g--6">
+    <p>Usage in the last 24 hours:</p>
+    <ul>
+      <li>Heater: {{.HeatOnTime}}</li>
+      <li>Air Conditioner: {{.CoolOnTime}}</li>
+    </ul>
   </div>
-</form>
-
+</div>
 <script>
   {{template "base-js" .}}
   {{template "furnace-js" .}}

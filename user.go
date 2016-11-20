@@ -127,10 +127,7 @@ func (u *User) saveTFAData(savedUser *User) ([]byte, error) {
 		var err error
 		var qr []byte
 		u.TFAData, qr, err = u.tfa.Get(u.Username)
-		if err != nil {
-			return nil, err
-		}
-		return qr, nil
+		return qr, err
 	}
 
 	//existing user
@@ -141,7 +138,6 @@ func (u *User) saveTFAData(savedUser *User) ([]byte, error) {
 }
 
 func (u *User) savePassword(savedUser *User) error {
-
 	//new user
 	if savedUser == nil && len(u.Password) == 0 {
 		return errors.New("password is too short")

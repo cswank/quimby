@@ -8,6 +8,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/GeertJohan/go.rice"
 	"github.com/cswank/gogadgets"
@@ -28,7 +29,7 @@ type tmpl struct {
 
 func Init(box *rice.Box) {
 	data := map[string]string{}
-	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "furnace.html", "base.js", "gadget.js", "method.js", "edit-method.html", "edit-method.js", "method.html", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-gadget.js", "edit-user.html", "edit-user.js", "delete.html", "delete.js", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
+	for _, pth := range []string{"head.html", "base.html", "navbar.html", "links.html", "index.html", "gadget.html", "chart.html", "chart-setup.html", "chart-setup.js", "chart-input.html", "chart-input.js", "furnace.html", "base.js", "gadget.js", "method.js", "edit-method.html", "edit-method.js", "method.html", "furnace.js", "chart.js", "device.html", "edit-gadget.html", "edit-gadget.js", "edit-user.html", "edit-user.js", "delete.html", "delete.js", "password.html", "new-user.html", "qr-code.html", "admin.html", "login.html", "logout.html"} {
 		s, err := box.String(pth)
 		if err != nil {
 			log.Fatal(err)
@@ -42,7 +43,8 @@ func Init(box *rice.Box) {
 		"gadget.html":      {files: []string{"gadget.html", "base.js", "gadget.js", "method.js", "method.html", "device.html"}},
 		"edit-method.html": {files: []string{"edit-method.html", "edit-method.js"}},
 		"chart.html":       {files: []string{"chart.html", "chart.js"}},
-		"chart-setup.html": {files: []string{"chart-setup.html"}},
+		"chart-setup.html": {files: []string{"chart-setup.html", "chart-setup.js"}},
+		"chart-input.html": {files: []string{"chart-input.html", "chart-input.js"}},
 		"furnace.html":     {files: []string{"furnace.html", "base.js", "furnace.js", "device.html"}},
 		"edit-gadget.html": {files: []string{"edit-gadget.html", "edit-gadget.js"}},
 		"edit-user.html":   {files: []string{"edit-user.html", "edit-user.js"}},
@@ -102,9 +104,22 @@ type chartPage struct {
 	Summarize string
 }
 
+type chartInputPage struct {
+	gadgetPage
+	Name string
+	Key  string
+	Back string
+}
+
+type chartInput struct {
+	Value string
+	Setup string
+	Key   string
+}
+
 type chartSetupPage struct {
 	gadgetPage
-	Inputs map[string]string
+	Inputs map[string]chartInput
 	Spans  []string
 	Action string
 }
@@ -153,6 +168,8 @@ type furnacePage struct {
 	Furnace     gogadgets.Message
 	Thermometer gogadgets.Message
 	SetPoint    float64
+	HeatOnTime  string
+	CoolOnTime  string
 }
 
 func IndexPage(w http.ResponseWriter, req *http.Request) {
@@ -282,9 +299,35 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 			Furnace:     f,
 			Thermometer: t,
 			SetPoint:    setPoint,
+			HeatOnTime:  getOnTime("home furnace heat", args.Gadget),
+			CoolOnTime:  getOnTime("home furnace cool", args.Gadget),
 		}
 		templates["furnace.html"].template.ExecuteTemplate(w, "base", p)
 	} else {
 		templates["gadget.html"].template.ExecuteTemplate(w, "base", g)
 	}
+}
+
+func getOnTime(name string, g *quimby.Gadget) string {
+	e := time.Now()
+	s := e.Add(-24 * 60 * 60 * time.Second)
+	data, err := g.GetDataPoints(name, s, e, 0, true)
+	if err != nil {
+		return "0hr"
+	}
+
+	var d time.Duration
+	var prev quimby.DataPoint
+	end := len(data) - 1
+	for i, p := range data {
+		if p.Value > 0.5 && prev.Value < 0.5 {
+			prev = p
+		} else if p.Value < 0.5 && prev.Value > 0.5 {
+			d += p.Time.Sub(prev.Time)
+			prev = p
+		} else if i == end && p.Value > 0.5 && prev.Value > 0.5 {
+			d += p.Time.Sub(prev.Time)
+		}
+	}
+	return parseDuration(d)
 }

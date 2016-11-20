@@ -3,8 +3,8 @@
   <input type="hidden" name="from-setup" value="true"/>
   <ul>
     {{range $key, $value := .Inputs}}
-    <input type="checkbox" name="source" value="{{$value}}"/><label class="checkbox">{{$key}}</label><br/>
-    {{ end }}
+    <input type="checkbox" name="source" value="{{$value.Value}}" key="{{$value.Key}}"/><label class="checkbox"><a href="{{$value.Setup}}">{{$key}}</a></label><br/>
+    {{end}}
   </ul>
 
   <ul>
@@ -23,8 +23,9 @@
     {{end}}
     {{ end }}
   </ul>
-  <button type="submit" class="btn--raised btn--green">Submit</button>
+  <button type="submit" onClick="checkBinary()" class="btn--raised btn--green">Submit</button>
 </form>
 <script>
+  {{template "chart-setup-js" .}}
 </script>
 {{end}}

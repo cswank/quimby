@@ -1300,6 +1300,29 @@ var _ = Describe("Quimby", func() {
 						addr,
 						"gadgets/",
 						sprinklersId,
+						"/sources",
+					)
+				}
+
+				getMethod = func() string { return "GET" }
+				getBuf = func() io.Reader { return nil }
+
+				var names []string
+				Eventually(func() int {
+					r = getReq()
+					defer r.Body.Close()
+					dec := json.NewDecoder(r.Body)
+					Expect(dec.Decode(&names)).To(BeNil())
+					return len(names)
+				}).Should(Equal(2))
+
+				Expect(names).To(ConsistOf("basement temperature", "outside temperature"))
+
+				getURL = func() string {
+					return fmt.Sprintf(
+						addr,
+						"gadgets/",
+						sprinklersId,
 						fmt.Sprintf(
 							"/sources/outside%%20temperature?start=%s&end=%s",
 							url.QueryEscape(n.Add(-60*time.Second).Format(time.RFC3339Nano)),

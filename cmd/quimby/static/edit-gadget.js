@@ -17,7 +17,7 @@ function setAction(name) {
         document.getElementById("name").removeAttribute("required");
         document.getElementById("host").removeAttribute("required");
     }
-
+    
     if (action.method == "get") {
         document.getElementById('gadget-form').onsubmit = function() {
             return false;

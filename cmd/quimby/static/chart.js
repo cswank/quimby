@@ -44,11 +44,15 @@ function getStats(urls, span, summarize, callback) {
     var params = {end: end, start: start, summarize: summarize};
     var vals = [];
     _.each(urls, function(url) {
-        console.log(url);
         var qStr = Object.keys(params).map(function(k) {
             return encodeURIComponent(k) + '=' + encodeURIComponent(params[k])
         }).join('&');
-        url = url + "?" + qStr;
+
+        if (url.indexOf("?") > -1) {
+            url = url + "&" + qStr;
+        } else {
+            url = url + "?" + qStr;
+        }
         httpGetAsync(url, function(data) {
             vals.push({
                 key: data.name,

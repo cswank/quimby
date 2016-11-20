@@ -35,7 +35,7 @@ var _ = Describe("Users", func() {
 			UserPermission("write"),
 			UserDB(db),
 		)
-		err = u.Save()
+		_, err = u.Save()
 		Expect(err).To(BeNil())
 	})
 

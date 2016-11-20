@@ -186,11 +186,11 @@ var _ = Describe("Gadgets", func() {
 
 	It("gets datapoints", func() {
 		ts := time.Now()
-		g.SaveDataPoint("kitchen temperature", quimby.DataPoint{ts, 23.2})
+		g.SaveDataPoint("kitchen temperature", quimby.DataPoint{Time: ts, Value: 23.2})
 		time.Sleep(10 * time.Millisecond)
 		ts2 := time.Now()
-		g.SaveDataPoint("kitchen temperature", quimby.DataPoint{ts2, 23.4})
-		points, err := g.GetDataPoints("kitchen temperature", ts, ts2, 0)
+		g.SaveDataPoint("kitchen temperature", quimby.DataPoint{Time: ts2, Value: 23.4})
+		points, err := g.GetDataPoints("kitchen temperature", ts, ts2, 0, false)
 		Expect(err).To(BeNil())
 		Expect(len(points)).To(Equal(2))
 
@@ -203,6 +203,29 @@ var _ = Describe("Gadgets", func() {
 		Expect(p2.Value).To(Equal(23.4))
 	})
 
+	It("gets binary datapoints", func() {
+		ts := time.Now()
+		g.SaveDataPoint("kitchen temperature", quimby.DataPoint{Time: ts, Value: 0.0})
+		time.Sleep(10 * time.Millisecond)
+		ts2 := time.Now()
+		g.SaveDataPoint("kitchen temperature", quimby.DataPoint{Time: ts2, Value: 1.0})
+		points, err := g.GetDataPoints("kitchen temperature", ts, ts2, 0, true)
+		Expect(err).To(BeNil())
+		Expect(len(points)).To(Equal(3))
+
+		p1 := points[0]
+		Expect(p1.Time.Format(time.RFC3339)).To(Equal(ts.Format(time.RFC3339)))
+		Expect(p1.Value).To(Equal(0.0))
+
+		p2 := points[1]
+		Expect(p2.Time.Format(time.RFC3339)).To(Equal(ts2.Format(time.RFC3339)))
+		Expect(p2.Value).To(Equal(0.0))
+
+		p3 := points[2]
+		Expect(p3.Time.Format(time.RFC3339)).To(Equal(ts2.Format(time.RFC3339)))
+		Expect(p3.Value).To(Equal(1.0))
+	})
+
 	It("gets summarized datapoints", func() {
 		l := 100
 
@@ -211,11 +234,11 @@ var _ = Describe("Gadgets", func() {
 		var ts2 time.Time
 		for i := 0; i < l; i++ {
 			ts2 = ts.Add(time.Duration(i) * time.Minute)
-			g.SaveDataPoint("kitchen temperature", quimby.DataPoint{ts2, float64(i)})
+			g.SaveDataPoint("kitchen temperature", quimby.DataPoint{Time: ts2, Value: float64(i)})
 		}
 
 		span := time.Duration(10 * time.Minute)
-		points, err := g.GetDataPoints("kitchen temperature", ts, ts2, span)
+		points, err := g.GetDataPoints("kitchen temperature", ts, ts2, span, false)
 		Expect(err).To(BeNil())
 		Expect(len(points)).To(Equal(10))
 

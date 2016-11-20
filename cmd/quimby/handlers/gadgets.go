@@ -186,7 +186,7 @@ func AddDataPoint(w http.ResponseWriter, req *http.Request) {
 		context.Set(req, "error", err)
 		return
 	}
-	args.Gadget.SaveDataPoint(args.Vars["name"], quimby.DataPoint{time.Now(), m["value"]})
+	args.Gadget.SaveDataPoint(args.Vars["name"], quimby.DataPoint{Time: time.Now(), Value: m["value"]})
 }
 
 func GetDataPointsCSV(w http.ResponseWriter, req *http.Request) {
@@ -197,6 +197,11 @@ func GetDataPointsCSV(w http.ResponseWriter, req *http.Request) {
 		return
 	}
 	getCSV(w, points, args.Vars["name"])
+}
+
+func GetDataPointSources(w http.ResponseWriter, req *http.Request) {
+	args := GetArgs(req)
+	json.NewEncoder(w).Encode(args.Gadget.GetDataPointSources())
 }
 
 func GetDataPoints(w http.ResponseWriter, req *http.Request) {
@@ -219,6 +224,7 @@ func GetDataPoints(w http.ResponseWriter, req *http.Request) {
 func getDataPoints(args *Args) ([]quimby.DataPoint, error) {
 	start := beginning
 	end := time.Now()
+
 	var d time.Duration
 	s := args.Args.Get("summarize")
 	if s != "" {
@@ -242,7 +248,9 @@ func getDataPoints(args *Args) ([]quimby.DataPoint, error) {
 			return nil, err
 		}
 	}
-	return args.Gadget.GetDataPoints(args.Vars["name"], start, end, d)
+
+	isBinary := args.Args.Get("binary") == "true"
+	return args.Gadget.GetDataPoints(args.Vars["name"], start, end, d, isBinary)
 }
 
 func getCSV(w http.ResponseWriter, points []quimby.DataPoint, name string) {

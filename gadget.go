@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"time"
@@ -129,7 +130,20 @@ func (s *summary) summary() []DataPoint {
 	return s.points
 }
 
-func (g *Gadget) GetDataPoints(name string, start, end time.Time, span time.Duration) ([]DataPoint, error) {
+func (g *Gadget) GetDataPointSources() []string {
+	var names []string
+	g.DB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte(g.Id)).Bucket(_stats)
+		c := b.Cursor()
+		for k, _ := c.First(); k != nil; k, _ = c.Next() {
+			names = append(names, string(k))
+		}
+		return nil
+	})
+	return names
+}
+
+func (g *Gadget) GetDataPoints(name string, start, end time.Time, span time.Duration, isBinary bool) ([]DataPoint, error) {
 	points := summary{span: span}
 	err := g.DB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(g.Id)).Bucket(_stats).Bucket([]byte(name))
@@ -140,6 +154,7 @@ func (g *Gadget) GetDataPoints(name string, start, end time.Time, span time.Dura
 		min := []byte(start.Format(time.RFC3339Nano))
 		max := []byte(end.Format(time.RFC3339Nano))
 
+		var prev float64
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
 			var val float64
 			buf := bytes.NewReader(v)
@@ -147,6 +162,10 @@ func (g *Gadget) GetDataPoints(name string, start, end time.Time, span time.Dura
 				return err
 			}
 			ts, _ := time.Parse(time.RFC3339Nano, string(k))
+			if isBinary && math.Abs(val-prev) > 0.5 {
+				points.append(DataPoint{Time: ts, Value: prev})
+				prev = val
+			}
 			points.append(DataPoint{Time: ts, Value: val})
 		}
 		return nil

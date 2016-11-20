@@ -5,26 +5,19 @@ import (
 	"net/http"
 
 	"github.com/cswank/quimby/cmd/quimby/handlers"
-	"github.com/gorilla/context"
 )
 
 func ChartSetupPage(w http.ResponseWriter, req *http.Request) {
 	args := handlers.GetArgs(req)
 
-	inputs := map[string]string{}
-	s, err := args.Gadget.Status()
-
-	if err != nil {
-		context.Set(req, "error", err)
-		return
-	}
-
-	for _, msg := range s {
-		if msg.Info.Direction == "input" {
-			inputs[fmt.Sprintf("%s %s", msg.Location, msg.Name)] = fmt.Sprintf("/api/gadgets/%s/sources/%s%%20%s", args.Gadget.Id, msg.Location, msg.Name)
+	inputs := map[string]chartInput{}
+	for _, name := range args.Gadget.GetDataPointSources() {
+		inputs[name] = chartInput{
+			Value: fmt.Sprintf("/api/gadgets/%s/sources/%s", args.Gadget.Id, name),
+			Setup: fmt.Sprintf("/gadgets/%s/chart-setup/%s", args.Gadget.Id, name),
+			Key:   fmt.Sprintf("%s %s", args.Gadget.Id, name),
 		}
 	}
-
 	p := chartSetupPage{
 		gadgetPage: gadgetPage{
 			userPage: userPage{
@@ -43,6 +36,30 @@ func ChartSetupPage(w http.ResponseWriter, req *http.Request) {
 		Action: fmt.Sprintf("/gadgets/%s/chart.html", args.Gadget.Id),
 	}
 	templates["chart-setup.html"].template.ExecuteTemplate(w, "base", p)
+}
+
+func ChartInputPage(w http.ResponseWriter, req *http.Request) {
+	args := handlers.GetArgs(req)
+	name := args.Vars["name"]
+	p := chartInputPage{
+		gadgetPage: gadgetPage{
+			userPage: userPage{
+				User:  args.User.Username,
+				Admin: handlers.Admin(args),
+				Links: []link{
+					{"quimby", "/"},
+					{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
+					{"chart-setup", fmt.Sprintf("/gadgets/%s/chart-setup.html", args.Gadget.Id)},
+					{name, fmt.Sprintf("/gadgets/%s/chart-setup/%s", args.Gadget.Id, name)},
+				},
+			},
+			Gadget: args.Gadget,
+		},
+		Name: args.Vars["name"],
+		Key:  fmt.Sprintf("%s %s", args.Gadget.Id, args.Vars["name"]),
+		Back: fmt.Sprintf("/gadgets/%s/chart-setup.html", args.Gadget.Id),
+	}
+	templates["chart-input.html"].template.ExecuteTemplate(w, "base", p)
 }
 
 func ChartPage(w http.ResponseWriter, req *http.Request) {
