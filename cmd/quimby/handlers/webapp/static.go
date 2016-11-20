@@ -162,6 +162,12 @@ type gadgetPage struct {
 	End       int
 }
 
+type usage struct {
+	Name  string
+	Day   string
+	Month string
+}
+
 type furnacePage struct {
 	gadgetPage
 	States      []string
@@ -170,6 +176,7 @@ type furnacePage struct {
 	SetPoint    float64
 	HeatOnTime  string
 	CoolOnTime  string
+	Usage       []usage
 }
 
 func IndexPage(w http.ResponseWriter, req *http.Request) {
@@ -299,8 +306,7 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 			Furnace:     f,
 			Thermometer: t,
 			SetPoint:    setPoint,
-			HeatOnTime:  getOnTime("home furnace heat", args.Gadget),
-			CoolOnTime:  getOnTime("home furnace cool", args.Gadget),
+			Usage:       getUsage(args.Gadget),
 		}
 		templates["furnace.html"].template.ExecuteTemplate(w, "base", p)
 	} else {
@@ -308,9 +314,26 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
-func getOnTime(name string, g *quimby.Gadget) string {
+func getUsage(g *quimby.Gadget) []usage {
+	var u []usage
+	for _, name := range []string{"home furnace heat", "home furnace cool"} {
+		parts := strings.Split(name, " ")
+		n := parts[2]
+		u = append(
+			u,
+			usage{
+				Name:  n,
+				Day:   getOnTime(name, -24*time.Hour, g),
+				Month: getOnTime(name, -30*24*time.Hour, g),
+			},
+		)
+	}
+	return u
+}
+
+func getOnTime(name string, period time.Duration, g *quimby.Gadget) string {
 	e := time.Now()
-	s := e.Add(-24 * 60 * 60 * time.Second)
+	s := e.Add(period)
 	data, err := g.GetDataPoints(name, s, e, 0, true)
 	if err != nil {
 		return "0hr"

@@ -95,3 +95,7 @@ header {
     margin-left: 5px;
     color: green;
 }
+
+table {
+    width: 100%;
+}
