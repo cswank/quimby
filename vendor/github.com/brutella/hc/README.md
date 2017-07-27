@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/brutella/hc.svg)](https://travis-ci.org/brutella/hc)
 
-[HomeControl][homecontrol] is an implementation of the [HomeKit][homekit] Accessory Protocol (HAP) to create your own HomeKit accessory in [Go](https://golang.org). [HomeKit][homekit] is a set of protocols and libraries to access devices for Home Automation. The actual protocol documentation is only available to MFi members.
+[HomeControl][homecontrol] is an implementation of the [HomeKit][homekit] Accessory Protocol (HAP) to create your own HomeKit accessory in [Go](https://golang.org). [HomeKit][homekit] is a set of protocols and libraries to access devices for Home Automation. ~~The actual protocol documentation is only available to MFi members.~~ A non-commercial version of the documentation is now available on the [HomeKit developer website](https://developer.apple.com/homekit/).
 
 You can use this library to make existing Home Automation devices HomeKit compatible. I've already developed the following HomeKit bridges with in:
 
@@ -37,9 +37,6 @@ Once you've setup HomeKit, you can use Siri to interact with your accessories us
         
         # Clone project
         git clone https://github.com/brutella/hklight && cd hklight
-        
-        # Install dependencies
-        go get
         
         # Run the project
         go run hklightd.go
@@ -136,7 +133,6 @@ You can also find common accessory types like lightbulbs, outlets, thermostats i
 HomeControl uses vendor directories (`vendor/`) to integrate the following libraries
 
 - `github.com/tadglines/go-pkgs/crypto/srp` for *SRP* algorithm
-- `github.com/codahale/chacha20` for *chacha20 poly1305* algorithm
 - `github.com/agl/ed25519` for *ed25519* signature
 - `github.com/gosexy/to` for type conversion
 - `github.com/oleksandr/bonjour` for mDNS

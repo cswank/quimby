@@ -12,20 +12,20 @@ import (
 )
 
 func main() {
-	g, err := gocui.NewGui()
-	if err != nil {
+	g := gocui.NewGui()
+	if err := g.Init(); err != nil {
 		log.Panicln(err)
 	}
 	defer g.Close()
 
-	g.Cursor = true
-	g.Mouse = true
-
-	g.SetManagerFunc(layout)
-
+	g.SetLayout(layout)
 	if err := keybindings(g); err != nil {
 		log.Panicln(err)
 	}
+	g.SelBgColor = gocui.ColorGreen
+	g.SelFgColor = gocui.ColorBlack
+	g.Cursor = true
+	g.Mouse = true
 
 	if err := g.MainLoop(); err != nil && err != gocui.ErrQuit {
 		log.Panicln(err)
@@ -38,8 +38,6 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Highlight = true
-		v.SelBgColor = gocui.ColorGreen
-		v.SelFgColor = gocui.ColorBlack
 		fmt.Fprintln(v, "Button 1 - line 1")
 		fmt.Fprintln(v, "Button 1 - line 2")
 		fmt.Fprintln(v, "Button 1 - line 3")
@@ -50,8 +48,6 @@ func layout(g *gocui.Gui) error {
 			return err
 		}
 		v.Highlight = true
-		v.SelBgColor = gocui.ColorGreen
-		v.SelFgColor = gocui.ColorBlack
 		fmt.Fprintln(v, "Button 2 - line 1")
 	}
 	return nil
@@ -80,7 +76,7 @@ func showMsg(g *gocui.Gui, v *gocui.View) error {
 	var l string
 	var err error
 
-	if _, err := g.SetCurrentView(v.Name()); err != nil {
+	if err := g.SetCurrentView(v.Name()); err != nil {
 		return err
 	}
 

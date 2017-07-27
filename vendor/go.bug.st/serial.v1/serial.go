@@ -1,10 +1,12 @@
 //
-// Copyright 2014-2016 Cristian Maglie. All rights reserved.
+// Copyright 2014-2017 Cristian Maglie. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
 
 package serial // import "go.bug.st/serial.v1"
+
+//go:generate go run $GOROOT/src/syscall/mksyscall_windows.go -output zsyscall_windows.go syscall_windows.go
 
 // Port is the interface for a serial Port
 type Port interface {
@@ -22,8 +24,33 @@ type Port interface {
 	// Returns the number of bytes written.
 	Write(p []byte) (n int, err error)
 
+	// ResetInputBuffer Purges port read buffer
+	ResetInputBuffer() error
+
+	// ResetOutputBuffer Purges port write buffer
+	ResetOutputBuffer() error
+
+	// SetDTR sets the modem status bit DataTerminalReady
+	SetDTR(dtr bool) error
+
+	// SetRTS sets the modem status bit RequestToSend
+	SetRTS(rts bool) error
+
+	// GetModemStatusBits returns a ModemStatusBits structure containing the
+	// modem status bits for the serial port (CTS, DSR, etc...)
+	GetModemStatusBits() (*ModemStatusBits, error)
+
 	// Close the serial port
 	Close() error
+}
+
+// ModemStatusBits contains all the modem status bits for a serial port (CTS, DSR, etc...).
+// It can be retrieved with the Port.GetModemStatusBits() method.
+type ModemStatusBits struct {
+	CTS bool // ClearToSend status
+	DSR bool // DataSetReady status
+	RI  bool // RingIndicator status
+	DCD bool // DataCarrierDetect status
 }
 
 // Open opens the serial port using the specified modes
@@ -100,6 +127,10 @@ const (
 	InvalidStopBits
 	// ErrorEnumeratingPorts an error occurred while listing serial port
 	ErrorEnumeratingPorts
+	// PortClosed the port has been closed while the operation is in progress
+	PortClosed
+	// FunctionNotImplemented the requested function is not implemented
+	FunctionNotImplemented
 )
 
 // EncodedErrorString returns a string explaining the error code
@@ -123,6 +154,10 @@ func (e PortError) EncodedErrorString() string {
 		return "Port stop bits invalid or not supported"
 	case ErrorEnumeratingPorts:
 		return "Could not enumerate serial ports"
+	case PortClosed:
+		return "Port has been closed"
+	case FunctionNotImplemented:
+		return "Function not implemented"
 	default:
 		return "Other error"
 	}

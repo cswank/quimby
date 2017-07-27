@@ -1,5 +1,5 @@
 //
-// Copyright 2014-2016 Cristian Maglie. All rights reserved.
+// Copyright 2014-2017 Cristian Maglie. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 //
@@ -10,6 +10,7 @@ package serial // import "go.bug.st/serial.v1"
 
 // MSDN article on Serial Communications:
 // http://msdn.microsoft.com/en-us/library/ff802693.aspx
+// (alternative link) https://msdn.microsoft.com/en-us/library/ms810467.aspx
 
 // Arduino Playground article on serial communication with Windows API:
 // http://playground.arduino.cc/Interfacing/CPPWindows
@@ -21,10 +22,6 @@ import "syscall"
 type windowsPort struct {
 	handle syscall.Handle
 }
-
-//go:generate go run extras/mksyscall_windows.go -output syscall_windows.go serial_windows.go
-
-//sys regEnumValue(key syscall.Handle, index uint32, name *uint16, nameLen *uint32, reserved *uint32, class *uint16, value *uint16, valueLen *uint32) (regerrno error) = advapi32.RegEnumValueW
 
 func nativeGetPortsList() ([]string, error) {
 	subKey, err := syscall.UTF16PtrFromString("HARDWARE\\DEVICEMAP\\SERIALCOMM\\")
@@ -64,12 +61,31 @@ func (port *windowsPort) Close() error {
 func (port *windowsPort) Read(p []byte) (int, error) {
 	var readed uint32
 	params := &dcb{}
+	ev, err := createOverlappedEvent()
+	if err != nil {
+		return 0, err
+	}
+	defer syscall.CloseHandle(ev.HEvent)
 	for {
-		if err := syscall.ReadFile(port.handle, p, &readed, nil); err != nil {
+		err := syscall.ReadFile(port.handle, p, &readed, ev)
+		switch err {
+		case nil:
+			// operation completed successfully
+		case syscall.ERROR_IO_PENDING:
+			// wait for overlapped I/O to complete
+			if err := getOverlappedResult(port.handle, ev, &readed, true); err != nil {
+				return int(readed), err
+			}
+		default:
+			// error happened
 			return int(readed), err
 		}
+
 		if readed > 0 {
 			return int(readed), nil
+		}
+		if err := resetEvent(ev.HEvent); err != nil {
+			return 0, err
 		}
 
 		// At the moment it seems that the only reliable way to check if
@@ -86,8 +102,32 @@ func (port *windowsPort) Read(p []byte) (int, error) {
 
 func (port *windowsPort) Write(p []byte) (int, error) {
 	var writed uint32
-	err := syscall.WriteFile(port.handle, p, &writed, nil)
+	ev, err := createOverlappedEvent()
+	if err != nil {
+		return 0, err
+	}
+	defer syscall.CloseHandle(ev.HEvent)
+	err = syscall.WriteFile(port.handle, p, &writed, ev)
+	if err == syscall.ERROR_IO_PENDING {
+		// wait for write to complete
+		err = getOverlappedResult(port.handle, ev, &writed, true)
+	}
 	return int(writed), err
+}
+
+const (
+	purgeRxAbort uint32 = 0x0002
+	purgeRxClear        = 0x0008
+	purgeTxAbort        = 0x0001
+	purgeTxClear        = 0x0004
+)
+
+func (port *windowsPort) ResetInputBuffer() error {
+	return purgeComm(port.handle, purgeRxClear|purgeRxAbort)
+}
+
+func (port *windowsPort) ResetOutputBuffer() error {
+	return purgeComm(port.handle, purgeTxClear|purgeTxAbort)
 }
 
 const (
@@ -154,10 +194,6 @@ type commTimeouts struct {
 	WriteTotalTimeoutConstant   uint32
 }
 
-//sys getCommState(handle syscall.Handle, dcb *dcb) (err error) = GetCommState
-//sys setCommState(handle syscall.Handle, dcb *dcb) (err error) = SetCommState
-//sys setCommTimeouts(handle syscall.Handle, timeouts *commTimeouts) (err error) = SetCommTimeouts
-
 const (
 	noParity    = 0
 	oddParity   = 1
@@ -186,6 +222,24 @@ var stopBitsMap = map[StopBits]byte{
 	TwoStopBits:          twoStopBits,
 }
 
+const (
+	commFunctionSetXOFF  = 1
+	commFunctionSetXON   = 2
+	commFunctionSetRTS   = 3
+	commFunctionClrRTS   = 4
+	commFunctionSetDTR   = 5
+	commFunctionClrDTR   = 6
+	commFunctionSetBreak = 8
+	commFunctionClrBreak = 9
+)
+
+const (
+	msCTSOn  = 0x0010
+	msDSROn  = 0x0020
+	msRingOn = 0x0040
+	msRLSDOn = 0x0080
+)
+
 func (port *windowsPort) SetMode(mode *Mode) error {
 	params := dcb{}
 	if getCommState(port.handle, &params) != nil {
@@ -211,6 +265,72 @@ func (port *windowsPort) SetMode(mode *Mode) error {
 	return nil
 }
 
+func (port *windowsPort) SetDTR(dtr bool) error {
+	var res bool
+	if dtr {
+		res = escapeCommFunction(port.handle, commFunctionSetDTR)
+	} else {
+		res = escapeCommFunction(port.handle, commFunctionClrDTR)
+	}
+	if !res {
+		return &PortError{}
+	}
+	return nil
+}
+
+func (port *windowsPort) SetRTS(rts bool) error {
+	// It seems that there is a bug in the Windows VCP driver:
+	// it doesn't send USB control message when the RTS bit is
+	// changed, so the following code not always works with
+	// USB-to-serial adapters.
+
+	/*
+		var res bool
+		if rts {
+			res = escapeCommFunction(port.handle, commFunctionSetRTS)
+		} else {
+			res = escapeCommFunction(port.handle, commFunctionClrRTS)
+		}
+		if !res {
+			return &PortError{}
+		}
+		return nil
+	*/
+
+	// The following seems a more reliable way to do it
+
+	params := &dcb{}
+	if err := getCommState(port.handle, params); err != nil {
+		return &PortError{causedBy: err}
+	}
+	params.Flags &= dcbRTSControlDisbaleMask
+	if rts {
+		params.Flags |= dcbRTSControlEnable
+	}
+	if err := setCommState(port.handle, params); err != nil {
+		return &PortError{causedBy: err}
+	}
+	return nil
+}
+
+func (port *windowsPort) GetModemStatusBits() (*ModemStatusBits, error) {
+	var bits uint32
+	if !getCommModemStatus(port.handle, &bits) {
+		return nil, &PortError{}
+	}
+	return &ModemStatusBits{
+		CTS: (bits & msCTSOn) != 0,
+		DCD: (bits & msRLSDOn) != 0,
+		DSR: (bits & msDSROn) != 0,
+		RI:  (bits & msRingOn) != 0,
+	}, nil
+}
+
+func createOverlappedEvent() (*syscall.Overlapped, error) {
+	h, err := createEvent(nil, true, false, nil)
+	return &syscall.Overlapped{HEvent: h}, err
+}
+
 func nativeOpen(portName string, mode *Mode) (*windowsPort, error) {
 	portName = "\\\\.\\" + portName
 	path, err := syscall.UTF16PtrFromString(portName)
@@ -222,7 +342,7 @@ func nativeOpen(portName string, mode *Mode) (*windowsPort, error) {
 		syscall.GENERIC_READ|syscall.GENERIC_WRITE,
 		0, nil,
 		syscall.OPEN_EXISTING,
-		0, //syscall.FILE_FLAG_OVERLAPPED,
+		syscall.FILE_FLAG_OVERLAPPED,
 		0)
 	if err != nil {
 		switch err {

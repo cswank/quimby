@@ -37,7 +37,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-// Client is an middleman between the websocket connection and the hub.
+// Client is a middleman between the websocket connection and the hub.
 type Client struct {
 	hub *Hub
 
@@ -129,6 +129,9 @@ func serveWs(hub *Hub, w http.ResponseWriter, r *http.Request) {
 	}
 	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
 	client.hub.register <- client
+
+	// Allow collection of memory referenced by the caller by doing all work in
+	// new goroutines.
 	go client.writePump()
-	client.readPump()
+	go client.readPump()
 }

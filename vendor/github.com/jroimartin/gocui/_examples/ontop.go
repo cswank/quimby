@@ -12,14 +12,13 @@ import (
 )
 
 func main() {
-	g, err := gocui.NewGui()
-	if err != nil {
+	g := gocui.NewGui()
+	if err := g.Init(); err != nil {
 		log.Panicln(err)
 	}
 	defer g.Close()
 
-	g.SetManagerFunc(layout)
-
+	g.SetLayout(layout)
 	if err := keybindings(g); err != nil {
 		log.Panicln(err)
 	}

@@ -88,6 +88,14 @@ func withPort(host string) string {
 	return host
 }
 
+// withoutPort strips the port from addr if present.
+func withoutPort(addr string) string {
+	if h, _, err := net.SplitHostPort(addr); err == nil {
+		return h
+	}
+	return addr
+}
+
 // h2i is the app's state.
 type h2i struct {
 	host   string
@@ -134,7 +142,7 @@ func main() {
 
 func (app *h2i) Main() error {
 	cfg := &tls.Config{
-		ServerName:         app.host,
+		ServerName:         withoutPort(app.host),
 		NextProtos:         strings.Split(*flagNextProto, ","),
 		InsecureSkipVerify: *flagInsecure,
 	}
@@ -452,6 +460,15 @@ func (app *h2i) readFrames() error {
 				app.hdec = hpack.NewDecoder(tableSize, app.onNewHeaderField)
 			}
 			app.hdec.Write(f.HeaderBlockFragment())
+		case *http2.PushPromiseFrame:
+			if app.hdec == nil {
+				// TODO: if the user uses h2i to send a SETTINGS frame advertising
+				// something larger, we'll need to respect SETTINGS_HEADER_TABLE_SIZE
+				// and stuff here instead of using the 4k default. But for now:
+				tableSize := uint32(4 << 10)
+				app.hdec = hpack.NewDecoder(tableSize, app.onNewHeaderField)
+			}
+			app.hdec.Write(f.HeaderBlockFragment())
 		}
 	}
 }
@@ -473,7 +490,7 @@ func (app *h2i) encodeHeaders(req *http.Request) []byte {
 		host = req.URL.Host
 	}
 
-	path := req.URL.Path
+	path := req.RequestURI
 	if path == "" {
 		path = "/"
 	}
