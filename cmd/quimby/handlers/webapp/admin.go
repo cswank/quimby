@@ -12,12 +12,11 @@ import (
 	"github.com/gorilla/context"
 )
 
-func AdminPage(w http.ResponseWriter, req *http.Request) {
+func AdminPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
-	gadgets, err := quimby.GetGadgets(args.DB)
+	gadgets, err := quimby.GetGadgets()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	links := make([]link, len(gadgets))
@@ -25,10 +24,9 @@ func AdminPage(w http.ResponseWriter, req *http.Request) {
 		links[i] = link{Name: g.Name, Path: fmt.Sprintf("/admin/gadgets/%s", g.Id)}
 	}
 
-	users, err := quimby.GetUsers(args.DB)
+	users, err := quimby.GetUsers()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	userLinks := make([]link, len(users))
@@ -41,27 +39,26 @@ func AdminPage(w http.ResponseWriter, req *http.Request) {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/"},
+				{"quimby", "/home"},
 				{"admin", "/admin.html"},
 			},
 		},
 		Gadgets: links,
 		Users:   userLinks,
 	}
-	templates["admin.html"].template.ExecuteTemplate(w, "base", i)
+	return templates["admin.html"].template.ExecuteTemplate(w, "base", i)
 }
 
-func GadgetEditPage(w http.ResponseWriter, req *http.Request) {
+func GadgetEditPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	id := args.Vars["gadgetid"]
-	g := &quimby.Gadget{Id: id, DB: args.DB}
+	g := &quimby.Gadget{Id: id}
 	if id == "new-gadget" {
 		g.Id = "new-gadget"
 		g.Name = "new-gadget"
 	} else {
 		if err := g.Fetch(); err != nil {
-			context.Set(req, "error", err)
-			return
+			return err
 		}
 	}
 
@@ -74,7 +71,7 @@ func GadgetEditPage(w http.ResponseWriter, req *http.Request) {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/"},
+				{"quimby", "/home"},
 				{"admin", "/admin.html"},
 				{g.Name, fmt.Sprintf("/admin/gadgets/%s", g.Id)},
 			},
@@ -86,10 +83,10 @@ func GadgetEditPage(w http.ResponseWriter, req *http.Request) {
 		},
 		End: 2,
 	}
-	templates["edit-gadget.html"].template.ExecuteTemplate(w, "base", p)
+	return templates["edit-gadget.html"].template.ExecuteTemplate(w, "base", p)
 }
 
-func UserEditPage(w http.ResponseWriter, req *http.Request) {
+func UserEditPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	username := args.Vars["username"]
 	page := editUserPage{
@@ -101,7 +98,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 	}
 	if username == "new-user" {
 		page.Links = []link{
-			{"quimby", "/"},
+			{"quimby", "/home"},
 			{"admin", "/admin.html"},
 			{"new user", "/admin/users/new-user"},
 		}
@@ -110,10 +107,9 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 		}
 		page.End = 0
 	} else {
-		u := quimby.NewUser(username, quimby.UserDB(args.DB))
+		u := quimby.NewUser(username)
 		if err := u.Fetch(); err != nil {
-			context.Set(req, "error", err)
-			return
+			return err
 		}
 
 		q := url.Values{}
@@ -121,7 +117,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 		q.Add("name", username)
 		page.EditUser = u
 		page.Links = []link{
-			{"quimby", "/"},
+			{"quimby", "/home"},
 			{"admin", "/admin.html"},
 			{u.Username, fmt.Sprintf("/admin/users/%s", u.Username)},
 		}
@@ -136,20 +132,19 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) {
 	}
 
 	if username == "new-user" {
-		templates["new-user.html"].template.ExecuteTemplate(w, "base", page)
-	} else {
-		templates["edit-user.html"].template.ExecuteTemplate(w, "base", page)
+		return templates["new-user.html"].template.ExecuteTemplate(w, "base", page)
 	}
+	return templates["edit-user.html"].template.ExecuteTemplate(w, "base", page)
 }
 
-func DeleteConfirmPage(w http.ResponseWriter, req *http.Request) {
+func DeleteConfirmPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	page := confirmPage{
 		userPage: userPage{
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/"},
+				{"quimby", "/home"},
 				{"admin", "/admin.html"},
 				{"new user", "/admin/users/new-user"},
 			},
@@ -160,32 +155,32 @@ func DeleteConfirmPage(w http.ResponseWriter, req *http.Request) {
 		Resource: args.Args.Get("resource"),
 		Name:     args.Args.Get("name"),
 	}
-	templates["delete.html"].template.ExecuteTemplate(w, "base", page)
+	return templates["delete.html"].template.ExecuteTemplate(w, "base", page)
 }
 
-func DeleteUserPage(w http.ResponseWriter, req *http.Request) {
+func DeleteUserPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
-	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB))
+	u := quimby.NewUser(args.Vars["username"])
 	if err := u.Delete(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	w.Header().Set("Location", "/admin.html")
 	w.WriteHeader(http.StatusFound)
+	return nil
 }
 
-func DeleteGadgetPage(w http.ResponseWriter, req *http.Request) {
+func DeleteGadgetPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
-	g := &quimby.Gadget{Id: args.Vars["gadgetid"], DB: args.DB}
+	g := &quimby.Gadget{Id: args.Vars["gadgetid"]}
 	if err := g.Delete(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	w.Header().Set("Location", "/admin.html")
 	w.WriteHeader(http.StatusFound)
+	return nil
 }
 
-func UserPasswordPage(w http.ResponseWriter, req *http.Request) {
+func UserPasswordPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	u := quimby.NewUser(args.Vars["username"])
 	page := editUserPage{
@@ -193,7 +188,7 @@ func UserPasswordPage(w http.ResponseWriter, req *http.Request) {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/"},
+				{"quimby", "/home"},
 				{"admin", "/admin.html"},
 				{u.Username, fmt.Sprintf("/admin/users/%s", u.Username)},
 			},
@@ -203,55 +198,48 @@ func UserPasswordPage(w http.ResponseWriter, req *http.Request) {
 			{Name: "cancel", URI: template.URL(fmt.Sprintf("/admin/users/%s", u.Username)), Method: "get"},
 		},
 	}
-	templates["password.html"].template.ExecuteTemplate(w, "base", page)
+	return templates["password.html"].template.ExecuteTemplate(w, "base", page)
 }
 
-func UserChangePasswordPage(w http.ResponseWriter, req *http.Request) {
+func UserChangePasswordPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
-	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB))
+	u := quimby.NewUser(args.Vars["username"])
 	if err := u.Fetch(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	if err := req.ParseForm(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 
 	u.Password = req.PostFormValue("password")
 	pw := req.PostFormValue("password_confirm")
 	if pw != u.Password {
-		context.Set(req, "error", ErrPasswordsDoNotMatch)
-		return
+		return fmt.Errorf("invalid password")
 	}
 
 	if _, err := u.Save(); err != nil {
-		context.Set(req, "error", ErrPasswordsDoNotMatch)
-		return
+		return err
 	}
 
 	w.Header().Set("Location", "/admin.html")
 	w.WriteHeader(http.StatusFound)
+	return nil
 }
 
-func UserTFAPage(w http.ResponseWriter, req *http.Request) {
+func UserTFAPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
-
-	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB), quimby.UserTFA(handlers.TFA))
+	u := quimby.NewUser(args.Vars["username"], quimby.UserTFA(handlers.TFA))
 	if err := u.Fetch(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 
 	qrData, err := u.UpdateTFA()
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 
 	if _, err := u.Save(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 
 	qr := qrPage{
@@ -259,13 +247,13 @@ func UserTFAPage(w http.ResponseWriter, req *http.Request) {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/"},
+				{"quimby", "/home"},
 				{"admin", "/admin.html"},
 			},
 		},
 		QR: template.HTMLAttr(base64.StdEncoding.EncodeToString(qrData)),
 	}
-	templates["qr-code.html"].template.ExecuteTemplate(w, "base", qr)
+	return templates["qr-code.html"].template.ExecuteTemplate(w, "base", qr)
 }
 
 type qrPage struct {
@@ -273,37 +261,33 @@ type qrPage struct {
 	QR template.HTMLAttr
 }
 
-func UserForm(w http.ResponseWriter, req *http.Request) {
+func UserForm(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 
 	err := req.ParseForm()
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 
 	username := args.Vars["username"]
 	var u *quimby.User
 	if username == "new-user" {
-		u = quimby.NewUser(req.PostFormValue("username"), quimby.UserDB(args.DB), quimby.UserTFA(handlers.TFA))
+		u = quimby.NewUser(req.PostFormValue("username"), quimby.UserTFA(handlers.TFA))
 		u.Password = req.PostFormValue("password")
 		pw := req.PostFormValue("password_confirm")
 		if pw != u.Password {
-			context.Set(req, "error", ErrPasswordsDoNotMatch)
-			return
+			return err
 		}
 	} else {
-		u = quimby.NewUser(username, quimby.UserDB(args.DB), quimby.UserTFA(handlers.TFA))
+		u = quimby.NewUser(username, quimby.UserTFA(handlers.TFA))
 		if err := u.Fetch(); err != nil {
-			context.Set(req, "error", ErrPasswordsDoNotMatch)
-			return
+			return err
 		}
 	}
 	u.Permission = req.PostFormValue("permission")
 	qrData, err := u.Save()
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	if username == "new-user" {
 		qr := qrPage{
@@ -311,27 +295,27 @@ func UserForm(w http.ResponseWriter, req *http.Request) {
 				User:  args.User.Username,
 				Admin: handlers.Admin(args),
 				Links: []link{
-					{"quimby", "/"},
+					{"quimby", "/home"},
 					{"admin", "/admin.html"},
 				},
 			},
 			QR: template.HTMLAttr(base64.StdEncoding.EncodeToString(qrData)),
 		}
-		templates["qr-code.html"].template.ExecuteTemplate(w, "base", qr)
-	} else {
-		w.Header().Set("Location", "/admin.html")
-		w.WriteHeader(http.StatusFound)
+		return templates["qr-code.html"].template.ExecuteTemplate(w, "base", qr)
 	}
+
+	w.Header().Set("Location", "/admin.html")
+	w.WriteHeader(http.StatusFound)
+	return nil
 }
 
-func GadgetForm(w http.ResponseWriter, req *http.Request) {
+func GadgetForm(w http.ResponseWriter, req *http.Request) error {
 	err := req.ParseForm()
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	args := handlers.GetArgs(req)
-	g := &quimby.Gadget{DB: args.DB}
+	g := &quimby.Gadget{}
 	if args.Vars["gadgetid"] != "new-gadget" {
 		g.Id = args.Vars["gadgetid"]
 	}
@@ -346,4 +330,5 @@ func GadgetForm(w http.ResponseWriter, req *http.Request) {
 	context.Set(req, "error", g.Save())
 	w.Header().Set("Location", "/admin.html")
 	w.WriteHeader(http.StatusFound)
+	return nil
 }

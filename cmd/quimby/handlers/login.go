@@ -29,7 +29,7 @@ func Logout(w http.ResponseWriter, r *http.Request) {
 }
 
 func Login(w http.ResponseWriter, r *http.Request) {
-	user := quimby.NewUser("", quimby.UserDB(DB), quimby.UserTFA(TFA))
+	user := quimby.NewUser("", quimby.UserTFA(TFA))
 	dec := json.NewDecoder(r.Body)
 	err := dec.Decode(user)
 	if err != nil {

@@ -20,7 +20,7 @@ function updateIO(msg) {
 
 function getValue(v) {
     if (isNumeric(v)) {
-        return v.toFixed(1);
+        return v.toFixed(2);
     }
     return v
 }

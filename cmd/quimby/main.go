@@ -13,7 +13,7 @@ import (
 	"github.com/cswank/quimby/cmd/quimby/handlers"
 	"github.com/cswank/quimby/cmd/quimby/handlers/webapp"
 	"github.com/cswank/quimby/cmd/quimby/utils"
-	"github.com/cswank/rex"
+	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 	"gopkg.in/alecthomas/kingpin.v2"
 )
@@ -64,19 +64,19 @@ func main() {
 	case "users add":
 		doUser(utils.AddUser)
 	case "users list":
-		addDB(utils.ListUsers)
+		utils.ListUsers()
 	case "users edit":
-		addDB(utils.EditUser)
+		utils.EditUser()
 	case "gadgets add":
 		doGadget(utils.AddGadget)
 	case "gadgets list":
-		addDB(utils.ListGadgets)
+		utils.ListGadgets()
 	case "gadgets edit":
-		addDB(utils.EditGadget)
+		utils.EditGadget()
 	case "gadgets delete":
-		addDB(utils.DeleteGadget)
+		utils.DeleteGadget()
 	case "command":
-		addDB(utils.SendCommand)
+		utils.SendCommand()
 	case "token":
 		utils.GetToken()
 	case "bootstrap":
@@ -107,26 +107,20 @@ func getDB() *bolt.DB {
 }
 
 func doUser(f userNeeder) {
-	db := getDB()
 	u := quimby.NewUser(
 		*userName,
-		quimby.UserDB(db),
 		quimby.UserPassword(*userPW),
 		quimby.UserPermission(*userPerm),
 	)
 	f(u)
-	defer db.Close()
 }
 
 func doGadget(f gadgetNeeder) {
-	db := getDB()
 	g := &quimby.Gadget{
-		DB:   db,
 		Name: *gadgetName,
 		Host: *gadgetHost,
 	}
 	f(g)
-	db.Close()
 }
 
 func addDB(f dbNeeder) {
@@ -162,87 +156,85 @@ func startServer(db *bolt.DB) {
 	start(db, port, internalPort, "/", "/api", lg, clients, tfa)
 }
 
-func getMiddleware(perm handlers.ACL, f http.HandlerFunc) http.Handler {
-	return alice.New(handlers.Perm(perm)).Then(http.HandlerFunc(f))
+func getMiddleware(perm handlers.ACL, f handlers.HandlerFunc) http.Handler {
+	return alice.New(handlers.Auth(), handlers.FetchGadget(), handlers.Perm(perm)).Then(http.HandlerFunc(handlers.Error(f)))
 }
 
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby.Logger, clients *quimby.ClientHolder, tfa quimby.TFAer) {
-
 	quimby.Clients = clients
-	quimby.DB = db
+	quimby.SetDB(db)
 	quimby.LG = lg
-	handlers.DB = db
 	handlers.LG = lg
 	handlers.TFA = tfa
 
 	go startInternal(iRoot, db, lg, internalPort)
 	go startHomeKit(db, lg)
 
-	r := rex.New("main")
-	r.Get("/", getMiddleware(handlers.Read, webapp.IndexPage))
-	r.Get("/gadgets/{id}", getMiddleware(handlers.Read, webapp.GadgetPage))
-	r.Get("/gadgets/{id}/method.html", getMiddleware(handlers.Read, webapp.EditMethodPage))
-	r.Get("/gadgets/{id}/chart.html", getMiddleware(handlers.Read, webapp.ChartPage))
-	r.Get("/gadgets/{id}/chart-setup.html", getMiddleware(handlers.Read, webapp.ChartSetupPage))
-	r.Get("/gadgets/{id}/chart-setup/{name}", getMiddleware(handlers.Read, webapp.ChartInputPage))
-	r.Get("/login.html", getMiddleware(handlers.Anyone, webapp.LoginPage))
-	r.Post("/login.html", getMiddleware(handlers.Anyone, webapp.LoginForm))
-	r.Get("/logout.html", getMiddleware(handlers.Read, webapp.LogoutPage))
-	r.Get("/links.html", getMiddleware(handlers.Read, webapp.LinksPage))
-	r.Get("/admin.html", getMiddleware(handlers.Admin, webapp.AdminPage))
-	r.Get("/admin/confirmation", getMiddleware(handlers.Admin, webapp.DeleteConfirmPage))
-	r.Get("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.GadgetEditPage))
-	r.Post("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.GadgetForm))
-	r.Delete("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.DeleteGadgetPage))
-	r.Get("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.UserEditPage))
-	r.Get("/admin/users/{username}/password", getMiddleware(handlers.Admin, webapp.UserPasswordPage))
-	r.Post("/admin/users/{username}/password", getMiddleware(handlers.Admin, webapp.UserChangePasswordPage))
-	r.Post("/admin/users/{username}/tfa", getMiddleware(handlers.Admin, webapp.UserTFAPage))
-	r.Delete("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.DeleteUserPage))
-	r.Post("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.UserForm))
+	r := mux.NewRouter()
+	r.Handle("/home", getMiddleware(handlers.Read, webapp.IndexPage)).Methods("GET")
+	r.Handle("/gadgets/{id}", getMiddleware(handlers.Read, webapp.GadgetPage)).Methods("GET")
+	r.Handle("/gadgets/{id}/method.html", getMiddleware(handlers.Read, webapp.EditMethodPage)).Methods("GET")
+	r.Handle("/gadgets/{id}/chart.html", getMiddleware(handlers.Read, webapp.ChartPage)).Methods("GET")
+	r.Handle("/gadgets/{id}/chart-setup.html", getMiddleware(handlers.Read, webapp.ChartSetupPage)).Methods("GET")
+	r.Handle("/gadgets/{id}/chart-setup/{name}", getMiddleware(handlers.Read, webapp.ChartInputPage)).Methods("GET")
+	r.Handle("/login.html", getMiddleware(handlers.Anyone, webapp.LoginPage)).Methods("GET")
+	r.Handle("/login.html", getMiddleware(handlers.Anyone, webapp.LoginForm)).Methods("POST")
+	r.Handle("/logout.html", getMiddleware(handlers.Read, webapp.LogoutPage)).Methods("GET")
+	r.Handle("/links.html", getMiddleware(handlers.Read, webapp.LinksPage)).Methods("GET")
+	r.Handle("/admin.html", getMiddleware(handlers.Admin, webapp.AdminPage)).Methods("GET")
+	r.Handle("/admin/confirmation", getMiddleware(handlers.Admin, webapp.DeleteConfirmPage)).Methods("GET")
+	r.Handle("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.GadgetEditPage)).Methods("GET")
+	r.Handle("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.GadgetForm)).Methods("POST")
+	r.Handle("/admin/gadgets/{gadgetid}", getMiddleware(handlers.Admin, webapp.DeleteGadgetPage)).Methods("DELETE")
+	r.Handle("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.UserEditPage)).Methods("GET")
+	r.Handle("/admin/users/{username}/password", getMiddleware(handlers.Admin, webapp.UserPasswordPage)).Methods("GET")
+	r.Handle("/admin/users/{username}/password", getMiddleware(handlers.Admin, webapp.UserChangePasswordPage)).Methods("POST")
+	r.Handle("/admin/users/{username}/tfa", getMiddleware(handlers.Admin, webapp.UserTFAPage)).Methods("POST")
+	r.Handle("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.DeleteUserPage)).Methods("DELETE")
+	r.Handle("/admin/users/{username}", getMiddleware(handlers.Admin, webapp.UserForm)).Methods("POST")
 
 	//api
-	r.Post("/api/login", http.HandlerFunc(handlers.Login))
-	r.Post("/api/logout", http.HandlerFunc(handlers.Logout))
-	r.Get("/api/ping", getMiddleware(handlers.Read, handlers.Ping))
-	r.Get("/api/currentuser", getMiddleware(handlers.Read, handlers.GetCurrentUser))
-	r.Get("/api/users", getMiddleware(handlers.Admin, handlers.GetUsers))
-	r.Post("/api/users", getMiddleware(handlers.Admin, handlers.AddUser))
-	r.Delete("/api/users/{username}", getMiddleware(handlers.Admin, handlers.DeleteUser))
-	r.Post("/api/users/{username}/permission", getMiddleware(handlers.Admin, handlers.UpdateUserPermission))
-	r.Post("/api/users/{username}/password", getMiddleware(handlers.Admin, handlers.UpdateUserPassword))
-	r.Get("/api/users/{username}", getMiddleware(handlers.Admin, handlers.GetUser))
-	r.Get("/api/gadgets", getMiddleware(handlers.Read, handlers.GetGadgets))
-	r.Post("/api/gadgets", getMiddleware(handlers.Read, handlers.AddGadget))
-	r.Get("/api/gadgets/{id}", getMiddleware(handlers.Read, handlers.GetGadget))
-	r.Post("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.UpdateGadget))
-	r.Delete("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.DeleteGadget))
-	r.Post("/api/gadgets/{id}/command", getMiddleware(handlers.Write, handlers.SendCommand))
-	r.Post("/api/gadgets/{id}/method", getMiddleware(handlers.Write, handlers.SendMethod))
-	r.Get("/api/gadgets/{id}/websocket", getMiddleware(handlers.Write, handlers.Connect))
-	r.Get("/api/gadgets/{id}/values", getMiddleware(handlers.Read, handlers.GetUpdates))
-	r.Get("/api/gadgets/{id}/status", getMiddleware(handlers.Read, handlers.GetStatus))
-	r.Post("/api/gadgets/{id}/notes", getMiddleware(handlers.Write, handlers.AddNote))
-	r.Get("/api/gadgets/{id}/notes", getMiddleware(handlers.Read, handlers.GetNotes))
-	r.Get("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getMiddleware(handlers.Read, handlers.GetDevice))
-	r.Post("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getMiddleware(handlers.Write, handlers.UpdateDevice))
-	r.Get("/api/gadgets/{id}/sources", getMiddleware(handlers.Read, handlers.GetDataPointSources))
-	r.Get("/api/gadgets/{id}/sources/{name}", getMiddleware(handlers.Read, handlers.GetDataPoints))
-	r.Get("/api/gadgets/{id}/sources/{name}/csv", getMiddleware(handlers.Read, handlers.GetDataPointsCSV))
-	r.Get("/api/beer/{name}", getMiddleware(handlers.Read, handlers.GetRecipe))
-	r.Get("/api/admin/clients", getMiddleware(handlers.Admin, handlers.GetClients))
+	r.Handle("/api/login", http.HandlerFunc(handlers.Login)).Methods("POST")
+	r.Handle("/api/logout", http.HandlerFunc(handlers.Logout)).Methods("POST")
+	r.Handle("/api/ping", getMiddleware(handlers.Read, handlers.Ping)).Methods("GET")
+	r.Handle("/api/currentuser", getMiddleware(handlers.Read, handlers.GetCurrentUser)).Methods("GET")
+	r.Handle("/api/users", getMiddleware(handlers.Admin, handlers.GetUsers)).Methods("GET")
+	r.Handle("/api/users", getMiddleware(handlers.Admin, handlers.AddUser)).Methods("POST")
+	r.Handle("/api/users/{username}", getMiddleware(handlers.Admin, handlers.DeleteUser))
+	r.Handle("/api/users/{username}/permission", getMiddleware(handlers.Admin, handlers.UpdateUserPermission)).Methods("POST")
+	r.Handle("/api/users/{username}/password", getMiddleware(handlers.Admin, handlers.UpdateUserPassword)).Methods("POST")
+	r.Handle("/api/users/{username}", getMiddleware(handlers.Admin, handlers.GetUser)).Methods("GET")
+	r.Handle("/api/gadgets", getMiddleware(handlers.Read, handlers.GetGadgets)).Methods("GET")
+	r.Handle("/api/gadgets", getMiddleware(handlers.Read, handlers.AddGadget)).Methods("POST")
+	r.Handle("/api/gadgets/{id}", getMiddleware(handlers.Read, handlers.GetGadget)).Methods("GET")
+	r.Handle("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.UpdateGadget)).Methods("POST")
+	r.Handle("/api/gadgets/{id}", getMiddleware(handlers.Write, handlers.DeleteGadget)).Methods("DELETE")
+	r.Handle("/api/gadgets/{id}/command", getMiddleware(handlers.Write, handlers.SendCommand)).Methods("POST")
+	r.Handle("/api/gadgets/{id}/method", getMiddleware(handlers.Write, handlers.SendMethod)).Methods("POST")
+	r.Handle("/api/gadgets/{id}/websocket", getMiddleware(handlers.Write, handlers.Connect)).Methods("GET")
+	r.Handle("/api/gadgets/{id}/values", getMiddleware(handlers.Read, handlers.GetUpdates)).Methods("GET")
+	r.Handle("/api/gadgets/{id}/status", getMiddleware(handlers.Read, handlers.GetStatus)).Methods("GET")
+	r.Handle("/api/gadgets/{id}/notes", getMiddleware(handlers.Write, handlers.AddNote)).Methods("POST")
+	r.Handle("/api/gadgets/{id}/notes", getMiddleware(handlers.Read, handlers.GetNotes)).Methods("GET")
+	r.Handle("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getMiddleware(handlers.Read, handlers.GetDevice)).Methods("GET")
+	r.Handle("/api/gadgets/{id}/locations/{location}/devices/{device}/status", getMiddleware(handlers.Write, handlers.UpdateDevice)).Methods("POST")
+	r.Handle("/api/gadgets/{id}/sources", getMiddleware(handlers.Read, handlers.GetDataPointSources)).Methods("GET")
+	r.Handle("/api/gadgets/{id}/sources/{name}", getMiddleware(handlers.Read, handlers.GetDataPoints)).Methods("GET")
+	r.Handle("/api/gadgets/{id}/sources/{name}/csv", getMiddleware(handlers.Read, handlers.GetDataPointsCSV)).Methods("GET")
+	r.Handle("/api/beer/{name}", getMiddleware(handlers.Read, handlers.GetRecipe)).Methods("GET")
+	r.Handle("/api/admin/clients", getMiddleware(handlers.Admin, handlers.GetClients)).Methods("GET")
 
-	r.ServeFiles(http.FileServer(box.HTTPBox()))
+	r.Handle("/css/{file}", http.FileServer(box.HTTPBox())).Methods("GET")
+	r.Handle("/js/{file}", http.FileServer(box.HTTPBox())).Methods("GET")
 
-	chain := alice.New(handlers.Auth(db, lg, "main"), handlers.FetchGadget(), handlers.Error(lg)).Then(r)
-	http.Handle(root, chain)
+	http.Handle(root, r)
 
 	addr := fmt.Sprintf("%s:%s", iface, port)
 	lg.Printf("listening on %s\n", addr)
 	if keyPath == "" {
-		lg.Println(http.ListenAndServe(addr, chain))
+		lg.Println(http.ListenAndServe(addr, r))
 	} else {
-		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, chain))
+		lg.Println(http.ListenAndServeTLS(fmt.Sprintf("%s:443", iface), certPath, keyPath, r))
 	}
 }
 
@@ -260,11 +252,11 @@ func startHomeKit(db *bolt.DB, lg quimby.Logger) {
 //served on a separate port so it doesn't have to be exposed
 //publicly if the main port is exposed.
 func startInternal(iRoot string, db *bolt.DB, lg quimby.Logger, port string) {
-	r := rex.New("internal")
-	r.Post("/internal/updates", getMiddleware(handlers.Write, handlers.RelayMessage))
-	r.Post("/internal/gadgets/{id}/sources/{name}", getMiddleware(handlers.Write, handlers.AddDataPoint))
+	r := mux.NewRouter()
+	r.Handle("/internal/updates", getMiddleware(handlers.Write, handlers.RelayMessage)).Methods("POST")
+	r.Handle("/internal/gadgets/{id}/sources/{name}", getMiddleware(handlers.Write, handlers.AddDataPoint)).Methods("POST")
 
-	chain := alice.New(handlers.Auth(db, lg, "internal"), handlers.FetchGadget()).Then(r)
+	chain := alice.New(handlers.Auth(), handlers.FetchGadget()).Then(r)
 
 	http.Handle(iRoot, chain)
 	a := fmt.Sprintf(":%s", port)

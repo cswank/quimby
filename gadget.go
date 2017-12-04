@@ -22,7 +22,6 @@ type Gadget struct {
 	Host     string                                `json:"host"`
 	View     string                                `json:"view"`
 	Disabled bool                                  `json:"disabled"`
-	DB       *bolt.DB                              `json:"-"`
 	Devices  map[string]map[string]gogadgets.Value `json:"-"`
 }
 
@@ -36,7 +35,7 @@ var (
 	century = (100 * 24 * 365 * time.Hour)
 )
 
-func GetGadgets(db *bolt.DB) ([]Gadget, error) {
+func GetGadgets() ([]Gadget, error) {
 	gadgets := []Gadget{}
 
 	err := db.View(func(tx *bolt.Tx) error {
@@ -44,7 +43,7 @@ func GetGadgets(db *bolt.DB) ([]Gadget, error) {
 		c := b.Cursor()
 
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			g := Gadget{DB: db}
+			g := Gadget{}
 			if err := json.Unmarshal(v, &g); err != nil {
 				return err
 			}
@@ -59,7 +58,7 @@ func GetGadgets(db *bolt.DB) ([]Gadget, error) {
 }
 
 func (g *Gadget) Fetch() error {
-	return g.DB.View(func(tx *bolt.Tx) error {
+	return db.View(func(tx *bolt.Tx) error {
 		v := tx.Bucket(_gadgets).Get([]byte(g.Id))
 		if len(v) == 0 {
 			return NotFound
@@ -74,7 +73,7 @@ type DataPoint struct {
 }
 
 func (g *Gadget) SaveDataPoint(name string, dp DataPoint) error {
-	return g.DB.Update(func(tx *bolt.Tx) error {
+	return db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.Bucket([]byte(g.Id)).Bucket(_stats).CreateBucketIfNotExists([]byte(name))
 		if err != nil {
 			return nil
@@ -132,7 +131,7 @@ func (s *summary) summary() []DataPoint {
 
 func (g *Gadget) GetDataPointSources() []string {
 	var names []string
-	g.DB.View(func(tx *bolt.Tx) error {
+	db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(g.Id)).Bucket(_stats)
 		c := b.Cursor()
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
@@ -145,7 +144,7 @@ func (g *Gadget) GetDataPointSources() []string {
 
 func (g *Gadget) GetDataPoints(name string, start, end time.Time, span time.Duration, isBinary bool) ([]DataPoint, error) {
 	points := summary{span: span}
-	err := g.DB.View(func(tx *bolt.Tx) error {
+	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(g.Id)).Bucket(_stats).Bucket([]byte(name))
 		if b == nil {
 			return nil
@@ -174,7 +173,7 @@ func (g *Gadget) GetDataPoints(name string, start, end time.Time, span time.Dura
 }
 
 func (g *Gadget) Save() error {
-	return g.DB.Update(func(tx *bolt.Tx) error {
+	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket(_gadgets)
 		if g.Id == "" {
 			if err := g.createGadget(tx); err != nil {
@@ -207,7 +206,7 @@ type Note struct {
 }
 
 func (g *Gadget) AddNote(note Note) error {
-	return g.DB.Update(func(tx *bolt.Tx) error {
+	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(g.Id)).Bucket(_notes)
 		d, _ := json.Marshal(note)
 		return b.Put([]byte(time.Now().Format(time.RFC3339Nano)), d)
@@ -216,7 +215,7 @@ func (g *Gadget) AddNote(note Note) error {
 
 func (g *Gadget) GetNotes(start, end *time.Time) ([]Note, error) {
 	var notes []Note
-	g.DB.View(func(tx *bolt.Tx) error {
+	db.View(func(tx *bolt.Tx) error {
 		c := tx.Bucket([]byte(g.Id)).Bucket(_notes).Cursor()
 		min, max := g.getMinMax(start, end)
 		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
@@ -246,7 +245,7 @@ func (g *Gadget) getMinMax(start, end *time.Time) ([]byte, []byte) {
 }
 
 func (g *Gadget) Delete() error {
-	return g.DB.Update(func(tx *bolt.Tx) error {
+	return db.Update(func(tx *bolt.Tx) error {
 		if err := tx.DeleteBucket([]byte(g.Id)); err != nil {
 			return err
 		}
@@ -272,6 +271,20 @@ func (g *Gadget) Method(steps []string) error {
 		Type:   gogadgets.METHOD,
 		Method: gogadgets.Method{
 			Steps: steps,
+		},
+	}
+	return g.UpdateMessage(m)
+}
+
+func (g *Gadget) ResumeMethod(step, time int, steps []string) error {
+	m := gogadgets.Message{
+		UUID:   gogadgets.GetUUID(),
+		Sender: "quimby",
+		Type:   gogadgets.METHOD,
+		Method: gogadgets.Method{
+			Step:  step,
+			Steps: steps,
+			Time:  time,
 		},
 	}
 	return g.UpdateMessage(m)

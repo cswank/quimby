@@ -86,6 +86,12 @@
   version = "v1.1"
 
 [[projects]]
+  name = "github.com/gorilla/mux"
+    packages = ["."]
+  revision = "7f08801859139f86dfafd1c296e2cba9a80d292e"
+  version = "v1.6.0"
+
+[[projects]]
   name = "github.com/gorilla/securecookie"
   packages = ["."]
   revision = "667fe4e3466a040b780561fe9b51a83a3753eefc"
@@ -244,6 +250,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ca563b6f0731b5ef9e345c4e405fd5eb053e3cd6dd04a89ab0010d21be054d79"
+  inputs-digest = "4b0b105f5bd9a9bfc41a1059c6f7fee60d71af00af26b038cf3ebd675408f569"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -12,16 +12,17 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"github.com/sec51/convert"
-	"github.com/sec51/convert/bigendian"
-	"github.com/sec51/cryptoengine"
-	qr "github.com/sec51/qrcode"
 	"hash"
 	"io"
 	"math"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/sec51/convert"
+	"github.com/sec51/convert/bigendian"
+	"github.com/sec51/cryptoengine"
+	qr "github.com/sec51/qrcode"
 )
 
 const (

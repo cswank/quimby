@@ -50,7 +50,7 @@ func Bootstrap() {
 	var b bootstrap
 	db := getDB(&b)
 	saveQuimbyUser(db)
-	u := quimby.NewUser("", quimby.UserDB(db))
+	u := quimby.NewUser("")
 	AddUser(u)
 	addCert(&b, db)
 	addIP(&b)
@@ -99,7 +99,6 @@ func writeEnv(b *bootstrap) {
 func saveQuimbyUser(db *bolt.DB) {
 	u := quimby.NewUser(
 		"quimby",
-		quimby.UserDB(db),
 		quimby.UserPassword(randString(16)),
 		quimby.UserPermission("write"),
 	)

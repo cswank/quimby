@@ -7,7 +7,7 @@ import (
 	"github.com/cswank/quimby/cmd/quimby/handlers"
 )
 
-func ChartSetupPage(w http.ResponseWriter, req *http.Request) {
+func ChartSetupPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 
 	inputs := map[string]chartInput{}
@@ -35,10 +35,10 @@ func ChartSetupPage(w http.ResponseWriter, req *http.Request) {
 		Spans:  []string{"hour", "day", "week", "month"},
 		Action: fmt.Sprintf("/gadgets/%s/chart.html", args.Gadget.Id),
 	}
-	templates["chart-setup.html"].template.ExecuteTemplate(w, "base", p)
+	return templates["chart-setup.html"].template.ExecuteTemplate(w, "base", p)
 }
 
-func ChartInputPage(w http.ResponseWriter, req *http.Request) {
+func ChartInputPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	name := args.Vars["name"]
 	p := chartInputPage{
@@ -59,10 +59,10 @@ func ChartInputPage(w http.ResponseWriter, req *http.Request) {
 		Key:  fmt.Sprintf("%s %s", args.Gadget.Id, args.Vars["name"]),
 		Back: fmt.Sprintf("/gadgets/%s/chart-setup.html", args.Gadget.Id),
 	}
-	templates["chart-input.html"].template.ExecuteTemplate(w, "base", p)
+	return templates["chart-input.html"].template.ExecuteTemplate(w, "base", p)
 }
 
-func ChartPage(w http.ResponseWriter, req *http.Request) {
+func ChartPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	span := args.Args.Get("span")
 	if span == "" {
@@ -95,5 +95,5 @@ func ChartPage(w http.ResponseWriter, req *http.Request) {
 		Sources:   sources,
 		Summarize: summarize,
 	}
-	templates["chart.html"].template.ExecuteTemplate(w, "base", p)
+	return templates["chart.html"].template.ExecuteTemplate(w, "base", p)
 }

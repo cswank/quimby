@@ -2,6 +2,10 @@ package quimby
 
 import "github.com/boltdb/bolt"
 
+var (
+	db *bolt.DB
+)
+
 func GetDB(pth string) (*bolt.DB, error) {
 	db, err := bolt.Open(pth, 0600, nil)
 	if err != nil {

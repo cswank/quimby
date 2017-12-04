@@ -13,7 +13,6 @@ import (
 
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby"
-	"github.com/gorilla/context"
 	"github.com/gorilla/websocket"
 )
 
@@ -21,204 +20,183 @@ var (
 	beginning = time.Time{}
 )
 
-func Ping(w http.ResponseWriter, req *http.Request) {
+func Ping(w http.ResponseWriter, req *http.Request) error {
 	w.Header().Add(
 		"Location",
 		"/api/currentuser",
 	)
+	return nil
 }
 
-func GetGadgets(w http.ResponseWriter, req *http.Request) {
-	args := GetArgs(req)
-	g, err := quimby.GetGadgets(args.DB)
+func GetGadgets(w http.ResponseWriter, req *http.Request) error {
+	g, err := quimby.GetGadgets()
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	enc := json.NewEncoder(w)
-	enc.Encode(g)
+	return json.NewEncoder(w).Encode(g)
 }
 
-func GetGadget(w http.ResponseWriter, req *http.Request) {
-	enc := json.NewEncoder(w)
-	args := GetArgs(req)
-	enc.Encode(args.Gadget)
+func GetGadget(w http.ResponseWriter, req *http.Request) error {
+	return json.NewEncoder(w).Encode(GetArgs(req))
 }
 
-func GetUsers(w http.ResponseWriter, req *http.Request) {
-	args := GetArgs(req)
-	users, err := quimby.GetUsers(args.DB)
+func GetUsers(w http.ResponseWriter, req *http.Request) error {
+	users, err := quimby.GetUsers()
 	if err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 
-	enc := json.NewEncoder(w)
-	enc.Encode(users)
+	return json.NewEncoder(w).Encode(users)
 }
 
-func DeleteUser(w http.ResponseWriter, req *http.Request) {
+func DeleteUser(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	username := args.Vars["username"]
-	u := quimby.NewUser(username, quimby.UserDB(args.DB))
-	context.Set(req, "error", u.Delete())
+	u := quimby.NewUser(username)
+	return u.Delete()
 }
 
-func UpdateUserPassword(w http.ResponseWriter, req *http.Request) {
+func UpdateUserPassword(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	username := args.Vars["username"]
-	u := quimby.NewUser(username, quimby.UserDB(args.DB))
+	u := quimby.NewUser(username)
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&u); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	savedU := quimby.NewUser(username, quimby.UserDB(args.DB))
+	savedU := quimby.NewUser(username)
 	if err := savedU.Fetch(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	savedU.Password = u.Password
 	_, err := savedU.Save()
-	context.Set(req, "error", err)
+	return err
 }
 
-func UpdateUserPermission(w http.ResponseWriter, req *http.Request) {
+func UpdateUserPermission(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	username := args.Vars["username"]
-	u := quimby.NewUser("", quimby.UserDB(args.DB))
+	u := quimby.NewUser("")
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&u); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	savedU := quimby.NewUser(username, quimby.UserDB(DB))
+	savedU := quimby.NewUser(username)
 	if err := savedU.Fetch(); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	savedU.Permission = u.Permission
 	_, err := savedU.Save()
-	context.Set(req, "error", err)
+	return err
 }
 
-func AddUser(w http.ResponseWriter, req *http.Request) {
-	args := GetArgs(req)
-
-	u := quimby.NewUser("", quimby.UserDB(args.DB), quimby.UserTFA(TFA))
+func AddUser(w http.ResponseWriter, req *http.Request) error {
+	u := quimby.NewUser("", quimby.UserTFA(TFA))
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&u); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	qr, err := u.Save()
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	str := base64.StdEncoding.EncodeToString(qr)
 	w.Header().Set("Content-Type", "image/png")
-	w.Write([]byte(str))
+	_, err = w.Write([]byte(str))
+	return err
 }
 
-func GetCurrentUser(w http.ResponseWriter, req *http.Request) {
-	enc := json.NewEncoder(w)
+func GetCurrentUser(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	args.User.TFAData = []byte{}
-	enc.Encode(args.User)
+	return json.NewEncoder(w).Encode(args.User)
 }
 
-func GetUser(w http.ResponseWriter, req *http.Request) {
+func GetUser(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
-	u := quimby.NewUser(args.Vars["username"], quimby.UserDB(args.DB))
+	u := quimby.NewUser(args.Vars["username"])
 	err := u.Fetch()
 	if err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 	u.HashedPassword = []byte{}
 	u.TFAData = []byte{}
 	u.TFA = ""
-	enc := json.NewEncoder(w)
-	enc.Encode(u)
+	return json.NewEncoder(w).Encode(u)
 }
 
-func DeleteGadget(w http.ResponseWriter, req *http.Request) {
+func DeleteGadget(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
-	args.Gadget.Delete()
+	return args.Gadget.Delete()
 }
 
-func GetStatus(w http.ResponseWriter, req *http.Request) {
+func GetStatus(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
-	args.Gadget.ReadStatus(w)
+	return args.Gadget.ReadStatus(w)
 }
 
-func AddNote(w http.ResponseWriter, req *http.Request) {
+func AddNote(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	var m map[string]string
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 	n, ok := m["text"]
-	if ok {
-		args.Gadget.AddNote(quimby.Note{Text: n, Author: args.User.Username})
+	if !ok {
+		return nil
 	}
+	return args.Gadget.AddNote(quimby.Note{Text: n, Author: args.User.Username})
 }
 
-func GetNotes(w http.ResponseWriter, req *http.Request) {
+func GetNotes(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	notes, err := args.Gadget.GetNotes(nil, nil)
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	enc := json.NewEncoder(w)
-	enc.Encode(notes)
+	return json.NewEncoder(w).Encode(notes)
 }
 
-func AddDataPoint(w http.ResponseWriter, req *http.Request) {
+func AddDataPoint(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	var m map[string]float64
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	args.Gadget.SaveDataPoint(args.Vars["name"], quimby.DataPoint{Time: time.Now(), Value: m["value"]})
+	return args.Gadget.SaveDataPoint(args.Vars["name"], quimby.DataPoint{Time: time.Now(), Value: m["value"]})
 }
 
-func GetDataPointsCSV(w http.ResponseWriter, req *http.Request) {
+func GetDataPointsCSV(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	points, err := getDataPoints(args)
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	getCSV(w, points, args.Vars["name"])
+	return nil
 }
 
-func GetDataPointSources(w http.ResponseWriter, req *http.Request) {
+func GetDataPointSources(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
-	json.NewEncoder(w).Encode(args.Gadget.GetDataPointSources())
+	return json.NewEncoder(w).Encode(args.Gadget.GetDataPointSources())
 }
 
-func GetDataPoints(w http.ResponseWriter, req *http.Request) {
+func GetDataPoints(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	points, err := getDataPoints(args)
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	if req.Header.Get("accept") == "application/csv" {
 		getCSV(w, points, args.Vars["name"])
-	} else {
-		json.NewEncoder(w).Encode(map[string]interface{}{
-			"name": args.Vars["name"],
-			"data": points,
-		})
+		return nil
 	}
+	return json.NewEncoder(w).Encode(map[string]interface{}{
+		"name": args.Vars["name"],
+		"data": points,
+	})
 }
 
 func getDataPoints(args *Args) ([]quimby.DataPoint, error) {
@@ -267,82 +245,82 @@ func getCSV(w http.ResponseWriter, points []quimby.DataPoint, name string) {
 	wr.Flush()
 }
 
-func GetUpdates(w http.ResponseWriter, req *http.Request) {
+func GetUpdates(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
-	args.Gadget.ReadValues(w)
+	return args.Gadget.ReadValues(w)
 }
 
-func SendCommand(w http.ResponseWriter, req *http.Request) {
+func SendCommand(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	var m map[string]string
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	args.Gadget.Update(m["command"])
+	return args.Gadget.Update(m["command"])
 }
 
-func SendMethod(w http.ResponseWriter, req *http.Request) {
+type method struct {
+	Step  int      `json:"step"`
+	Time  int      `json:"time"`
+	Steps []string `json:"steps"`
+}
+
+func SendMethod(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
-	var m map[string][]string
+	var m method
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	args.Gadget.Method(m["method"])
+	if m.Step > 0 {
+		return args.Gadget.ResumeMethod(m.Step, m.Time, m.Steps)
+	}
+	return args.Gadget.Method(m.Steps)
 }
 
-func AddGadget(w http.ResponseWriter, req *http.Request) {
-	args := GetArgs(req)
+func AddGadget(w http.ResponseWriter, req *http.Request) error {
 	var g quimby.Gadget
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&g)
 	if err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 
-	g.DB = args.DB
 	err = g.Save()
 	if err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 
 	u, err := url.Parse(fmt.Sprintf("/api/gadgets/%s", g.Id))
 	if err != nil {
-		context.Set(req, "error", err)
-		return //err
+		return err
 	}
 	w.Header().Set("Location", u.String())
+	return nil
 }
 
-func UpdateGadget(w http.ResponseWriter, req *http.Request) {
+func UpdateGadget(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	var g quimby.Gadget
 	dec := json.NewDecoder(req.Body)
 	err := dec.Decode(&g)
 	if err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 
-	g.DB = args.DB
 	g.Id = args.Vars["id"]
 	err = g.Save()
 	if err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 
 	u, err := url.Parse(fmt.Sprintf("/api/gadgets/%s", g.Id))
 	if err != nil {
-		context.Set(req, "error", err)
-		return //err
+		return err
 	}
 	w.Header().Set("Location", u.String())
+	return nil
 }
 
 var letterRunes = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
@@ -358,11 +336,10 @@ func randString(n int) string {
 //Registers with a gogadget instance and starts up
 //a websocket.  It pushes new messages from the
 //instance to the websocket and vice versa.
-func Connect(w http.ResponseWriter, req *http.Request) {
+func Connect(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	if err := quimby.Register(*args.Gadget); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	ws := make(chan gogadgets.Message)
 	q := make(chan bool)
@@ -379,8 +356,7 @@ func Connect(w http.ResponseWriter, req *http.Request) {
 
 	conn, err := upgrader.Upgrade(w, req, nil)
 	if err != nil {
-		context.Set(req, "error", err)
-		return // err
+		return err
 	}
 
 	go listen(conn, ws, q)
@@ -393,10 +369,9 @@ func Connect(w http.ResponseWriter, req *http.Request) {
 			sendSocketMessage(conn, msg)
 		case <-q:
 			quimby.Clients.Delete(args.Gadget.Host, uuid)
-			return
+			return nil
 		}
 	}
-
 }
 
 //Send a message via the web socket.
@@ -425,34 +400,33 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
 	}
 }
 
-func GetDevice(w http.ResponseWriter, req *http.Request) {
+func GetDevice(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
-	args.Gadget.ReadDevice(w, args.Vars["location"], args.Vars["device"])
+	return args.Gadget.ReadDevice(w, args.Vars["location"], args.Vars["device"])
 }
 
-func UpdateDevice(w http.ResponseWriter, req *http.Request) {
+func UpdateDevice(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	var v gogadgets.Value
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&v); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
-	args.Gadget.UpdateDevice(args.Vars["location"], args.Vars["device"], v)
+	return args.Gadget.UpdateDevice(args.Vars["location"], args.Vars["device"], v)
 }
 
-func RelayMessage(w http.ResponseWriter, req *http.Request) {
+func RelayMessage(w http.ResponseWriter, req *http.Request) error {
 	var m gogadgets.Message
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 	chs, ok := quimby.Clients.Get(m.Host)
 	if !ok {
-		return
+		return fmt.Errorf("no client for %s", m.Host)
 	}
 	for _, ch := range chs {
 		ch <- m
 	}
+	return nil
 }

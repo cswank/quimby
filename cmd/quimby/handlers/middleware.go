@@ -1,47 +1,43 @@
 package handlers
 
 import (
+	"context"
+	"log"
 	"net/http"
 	"strings"
 
-	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby"
-	"github.com/cswank/rex"
-	"github.com/gorilla/context"
+	"github.com/gorilla/mux"
 	"github.com/justinas/alice"
 )
 
+type HandlerFunc func(http.ResponseWriter, *http.Request) error
+
 func GetArgs(r *http.Request) *Args {
-	if args := context.Get(r, "args"); args != nil {
-		return args.(*Args)
-	}
-	return nil
+	return r.Context().Value("args").(*Args)
 }
 
-func setArgs(r *http.Request, args *Args) {
-	context.Set(r, "args", args)
+func setArgs(r *http.Request, args *Args) *http.Request {
+	ctx := context.WithValue(r.Context(), "args", args)
+	return r.WithContext(ctx)
 }
 
-func Error(lg quimby.Logger) alice.Constructor {
-	return func(h http.Handler) http.Handler {
-		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-			h.ServeHTTP(w, req)
-			e := context.Get(req, "error")
-			if e != nil {
-				lg.Printf("error (%s)\n", e)
-				err := e.(error)
-				if err.Error() == "not found" {
-					w.WriteHeader(http.StatusNotFound)
-				} else {
-					w.WriteHeader(http.StatusInternalServerError)
-				}
-				w.Write([]byte(err.Error()))
+func Error(h HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		err := h(w, req)
+		if err != nil {
+			log.Printf("error (%s)\n", err)
+			if err.Error() == "not found" {
+				w.WriteHeader(http.StatusNotFound)
+			} else {
+				w.WriteHeader(http.StatusInternalServerError)
 			}
-		})
+			w.Write([]byte(err.Error()))
+		}
 	}
 }
 
-func Auth(db *bolt.DB, lg quimby.Logger, name string) alice.Constructor {
+func Auth() alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 			pth := req.URL.Path
@@ -67,27 +63,20 @@ func Auth(db *bolt.DB, lg quimby.Logger, name string) alice.Constructor {
 				return
 			}
 
-			user.SetDB(db)
-
 			if err := user.Fetch(); err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				w.Write([]byte("Internal server error"))
 				return
 			}
 			user.HashedPassword = []byte{}
-
 			args := &Args{
 				User: user,
-				DB:   db,
-				LG:   lg,
-				Vars: rex.Vars(req, name),
+				Vars: mux.Vars(req),
 				Args: req.URL.Query(),
 			}
-			setArgs(req, args)
 
+			req = setArgs(req, args)
 			h.ServeHTTP(w, req)
-
-			context.Clear(req)
 		})
 	}
 }
@@ -107,7 +96,6 @@ func FetchGadget() alice.Constructor {
 				return
 			}
 			args.Gadget = &quimby.Gadget{
-				DB: DB,
 				Id: args.Vars["id"],
 			}
 

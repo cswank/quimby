@@ -1,5 +1,8 @@
 {{define "method-js"}}
 
+var id = {{.Gadget.Id}}
+var inProgressKey = id + "-in-progress-method";
+
 function confirm(step) {
     var msg = JSON.stringify({
         type: 'method update',
@@ -34,6 +37,10 @@ function addStep(ul, text, i, step, time) {
 }
 
 function showMethod(method) {
+	if (method.step > 0) {
+		localStorage.setItem(inProgressKey, JSON.stringify(method));
+	}
+	
     var ul = document.getElementById("steps");
     while (ul.firstChild) {
         ul.removeChild(ul.firstChild);
