@@ -25,7 +25,7 @@ func LoginForm(w http.ResponseWriter, req *http.Request) error {
 	if err := handlers.DoLogin(user, w, req); err != nil {
 		w.Header().Set("Location", "/login.html?error=invalidlogin")
 	} else {
-		w.Header().Set("Location", "/home")
+		w.Header().Set("Location", "/")
 	}
 	w.WriteHeader(http.StatusFound)
 	return nil

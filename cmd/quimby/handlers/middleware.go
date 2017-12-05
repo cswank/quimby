@@ -14,7 +14,11 @@ import (
 type HandlerFunc func(http.ResponseWriter, *http.Request) error
 
 func GetArgs(r *http.Request) *Args {
-	return r.Context().Value("args").(*Args)
+	args := r.Context().Value("args")
+	if args == nil {
+		return nil
+	}
+	return args.(*Args)
 }
 
 func setArgs(r *http.Request, args *Args) *http.Request {

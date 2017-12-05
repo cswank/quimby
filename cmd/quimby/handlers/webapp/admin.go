@@ -39,7 +39,7 @@ func AdminPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 				{"admin", "/admin.html"},
 			},
 		},
@@ -71,7 +71,7 @@ func GadgetEditPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 				{"admin", "/admin.html"},
 				{g.Name, fmt.Sprintf("/admin/gadgets/%s", g.Id)},
 			},
@@ -98,7 +98,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) error {
 	}
 	if username == "new-user" {
 		page.Links = []link{
-			{"quimby", "/home"},
+			{"quimby", "/"},
 			{"admin", "/admin.html"},
 			{"new user", "/admin/users/new-user"},
 		}
@@ -117,7 +117,7 @@ func UserEditPage(w http.ResponseWriter, req *http.Request) error {
 		q.Add("name", username)
 		page.EditUser = u
 		page.Links = []link{
-			{"quimby", "/home"},
+			{"quimby", "/"},
 			{"admin", "/admin.html"},
 			{u.Username, fmt.Sprintf("/admin/users/%s", u.Username)},
 		}
@@ -144,7 +144,7 @@ func DeleteConfirmPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 				{"admin", "/admin.html"},
 				{"new user", "/admin/users/new-user"},
 			},
@@ -188,7 +188,7 @@ func UserPasswordPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 				{"admin", "/admin.html"},
 				{u.Username, fmt.Sprintf("/admin/users/%s", u.Username)},
 			},
@@ -247,7 +247,7 @@ func UserTFAPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 				{"admin", "/admin.html"},
 			},
 		},
@@ -295,7 +295,7 @@ func UserForm(w http.ResponseWriter, req *http.Request) error {
 				User:  args.User.Username,
 				Admin: handlers.Admin(args),
 				Links: []link{
-					{"quimby", "/home"},
+					{"quimby", "/"},
 					{"admin", "/admin.html"},
 				},
 			},

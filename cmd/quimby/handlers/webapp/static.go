@@ -191,7 +191,7 @@ func IndexPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 			},
 		},
 	}
@@ -205,7 +205,7 @@ func LinksPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 			},
 		},
 	}
@@ -225,7 +225,7 @@ func EditMethodPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 				{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
 				{"method", fmt.Sprintf("/gadgets/%s/method.html", args.Gadget.Id)},
 			},
@@ -272,7 +272,7 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) error {
 			User:  args.User.Username,
 			Admin: handlers.Admin(args),
 			Links: []link{
-				{"quimby", "/home"},
+				{"quimby", "/"},
 				{args.Gadget.Name, fmt.Sprintf("/gadgets/%s", args.Gadget.Id)},
 			},
 			Dropdowns: []dropdown{

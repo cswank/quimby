@@ -171,7 +171,7 @@ func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby
 	go startHomeKit(db, lg)
 
 	r := mux.NewRouter()
-	r.Handle("/home", getMiddleware(handlers.Read, webapp.IndexPage)).Methods("GET")
+	r.Handle("/", getMiddleware(handlers.Read, webapp.IndexPage)).Methods("GET")
 	r.Handle("/gadgets/{id}", getMiddleware(handlers.Read, webapp.GadgetPage)).Methods("GET")
 	r.Handle("/gadgets/{id}/method.html", getMiddleware(handlers.Read, webapp.EditMethodPage)).Methods("GET")
 	r.Handle("/gadgets/{id}/chart.html", getMiddleware(handlers.Read, webapp.ChartPage)).Methods("GET")
