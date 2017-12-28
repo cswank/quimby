@@ -167,7 +167,6 @@ func getMiddleware(perm handlers.ACL, f http.HandlerFunc) http.Handler {
 }
 
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby.Logger, clients *quimby.ClientHolder, tfa quimby.TFAer) {
-
 	quimby.Clients = clients
 	quimby.DB = db
 	quimby.LG = lg
