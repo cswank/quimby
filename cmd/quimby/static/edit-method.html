@@ -10,6 +10,11 @@
     <input type="number" id="grain-temperature" placeholder="grain temperature" value="70"/><br/><br/>
     <button class="btn--raised btn--green nudge--down" id="fetch-brew-method" onClick="getBrewMethod()">Fetch Method</button>
     {{end}}
+
+	<div>
+	  <label>Run In Progress Method</label><br/>
+      <button class="btn--raised btn--green nudge--down" id="fetch-in-progress-brew-method" onClick="showInProgressMethod()">Fetch Method</button>
+	</div>
   </div>
   <div class="g--6">
     <form id="method-form" action="/gadgets/{{.Gadget.Id}}">

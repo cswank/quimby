@@ -6,6 +6,7 @@ import (
 	"math"
 	"os"
 	"path"
+	"strings"
 
 	"github.com/boltdb/bolt"
 	"github.com/brutella/hc"
@@ -42,11 +43,12 @@ func (h *HomeKit) Start() {
 }
 
 func (h *HomeKit) getDevices() {
-	gadgets, err := GetGadgets(h.db)
+	gadgets, err := GetGadgets()
 	if err != nil {
 		log.Fatal(err)
 	}
 	for _, g := range gadgets {
+		log.Printf("homekit connecting %+v", g)
 		p := path.Join(pth, g.Name)
 		cfg := hc.Config{
 			StoragePath: p,
@@ -168,7 +170,12 @@ func connectSwitch(s *accessory.Switch, g Gadget, k string) {
 			msg := <-ch
 			key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
 			if key == k {
-				s.Switch.On.SetValue(msg.Value.Value.(bool))
+				b, ok := msg.Value.Value.(bool)
+				if ok {
+					s.Switch.On.SetValue(b)
+				} else {
+					log.Printf("homekit not updating home, unexpected switch value %v", msg.Value.Value)
+				}
 			}
 		}
 	}(ch, k, s)
@@ -204,24 +211,23 @@ func connectThermostat(t *accessory.Thermostat, g Gadget, k string) {
 		}
 	})
 
-	// ch := make(chan gogadgets.Message)
-	// uuid := gogadgets.GetUUID()
-	// Clients.Add(g.Host, uuid, ch)
-	// go func(ch chan gogadgets.Message, k string, t *accessory.Thermostat) {
-	// 	for {
-	// 		msg := <-ch
-	// 		key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
-	// 		if key == k {
-	// 			fmt.Println("update from furnace", msg)
-	// 			// if msg.Value.Cmd == "turn off home furnace" {
-	// 			// 	t.Thermostat.TargetHeatingCoolingState.SetValue(characteristic.TargetHeatingCoolingStateOff)
-	// 			// } else {
-
-	// 			// case  "":
-	// 			// 	fmt.Println("somebody turned on the furnace")
-	// 		} // else if key == thermometer {
-	// 		//fmt.Println("tell homekit thermostat that the temperature has changed")
-	// 		//}
-	// 	}
-	// }(ch, k, t)
+	ch := make(chan gogadgets.Message)
+	uuid := gogadgets.GetUUID()
+	Clients.Add(g.Host, uuid, ch)
+	go func(ch chan gogadgets.Message, k string, t *accessory.Thermostat) {
+		for {
+			msg := <-ch
+			key := fmt.Sprintf("%s %s", msg.Location, msg.Name)
+			if key == k {
+				log.Printf("homekit update from furnace: %+v", msg.Value)
+				if strings.Index(msg.Value.Cmd, "turn off") == 0 {
+					t.Thermostat.TargetHeatingCoolingState.SetValue(characteristic.TargetHeatingCoolingStateOff)
+				} else if strings.Index(msg.Value.Cmd, "heat home") == 0 {
+					t.Thermostat.TargetHeatingCoolingState.SetValue(characteristic.TargetHeatingCoolingStateHeat)
+				} else if strings.Index(msg.Value.Cmd, "cool home") == 0 {
+					t.Thermostat.TargetHeatingCoolingState.SetValue(characteristic.TargetHeatingCoolingStateCool)
+				}
+			}
+		}
+	}(ch, k, t)
 }

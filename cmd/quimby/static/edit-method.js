@@ -4,13 +4,22 @@ var id = {{.Gadget.Id}}
 var methodUrl = "/api/gadgets/" + id + "/method";
 var brewMethodUrl = "/api/beer/"
 var key = id + "-methods";
+var inProgressKey = id + "-in-progress-method";
 
 var methods = getStoredMethods();
 showStoredMethods();
 
 function runMethod() {
-    method = doSaveMethod();
-    postMethod({method: method.steps});
+	var title = document.getElementById("title").value;
+	var method;
+	if (title == "last method") {
+		method = JSON.parse(localStorage.getItem(inProgressKey));
+		localStorage.setItem(inProgressKey, null);
+		postMethod(method);
+	} else {
+		method = doSaveMethod();
+		postMethod({steps: method.steps});
+	}
     return true;
 }
 
@@ -84,6 +93,14 @@ function showMethod() {
         document.getElementById("title").value = val;
         document.getElementById("method").value = methods[val].steps.join("\n");
     }
+}
+
+function showInProgressMethod() {
+	var method = JSON.parse(localStorage.getItem(inProgressKey));
+	if (method != null) {
+		document.getElementById("title").value = "last method";
+		document.getElementById("method").value = method.steps.join("\n");
+	}
 }
 
 function showStoredMethods() {

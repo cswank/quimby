@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby"
 	"github.com/howeyc/gopass"
 )
@@ -18,16 +17,16 @@ func listUsers(users []quimby.User) {
 	}
 }
 
-func ListUsers(db *bolt.DB) {
-	users, err := quimby.GetUsers(db)
+func ListUsers() {
+	users, err := quimby.GetUsers()
 	if err != nil {
 		log.Fatal(err)
 	}
 	listUsers(users)
 }
 
-func EditUser(db *bolt.DB) {
-	users, err := quimby.GetUsers(db)
+func EditUser() {
+	users, err := quimby.GetUsers()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -207,8 +206,8 @@ func AddGadget(g *quimby.Gadget) {
 	fmt.Println(g.Id)
 }
 
-func DeleteGadget(db *bolt.DB) {
-	gadgets, err := quimby.GetGadgets(db)
+func DeleteGadget() {
+	gadgets, err := quimby.GetGadgets()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -217,12 +216,11 @@ func DeleteGadget(db *bolt.DB) {
 	var n int
 	fmt.Scanf("%d\n", &n)
 	g := gadgets[n-1]
-	g.DB = db
 	fmt.Println(g.Delete())
 }
 
-func EditGadget(db *bolt.DB) {
-	gadgets, err := quimby.GetGadgets(db)
+func EditGadget() {
+	gadgets, err := quimby.GetGadgets()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -230,7 +228,6 @@ func EditGadget(db *bolt.DB) {
 	var i int
 	fmt.Scanf("%d\n", &i)
 	g := gadgets[i-1]
-	g.DB = db
 
 	var n string
 	fmt.Printf("name (%s): ", g.Name)
@@ -244,8 +241,8 @@ func EditGadget(db *bolt.DB) {
 	fmt.Println(g.Save())
 }
 
-func ListGadgets(db *bolt.DB) {
-	gadgets, err := quimby.GetGadgets(db)
+func ListGadgets() {
+	gadgets, err := quimby.GetGadgets()
 	if err != nil {
 		log.Fatal(err)
 	}

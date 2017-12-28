@@ -6,12 +6,11 @@ import (
 	"log"
 	"os"
 
-	"github.com/boltdb/bolt"
 	"github.com/cswank/quimby"
 )
 
-func SendCommand(db *bolt.DB) {
-	gadgets, err := quimby.GetGadgets(db)
+func SendCommand() {
+	gadgets, err := quimby.GetGadgets()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -20,7 +19,6 @@ func SendCommand(db *bolt.DB) {
 	var n int
 	fmt.Scanf("%d", &n)
 	g := gadgets[n-1]
-	g.DB = db
 
 	fmt.Print("command: ")
 

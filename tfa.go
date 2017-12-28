@@ -32,7 +32,7 @@ func NewTFA(issuer string) TFAer {
 //and returns the serialized otp (needs to be saved) and PNG
 //data to display for google authenticator
 func (t *TFA) Get(username string) ([]byte, []byte, error) {
-	otp, err := twofactor.NewTOTP(username, t.issuer, crypto.SHA1, 8)
+	otp, err := twofactor.NewTOTP(username, t.issuer, crypto.SHA1, 6)
 	if err != nil {
 		return nil, nil, err
 	}

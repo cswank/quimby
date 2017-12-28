@@ -14,7 +14,6 @@ import (
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby"
 	"github.com/cswank/quimby/cmd/quimby/handlers"
-	"github.com/gorilla/context"
 )
 
 var (
@@ -179,12 +178,11 @@ type furnacePage struct {
 	Usage       []usage
 }
 
-func IndexPage(w http.ResponseWriter, req *http.Request) {
+func IndexPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
-	g, err := quimby.GetGadgets(args.DB)
+	g, err := quimby.GetGadgets()
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		return
+		return err
 	}
 
 	i := indexPage{
@@ -197,10 +195,10 @@ func IndexPage(w http.ResponseWriter, req *http.Request) {
 			},
 		},
 	}
-	templates["index.html"].template.ExecuteTemplate(w, "base", i)
+	return templates["index.html"].template.ExecuteTemplate(w, "base", i)
 }
 
-func LinksPage(w http.ResponseWriter, req *http.Request) {
+func LinksPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	i := indexPage{
 		userPage: userPage{
@@ -211,7 +209,7 @@ func LinksPage(w http.ResponseWriter, req *http.Request) {
 			},
 		},
 	}
-	templates["links.html"].template.ExecuteTemplate(w, "base", i)
+	return templates["links.html"].template.ExecuteTemplate(w, "base", i)
 }
 
 func displayValues(msg *gogadgets.Message) {
@@ -220,7 +218,7 @@ func displayValues(msg *gogadgets.Message) {
 	}
 }
 
-func EditMethodPage(w http.ResponseWriter, req *http.Request) {
+func EditMethodPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	p := gadgetPage{
 		userPage: userPage{
@@ -235,16 +233,15 @@ func EditMethodPage(w http.ResponseWriter, req *http.Request) {
 		Gadget: args.Gadget,
 		URI:    fmt.Sprintf("/gadgets/%s", args.Gadget.Id),
 	}
-	templates["edit-method.html"].template.ExecuteTemplate(w, "base", p)
+	return templates["edit-method.html"].template.ExecuteTemplate(w, "base", p)
 }
 
-func GadgetPage(w http.ResponseWriter, req *http.Request) {
+func GadgetPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	s, err := args.Gadget.Status()
 
 	if err != nil {
-		context.Set(req, "error", err)
-		return
+		return err
 	}
 
 	l := map[string][]gogadgets.Message{}
@@ -308,10 +305,9 @@ func GadgetPage(w http.ResponseWriter, req *http.Request) {
 			SetPoint:    setPoint,
 			Usage:       getUsage(args.Gadget),
 		}
-		templates["furnace.html"].template.ExecuteTemplate(w, "base", p)
-	} else {
-		templates["gadget.html"].template.ExecuteTemplate(w, "base", g)
+		return templates["furnace.html"].template.ExecuteTemplate(w, "base", p)
 	}
+	return templates["gadget.html"].template.ExecuteTemplate(w, "base", g)
 }
 
 func getUsage(g *quimby.Gadget) []usage {

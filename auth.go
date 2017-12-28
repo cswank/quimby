@@ -17,7 +17,6 @@ import (
 )
 
 var (
-	DB          *bolt.DB
 	privKey     *rsa.PrivateKey
 	PubKey      *rsa.PublicKey
 	pubKeyPath  = os.Getenv("QUIMBY_JWT_PUB")
@@ -27,6 +26,10 @@ var (
 	blockKey = []byte(os.Getenv("QUIMBY_BLOCK_KEY"))
 	SC       = securecookie.New(hashKey, blockKey)
 )
+
+func SetDB(d *bolt.DB) {
+	db = d
+}
 
 func GenerateCookie(username string) *http.Cookie {
 	value := map[string]string{
@@ -43,7 +46,7 @@ func GenerateCookie(username string) *http.Cookie {
 }
 
 func GetUserFromCookie(r *http.Request) (*User, error) {
-	user := NewUser("", UserDB(DB))
+	user := NewUser("")
 	cookie, err := r.Cookie("quimby")
 
 	if err != nil {

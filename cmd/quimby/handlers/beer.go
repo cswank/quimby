@@ -8,15 +8,15 @@ import (
 	"github.com/cswank/brewery/recipes"
 )
 
-func GetRecipe(w http.ResponseWriter, req *http.Request) {
+func GetRecipe(w http.ResponseWriter, req *http.Request) error {
 	args := GetArgs(req)
 	recipe, err := recipes.NewRecipe(args.Vars["name"])
 	if err != nil {
-		return // err
+		return err
 	}
 	temp := getTemperature(args)
 	method := recipe.GetMethod(temp)
-	json.NewEncoder(w).Encode(method)
+	return json.NewEncoder(w).Encode(method)
 }
 
 func getTemperature(args *Args) float64 {

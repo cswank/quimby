@@ -17,17 +17,10 @@ type User struct {
 	TFA            string `json:"tfa,omitempty"`
 	TFAData        []byte `json:"tfa_data,omitempty"`
 	Permission     string `json:"permission"`
-	db             *bolt.DB
 	tfa            TFAer
 }
 
 type UserOpt func(*User)
-
-func UserDB(db *bolt.DB) UserOpt {
-	return func(u *User) {
-		u.db = db
-	}
-}
 
 func UserPassword(pw string) UserOpt {
 	return func(u *User) {
@@ -55,7 +48,7 @@ func NewUser(username string, opts ...UserOpt) *User {
 	return u
 }
 
-func GetUsers(db *bolt.DB) ([]User, error) {
+func GetUsers() ([]User, error) {
 	users := []User{}
 
 	err := db.View(func(tx *bolt.Tx) error {
@@ -70,7 +63,6 @@ func GetUsers(db *bolt.DB) ([]User, error) {
 			u.HashedPassword = []byte{}
 			u.TFAData = []byte{}
 			u.TFA = ""
-			u.db = db
 			users = append(users, u)
 		}
 		return nil
@@ -78,16 +70,12 @@ func GetUsers(db *bolt.DB) ([]User, error) {
 	return users, err
 }
 
-func (u *User) SetDB(db *bolt.DB) {
-	u.db = db
-}
-
 func (u *User) SetTFA(tfa TFAer) {
 	u.tfa = tfa
 }
 
 func (u *User) Fetch() error {
-	return u.db.View(func(tx *bolt.Tx) error {
+	return db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		v := b.Get([]byte(u.Username))
 		if len(v) == 0 {
@@ -153,7 +141,7 @@ func (u *User) savePassword(savedUser *User) error {
 }
 
 func (u *User) Save() ([]byte, error) {
-	savedUser := &User{Username: u.Username, db: u.db}
+	savedUser := &User{Username: u.Username}
 	if err := savedUser.Fetch(); err != nil && err != NotFound {
 		return nil, err
 	} else if err == NotFound {
@@ -169,7 +157,7 @@ func (u *User) Save() ([]byte, error) {
 		return nil, err
 	}
 
-	return qr, u.db.Update(func(tx *bolt.Tx) error {
+	return qr, db.Update(func(tx *bolt.Tx) error {
 		d, _ := json.Marshal(u)
 		b := tx.Bucket([]byte("users"))
 		return b.Put([]byte(u.Username), d)
@@ -177,7 +165,7 @@ func (u *User) Save() ([]byte, error) {
 }
 
 func (u *User) Exists() bool {
-	err := u.db.View(func(tx *bolt.Tx) error {
+	err := db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		v := b.Get([]byte(u.Username))
 		if len(v) == 0 {
@@ -192,7 +180,7 @@ func (u *User) Exists() bool {
 }
 
 func (u *User) Delete() error {
-	return u.db.Update(func(tx *bolt.Tx) error {
+	return db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("users"))
 		return b.Delete([]byte(u.Username))
 	})
