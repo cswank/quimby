@@ -41,6 +41,15 @@ func Error(h HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func Log() alice.Constructor {
+	return func(h http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+			log.Println(req.URL.Path)
+			h.ServeHTTP(w, req)
+		})
+	}
+}
+
 func Auth() alice.Constructor {
 	return func(h http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {

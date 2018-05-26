@@ -157,7 +157,7 @@ func startServer(db *bolt.DB) {
 }
 
 func getMiddleware(perm handlers.ACL, f handlers.HandlerFunc) http.Handler {
-	return alice.New(handlers.Auth(), handlers.FetchGadget(), handlers.Perm(perm)).Then(http.HandlerFunc(handlers.Error(f)))
+	return alice.New(handlers.Log(), handlers.Auth(), handlers.FetchGadget(), handlers.Perm(perm)).Then(http.HandlerFunc(handlers.Error(f)))
 }
 
 func start(db *bolt.DB, port, internalPort, root string, iRoot string, lg quimby.Logger, clients *quimby.ClientHolder, tfa quimby.TFAer) {

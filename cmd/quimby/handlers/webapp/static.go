@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"sort"
 	"strings"
 	"time"
 
@@ -181,6 +182,9 @@ type furnacePage struct {
 func IndexPage(w http.ResponseWriter, req *http.Request) error {
 	args := handlers.GetArgs(req)
 	g, err := quimby.GetGadgets()
+	sort.Slice(g, func(i, j int) bool {
+		return g[i].Name < g[j].Name
+	})
 	if err != nil {
 		return err
 	}
