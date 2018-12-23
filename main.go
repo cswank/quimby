@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 
@@ -14,6 +15,7 @@ func main() {
 	r := chi.NewRouter()
 
 	box := packr.NewBox("./html")
+	fmt.Println(box)
 	userhttp.New(r)
 	gadgethttp.New(r)
 	if err := http.ListenAndServe(":3333", r); err != nil {

@@ -31,10 +31,22 @@ type link struct {
 
 type page struct {
 	Name        string
-	Links       []link
-	Scripts     []string
-	Stylesheets []string
+	links       []link
+	scripts     []string
+	stylesheets []string
 	template    string
+}
+
+func (p *page) Scripts(s []string) {
+	p.scripts = s
+}
+
+func (p *page) Stylesheets(s []string) {
+	p.stylesheets = s
+}
+
+func (p *page) Template() string {
+	return p.template
 }
 
 type gadgetsPage struct {
@@ -46,7 +58,7 @@ type gadgetsPage struct {
 func (g GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
 	gadgets, err := g.repo.GetAll()
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	return &gadgetsPage{
