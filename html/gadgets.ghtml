@@ -1,0 +1,10 @@
+{{define "content"}}
+<div id="content">
+    {{range .Devices}}
+    <div>
+      .Name        
+    </div>
+    {{end}}
+</div>
+{{end}}
+

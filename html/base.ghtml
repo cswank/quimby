@@ -1,0 +1,17 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html>
+  {{template "head" .}}
+  <body>
+    <div>
+      {{template "navbar" .}}
+      <div id="content-holder">
+      {{template "content" .}}
+      </div>
+    </div>
+    <script>
+      {{template "base.js" .}}
+    </script>
+  </body>
+</html>
+{{end}}

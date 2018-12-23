@@ -4,13 +4,17 @@ import (
 	"net/http"
 
 	"github.com/cswank/quimby/internal/gadget"
+	"github.com/cswank/quimby/internal/gadget/repository"
 	"github.com/cswank/quimby/internal/middleware"
+	"github.com/cswank/quimby/internal/schema"
 	"github.com/go-chi/chi"
 )
 
 func New(r chi.Router) {
-	g := &GadgetHTTP{}
-	r.Get("/gadgets", middleware.Handle(g.GetAll))
+	g := &GadgetHTTP{
+		repo: repository.New(),
+	}
+	r.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
 }
 
 // GadgetHTTP renders html
@@ -18,16 +22,37 @@ type GadgetHTTP struct {
 	repo gadget.Repository
 }
 
+type link struct {
+	Name     string
+	Link     string
+	Selected string
+	Children []link
+}
+
+type page struct {
+	Name        string
+	Links       []link
+	Scripts     []string
+	Stylesheets []string
+	template    string
+}
+
+type gadgetsPage struct {
+	page
+	Gadgets []schema.Gadget
+}
+
 // GetAll shows all the gadgets
-func (g GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) error {
+func (g GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
 	gadgets, err := g.repo.GetAll()
 	if err != nil {
 		return err
 	}
 
-	for _, ga := range gadgets {
-		w.Write([]byte(ga.Name))
-	}
-
-	return nil
+	return &gadgetsPage{
+		Gadgets: gadgets,
+		page: page{
+			template: "gadgets.ghtml",
+		},
+	}, nil
 }
