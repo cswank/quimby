@@ -13,6 +13,8 @@ import (
 func main() {
 	r := chi.NewRouter()
 
+	defer storage.Close()
+
 	userhttp.New(r)
 	gadgethttp.New(r)
 	if err := http.ListenAndServe(":3333", r); err != nil {

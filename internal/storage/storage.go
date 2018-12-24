@@ -15,6 +15,10 @@ func Get() *storm.DB {
 	return db
 }
 
+func Close() {
+	db.Close()
+}
+
 func init() {
 	pth, err := dbPath()
 	if err != nil {

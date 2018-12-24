@@ -1,6 +1,6 @@
 {{define "content"}}
 <div id="content">
-    {{.Gadget.Name}}
+  {{.Gadget.Name}}
 </div>
 {{end}}
 

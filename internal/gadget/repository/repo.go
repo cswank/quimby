@@ -6,6 +6,7 @@ import (
 	"github.com/cswank/quimby/internal/storage"
 )
 
+// Repo does database-y things.
 type Repo struct {
 	db *storm.DB
 }
