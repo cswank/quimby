@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	gadgethttp "github.com/cswank/quimby/internal/gadget/delivery/http"
+	"github.com/cswank/quimby/internal/storage"
 	userhttp "github.com/cswank/quimby/internal/user/delivery/http"
 
 	"github.com/go-chi/chi"

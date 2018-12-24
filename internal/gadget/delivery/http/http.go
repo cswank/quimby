@@ -1,7 +1,9 @@
 package gadgethttp
 
 import (
+	"fmt"
 	"net/http"
+	"strconv"
 
 	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/gadget/repository"
@@ -75,10 +77,15 @@ type gadgetPage struct {
 	Gadget schema.Gadget
 }
 
-// GetAll shows a single gadget
+// Get shows a single gadget
 func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
-	id := chi.URLParam(req, "id")
-	gadget, err := g.repo.Get(id)
+	id, err := strconv.ParseInt(chi.URLParam(req, "id"), 10, 64)
+	if err != nil {
+		return nil, err
+	}
+
+	gadget, err := g.repo.Get(int(id))
+	fmt.Println(gadget, err)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@
 <div id="content">
     {{range .Gadgets}}
     <div>
-        <a href="{{.URL}}">{{.Name}}</a>
+        <a href="/gadgets/{{.ID}}">{{.Name}}</a>
     </div>
     {{end}}
 </div>

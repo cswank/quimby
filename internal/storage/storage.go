@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"github.com/asdine/storm"
+	"github.com/cswank/quimby/internal/schema"
 )
 
 var db *storm.DB
@@ -28,6 +29,10 @@ func init() {
 	db, err = storm.Open(pth)
 	if err != nil {
 		log.Fatalf("could not open database: %s", err)
+	}
+
+	if err := db.Init(&schema.Gadget{}); err != nil {
+		log.Fatalf("could not Init db: %v", err)
 	}
 }
 

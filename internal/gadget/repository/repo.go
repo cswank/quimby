@@ -18,12 +18,16 @@ func New() *Repo {
 }
 
 func (r Repo) GetAll() ([]schema.Gadget, error) {
-	return []schema.Gadget{
-		{Name: "g 1", URL: "/gadgets/1234"},
-		{Name: "g 2", URL: "/gadgets/5678"},
-	}, nil
+	var g []schema.Gadget
+	return g, r.db.All(&g)
 }
 
-func (r Repo) Get(id string) (schema.Gadget, error) {
-	return schema.Gadget{Name: "g 1", URL: "/gadgets/1234"}, nil
+func (r Repo) Get(id int) (schema.Gadget, error) {
+	var g schema.Gadget
+	return g, r.db.One("ID", id, &g)
+}
+
+func (r Repo) Create(name, url string) (*schema.Gadget, error) {
+	g := &schema.Gadget{Name: name, URL: url}
+	return g, r.db.Save(g)
 }
