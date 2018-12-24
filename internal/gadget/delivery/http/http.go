@@ -15,6 +15,7 @@ func New(r chi.Router) {
 		repo: repository.New(),
 	}
 	r.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
+	r.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
 }
 
 // GadgetHTTP renders html
@@ -65,6 +66,27 @@ func (g GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middleware
 		Gadgets: gadgets,
 		page: page{
 			template: "gadgets.ghtml",
+		},
+	}, nil
+}
+
+type gadgetPage struct {
+	page
+	Gadget schema.Gadget
+}
+
+// GetAll shows a single gadget
+func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+	id := chi.URLParam(req, "id")
+	gadget, err := g.repo.Get(id)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gadgetPage{
+		Gadget: gadget,
+		page: page{
+			template: "gadget.ghtml",
 		},
 	}, nil
 }

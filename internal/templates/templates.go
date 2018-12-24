@@ -59,6 +59,7 @@ func init() {
 
 	templates = map[string]tmpl{
 		"gadgets.ghtml": {},
+		"gadget.ghtml":  {},
 	}
 
 	base := []string{"head.ghtml", "base.ghtml", "navbar.ghtml", "menu-item.ghtml", "base.js"}

@@ -1,0 +1,6 @@
+{{define "content"}}
+<div id="content">
+    {{.Gadget.Name}}
+</div>
+{{end}}
+

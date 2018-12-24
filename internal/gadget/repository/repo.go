@@ -18,7 +18,11 @@ func New() *Repo {
 
 func (r Repo) GetAll() ([]schema.Gadget, error) {
 	return []schema.Gadget{
-		{Name: "g 1"},
-		{Name: "g 2"},
+		{Name: "g 1", URL: "/gadgets/1234"},
+		{Name: "g 2", URL: "/gadgets/5678"},
 	}, nil
+}
+
+func (r Repo) Get(id string) (schema.Gadget, error) {
+	return schema.Gadget{Name: "g 1", URL: "/gadgets/1234"}, nil
 }

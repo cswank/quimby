@@ -2,7 +2,7 @@
 <div id="content">
     {{range .Gadgets}}
     <div>
-      {{.Name}}
+        <a href="{{.URL}}">{{.Name}}</a>
     </div>
     {{end}}
 </div>
