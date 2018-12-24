@@ -8,3 +8,10 @@ type Repository interface {
 	Get(id int) (schema.Gadget, error)
 	Create(name, url string) (*schema.Gadget, error)
 }
+
+// Usecase does non storage stuff with gadgets
+type Usecase interface {
+	GetAll() ([]schema.Gadget, error)
+	Get(id int) (schema.Gadget, error)
+	Create(name, url string) (*schema.Gadget, error)
+}

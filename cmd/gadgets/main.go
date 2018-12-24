@@ -23,9 +23,7 @@ func main() {
 	defer storage.Close()
 
 	repo := repository.New()
-
 	cmd := kingpin.Parse()
-	fmt.Println(cmd)
 	var err error
 	switch cmd {
 	case "gadget create":

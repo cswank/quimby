@@ -6,7 +6,7 @@ import (
 	"strconv"
 
 	"github.com/cswank/quimby/internal/gadget"
-	"github.com/cswank/quimby/internal/gadget/repository"
+	"github.com/cswank/quimby/internal/gadget/usecase"
 	"github.com/cswank/quimby/internal/middleware"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/go-chi/chi"
@@ -14,7 +14,7 @@ import (
 
 func New(r chi.Router) {
 	g := &GadgetHTTP{
-		repo: repository.New(),
+		usecase: usecase.New(),
 	}
 	r.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
 	r.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
@@ -22,7 +22,7 @@ func New(r chi.Router) {
 
 // GadgetHTTP renders html
 type GadgetHTTP struct {
-	repo gadget.Repository
+	usecase gadget.Usecase
 }
 
 type link struct {
@@ -59,7 +59,7 @@ type gadgetsPage struct {
 
 // GetAll shows all the gadgets
 func (g GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
-	gadgets, err := g.repo.GetAll()
+	gadgets, err := g.usecase.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -84,11 +84,12 @@ func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Re
 		return nil, err
 	}
 
-	gadget, err := g.repo.Get(int(id))
-	fmt.Println(gadget, err)
+	gadget, err := g.usecase.Get(int(id))
 	if err != nil {
 		return nil, err
 	}
+
+	fmt.Printf("gadget: %+v\n", gadget)
 
 	return &gadgetPage{
 		Gadget: gadget,

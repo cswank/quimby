@@ -1,6 +1,14 @@
 {{define "content"}}
 <div id="content">
-  {{.Gadget.Name}}
+    {{.Gadget.Name}}
+    {{range $key, $value := .Gadget.Status}}
+        <div>
+            <div>{{$key}}</div>
+            {{range $key, $value := $value}}
+                <div>{{$key}} {{$value}}</div>
+            {{end}}
+        </div>
+    {{end}}
 </div>
 {{end}}
 
