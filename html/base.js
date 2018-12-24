@@ -1,0 +1,3 @@
+{{define "base.js"}}
+
+{{end}}

@@ -27,15 +27,15 @@ func Render(r RenderFunc) func(w http.ResponseWriter, req *http.Request) error {
 		}
 
 		t, scripts, stylesheets := templates.Get(pg.Template())
-		pg.Scripts(scripts)
-		pg.Stylesheets(stylesheets)
+		pg.AddScripts(scripts)
+		pg.AddStylesheets(stylesheets)
 		return t.ExecuteTemplate(w, "base", pg)
 	}
 }
 
 // Renderer supplies the data needed to render html
 type Renderer interface {
-	Scripts([]string)
-	Stylesheets([]string)
+	AddScripts([]string)
+	AddStylesheets([]string)
 	Template() string
 }

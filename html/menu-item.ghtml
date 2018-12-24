@@ -1,0 +1,21 @@
+{{define "menu-item"}}
+{{ if eq (len .Children) 0 }}
+<li class="pure-menu-item">
+  {{ if eq .Link ""}}
+  <a id="{{.Name}}" class="pure-menu-link">{{.Name}}</a>
+  {{else}}
+  <a href="{{.Link}}" id="{{.Name}}" class="pure-menu-link">{{.Name}}</a>
+  {{end}}
+</li>
+{{else}}
+<li class="pure-menu-item pure-menu-has-children pure-menu-allow-hover">
+  <a href="{{.Link}}" id="{{.Name}}" class="pure-menu-link">{{.Name}}</a>
+  <ul class="pure-menu-children">
+    {{range $child := .Children}}
+    <li class="pure-menu-item"><a href="{{$child.Link}}" class="pure-menu-link">{{$child.Name}}</a></li>
+    {{end}}
+  </ul>
+</li>
+{{end}}
+
+{{end}}

@@ -1,8 +1,8 @@
 {{define "content"}}
 <div id="content">
-    {{range .Devices}}
+    {{range .Gadgets}}
     <div>
-      .Name        
+      {{.Name}}
     </div>
     {{end}}
 </div>

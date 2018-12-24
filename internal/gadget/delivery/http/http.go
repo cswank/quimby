@@ -31,18 +31,18 @@ type link struct {
 
 type page struct {
 	Name        string
-	links       []link
-	scripts     []string
-	stylesheets []string
+	Links       []link
+	Scripts     []string
+	Stylesheets []string
 	template    string
 }
 
-func (p *page) Scripts(s []string) {
-	p.scripts = s
+func (p *page) AddScripts(s []string) {
+	p.Scripts = s
 }
 
-func (p *page) Stylesheets(s []string) {
-	p.stylesheets = s
+func (p *page) AddStylesheets(s []string) {
+	p.Stylesheets = s
 }
 
 func (p *page) Template() string {
