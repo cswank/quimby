@@ -13,10 +13,10 @@ type Gadget struct {
 	ID     int    `storm:"id,increment"`
 	Name   string `json:"name"`
 	URL    string `json:"url"`
-	status map[string]gogadgets.Message
+	status map[string]map[string]gogadgets.Message
 }
 
-func (g *Gadget) Status() map[string]gogadgets.Message {
+func (g *Gadget) Status() map[string]map[string]gogadgets.Message {
 	return g.status
 }
 
@@ -28,5 +28,22 @@ func (g *Gadget) FetchStatus() error {
 	}
 
 	defer resp.Body.Close()
-	return json.NewDecoder(resp.Body).Decode(&g.status)
+	var m map[string]gogadgets.Message
+	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
+		return err
+	}
+
+	status := map[string]map[string]gogadgets.Message{}
+
+	for k, v := range m {
+		l, ok := status[k]
+		if !ok {
+			l = map[string]gogadgets.Message{}
+		}
+		l[v.Name] = v
+		status[k] = l
+	}
+
+	g.status = status
+	return nil
 }

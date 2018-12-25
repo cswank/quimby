@@ -1,0 +1,19 @@
+{{define "device"}}
+<li>
+  <div class="device">
+    <label>{{.Name}}</label>
+    {{if eq .Info.Direction "output"}}
+    <span class="toggle-holder">
+      {{if eq .Value.Value true}}
+      <input id="{{.Location}}-{{.Name}}" onChange="sendCommand('{{.Location}}-{{.Name}}', {{.Info}})" type="checkbox" class="toggle" checked="checked"/>
+      {{else}}
+      <input id="{{.Location}}-{{.Name}}" onChange="sendCommand('{{.Location}}-{{.Name}}', {{.Info}})" type="checkbox" class="toggle"/>
+      {{end}}
+      <label for="{{.Location}}-{{.Name}}"></label>
+    </span>
+    {{else}}
+    <span onClick="showChart('{{.Location}}', '{{.Name}}')" id="{{.Location}}-{{.Name}}">{{.Value.Value}}</span>
+    {{end}}
+  </div>
+</li>
+{{end}}

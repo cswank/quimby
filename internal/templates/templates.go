@@ -40,8 +40,7 @@ type tmpl struct {
 	bare        bool
 }
 
-func init() {
-	box := rice.MustFindBox("../../html")
+func Box(box *rice.Box) {
 	data := map[string]string{}
 	html, err := getHTML(box)
 
@@ -59,7 +58,7 @@ func init() {
 
 	templates = map[string]tmpl{
 		"gadgets.ghtml": {},
-		"gadget.ghtml":  {},
+		"gadget.ghtml":  {files: []string{"device.ghtml"}},
 	}
 
 	base := []string{"head.ghtml", "base.ghtml", "navbar.ghtml", "menu-item.ghtml", "base.js"}
