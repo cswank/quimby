@@ -1,0 +1,16 @@
+{{define "navbar"}}
+  <div class="container">
+    <div class="row">
+      <div class="column-75">
+        <h1>Quimby</h1>
+      </div>
+      <div class="column-25">
+        <ul class="pure-menu-list">
+          {{range $link := .Links}}
+            {{template "menu-item" $link}}
+          {{end}}
+        </ul>
+      </div>
+    </div>
+  </div>
+{{end}}

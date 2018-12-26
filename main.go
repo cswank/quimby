@@ -47,7 +47,7 @@ func main() {
 }
 
 func doServe() error {
-	box := rice.MustFindBox("html")
+	box := rice.MustFindBox("templates")
 	templates.Box(box)
 	r := chi.NewRouter()
 
