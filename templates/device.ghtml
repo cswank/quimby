@@ -1,6 +1,7 @@
 {{define "device"}}
   <li>
     <div class="device">
+      {{.Name}}
       {{if eq .Info.Direction "output"}}
         <span class="toggle-holder">
           {{if eq .Value.Value true}}
