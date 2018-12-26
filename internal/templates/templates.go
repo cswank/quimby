@@ -58,7 +58,7 @@ func Box(box *rice.Box) {
 
 	templates = map[string]tmpl{
 		"gadgets.ghtml": {},
-		"gadget.ghtml":  {files: []string{"device.ghtml"}},
+		"gadget.ghtml":  {files: []string{"device.ghtml"}, stylesheets: []string{"/static/switch.css"}},
 	}
 
 	base := []string{"head.ghtml", "base.ghtml", "navbar.ghtml", "menu-item.ghtml", "base.js"}

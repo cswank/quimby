@@ -52,7 +52,7 @@ func doServe() error {
 	r := chi.NewRouter()
 
 	userhttp.New(r)
-	gadgethttp.New(r)
+	gadgethttp.New(r, box)
 	return http.ListenAndServe(":3333", r)
 }
 

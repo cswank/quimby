@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="//cdn.rawgit.com/milligram/milligram/master/dist/milligram.min.css">
     <link rel="stylesheet" href="/static/site.css">
     {{range .Stylesheets}}
-      <link rel="stylesheet" href="{{.}}">  
+        <link rel="stylesheet" href="{{.}}">
     {{end}}
     {{range .Scripts}}
       <script src="{{.}}"></script>

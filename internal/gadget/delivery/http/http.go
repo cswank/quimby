@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	rice "github.com/GeertJohan/go.rice"
 	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/gadget/usecase"
 	"github.com/cswank/quimby/internal/middleware"
@@ -12,17 +13,24 @@ import (
 	"github.com/go-chi/chi"
 )
 
-func New(r chi.Router) {
+func New(r chi.Router, box *rice.Box) {
 	g := &GadgetHTTP{
+		box:     box,
 		usecase: usecase.New(),
 	}
 	r.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
 	r.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
+
+	r.Get("/static/*", middleware.Handle(g.Static()))
+	//r.PathPrefix("/static/").Handler(getMiddleware(anyone, static())).Methods("GET")
+	//r.Handle("/favicon", getMiddleware(anyone, favicon)).Methods("GET")
+	//r.HandleFunc("/", redirect).Methods("GET")
 }
 
 // GadgetHTTP renders html
 type GadgetHTTP struct {
 	usecase gadget.Usecase
+	box     *rice.Box
 }
 
 type link struct {
@@ -89,12 +97,19 @@ func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Re
 		return nil, err
 	}
 
-	fmt.Printf("gadget: %+v\n", gadget)
-
 	return &gadgetPage{
 		Gadget: gadget,
 		page: page{
 			template: "gadget.ghtml",
 		},
 	}, nil
+}
+
+func (g GadgetHTTP) Static() middleware.Handler {
+	s := http.FileServer(g.box.HTTPBox())
+	return func(w http.ResponseWriter, req *http.Request) error {
+		fmt.Println("static", req.URL.Path)
+		s.ServeHTTP(w, req)
+		return nil
+	}
 }
