@@ -5,11 +5,13 @@ import (
 	"strconv"
 
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/gadget/usecase"
 	"github.com/cswank/quimby/internal/middleware"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/go-chi/chi"
+	"github.com/gorilla/websocket"
 )
 
 func New(r chi.Router, box *rice.Box) {
@@ -107,6 +109,47 @@ func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Re
 			template: "gadget.ghtml",
 		},
 	}, nil
+}
+
+// Connect registers with a gogadget instance and starts up
+// a websocket.  It pushes new messages from the
+// instance to the websocket and vice versa.
+func Connect(w http.ResponseWriter, req *http.Request) error {
+	args := GetArgs(req)
+	if err := quimby.Register(*args.Gadget); err != nil {
+		return err
+	}
+	ws := make(chan gogadgets.Message)
+	q := make(chan bool)
+
+	ch := make(chan gogadgets.Message)
+	uuid := gogadgets.GetUUID()
+	quimby.Clients.Add(args.Gadget.Host, uuid, ch)
+
+	upgrader := websocket.Upgrader{
+		ReadBufferSize:  1024,
+		WriteBufferSize: 1024,
+		CheckOrigin:     func(r *http.Request) bool { return true },
+	}
+
+	conn, err := upgrader.Upgrade(w, req, nil)
+	if err != nil {
+		return err
+	}
+
+	go listen(conn, ws, q)
+
+	for {
+		select {
+		case msg := <-ws:
+			args.Gadget.UpdateMessage(msg)
+		case msg := <-ch:
+			sendSocketMessage(conn, msg)
+		case <-q:
+			quimby.Clients.Delete(args.Gadget.Host, uuid)
+			return nil
+		}
+	}
 }
 
 func (g GadgetHTTP) Static() middleware.Handler {
