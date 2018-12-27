@@ -15,7 +15,6 @@ import (
 	"github.com/cswank/quimby/internal/gadget/repository"
 	"github.com/cswank/quimby/internal/storage"
 	"github.com/cswank/quimby/internal/templates"
-	userhttp "github.com/cswank/quimby/internal/user/delivery/http"
 
 	"github.com/go-chi/chi"
 )
@@ -42,7 +41,7 @@ func main() {
 	case "gadget create":
 		err = doCreate(*name, *url)
 	default:
-		log.Printf("unknown command '%s'", cmd)
+		err = fmt.Errorf("unknown command '%s'", cmd)
 	}
 
 	if err != nil {
@@ -67,8 +66,7 @@ func doServe() error {
 	templates.Box(box)
 	r := chi.NewRouter()
 
-	userhttp.New(r)
-	gadgethttp.New(r, box)
+	gadgethttp.Init(r, box)
 	server := getServer(r)
 	return server.ListenAndServeTLS(*cert, *key)
 }
