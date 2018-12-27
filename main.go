@@ -54,8 +54,12 @@ func main() {
 func doCreate(name, url string) error {
 	repo := repository.New()
 	g, err := repo.Create(name, url)
-	fmt.Printf("%+v\n", g)
-	return err
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("created gadget\n: %+v\n", g)
+	return nil
 }
 
 func doServe() error {
@@ -74,18 +78,20 @@ func getServer(h http.Handler) *http.Server {
 	if err != nil {
 		log.Fatal(err)
 	}
-	caCertPool := x509.NewCertPool()
-	caCertPool.AppendCertsFromPEM(caCert)
 
-	tlsConfig := &tls.Config{
-		ClientCAs:  caCertPool,
+	pool := x509.NewCertPool()
+	pool.AppendCertsFromPEM(caCert)
+
+	cfg := &tls.Config{
+		ClientCAs:  pool,
 		ClientAuth: tls.RequireAndVerifyClientCert,
 	}
-	tlsConfig.BuildNameToCertificate()
+
+	cfg.BuildNameToCertificate()
 
 	return &http.Server{
 		Addr:      ":3333",
-		TLSConfig: tlsConfig,
+		TLSConfig: cfg,
 		Handler:   h,
 	}
 }
