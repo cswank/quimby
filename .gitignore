@@ -30,7 +30,7 @@ dist
 bower_components
 nohup.out
 keys
-quimby
+
 
 *pem
 *p12
