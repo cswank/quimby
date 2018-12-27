@@ -1,7 +1,6 @@
 package gadgethttp
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -108,7 +107,6 @@ func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Re
 func (g GadgetHTTP) Static() middleware.Handler {
 	s := http.FileServer(g.box.HTTPBox())
 	return func(w http.ResponseWriter, req *http.Request) error {
-		fmt.Println("static", req.URL.Path)
 		s.ServeHTTP(w, req)
 		return nil
 	}

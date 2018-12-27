@@ -2,6 +2,7 @@
   <div id="content">
     {{.Gadget.Name}}
     {{range $location, $devices := .Gadget.Status}}
+      <div>{{$location}}</div>
       <div>
         {{range $key, $device := $devices}}
           {{ template "device" $device}}

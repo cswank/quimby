@@ -35,13 +35,18 @@ func (g *Gadget) FetchStatus() error {
 
 	status := map[string]map[string]gogadgets.Message{}
 
-	for k, v := range m {
-		l, ok := status[k]
+	for _, v := range m {
+		if v.Name == "" || v.Location == "" {
+			continue
+		}
+
+		l, ok := status[v.Location]
 		if !ok {
 			l = map[string]gogadgets.Message{}
 		}
+
 		l[v.Name] = v
-		status[k] = l
+		status[v.Location] = l
 	}
 
 	g.status = status
