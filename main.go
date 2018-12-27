@@ -21,7 +21,9 @@ import (
 )
 
 var (
-	_ = kingpin.Command("serve", "start server")
+	srv  = kingpin.Command("serve", "start server")
+	cert = srv.Flag("cert", "tls certificate file").Short('c').Required().String()
+	key  = srv.Flag("key", "tls key file").Short('k').Required().String()
 
 	gdt    = kingpin.Command("gadget", "gadget crud")
 	create = gdt.Command("create", "create a gadget")
@@ -64,11 +66,11 @@ func doServe() error {
 	userhttp.New(r)
 	gadgethttp.New(r, box)
 	server := getServer(r)
-	return server.ListenAndServeTLS("server_cert.pem", "server_key.pem") //private cert
+	return server.ListenAndServeTLS(*cert, *key)
 }
 
 func getServer(h http.Handler) *http.Server {
-	caCert, err := ioutil.ReadFile("server_cert.pem")
+	caCert, err := ioutil.ReadFile(*cert)
 	if err != nil {
 		log.Fatal(err)
 	}
