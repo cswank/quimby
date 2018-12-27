@@ -17,13 +17,12 @@ func New(r chi.Router, box *rice.Box) {
 		box:     box,
 		usecase: usecase.New(),
 	}
+
+	r.Get("/", middleware.Handle(g.Redirect))
 	r.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
 	r.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
-
 	r.Get("/static/*", middleware.Handle(g.Static()))
-	//r.PathPrefix("/static/").Handler(getMiddleware(anyone, static())).Methods("GET")
-	//r.Handle("/favicon", getMiddleware(anyone, favicon)).Methods("GET")
-	//r.HandleFunc("/", redirect).Methods("GET")
+
 }
 
 // GadgetHTTP renders html
@@ -116,4 +115,10 @@ func (g GadgetHTTP) Static() middleware.Handler {
 		s.ServeHTTP(w, req)
 		return nil
 	}
+}
+
+// Redirect -> /gadgets
+func (g GadgetHTTP) Redirect(w http.ResponseWriter, req *http.Request) error {
+	http.Redirect(w, req, "/gadgets", http.StatusSeeOther)
+	return nil
 }
