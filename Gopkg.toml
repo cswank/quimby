@@ -1,6 +1,6 @@
 # Gopkg.toml example
 #
-# Refer to https://golang.github.io/dep/docs/Gopkg.toml.html
+# Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
 # for detailed Gopkg.toml documentation.
 #
 # required = ["github.com/user/thing/cmd/thing"]
@@ -16,13 +16,8 @@
 #   source = "github.com/myfork/project2"
 #
 # [[override]]
-#   name = "github.com/x/y"
-#   version = "2.4.0"
-#
-# [prune]
-#   non-go = false
-#   go-tests = true
-#   unused-packages = true
+#  name = "github.com/x/y"
+#  version = "2.4.0"
 
 
 [[constraint]]
@@ -34,9 +29,13 @@
   version = "2.1.2"
 
 [[constraint]]
+  branch = "master"
+  name = "github.com/cswank/gogadgets"
+
+[[constraint]]
   name = "github.com/go-chi/chi"
   version = "3.3.3"
 
-[prune]
-  go-tests = true
-  unused-packages = true
+[[constraint]]
+  name = "gopkg.in/alecthomas/kingpin.v2"
+  version = "2.2.6"
