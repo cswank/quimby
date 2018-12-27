@@ -1,6 +1,7 @@
 package schema
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -18,6 +19,28 @@ type Gadget struct {
 
 func (g *Gadget) Status() map[string]map[string]gogadgets.Message {
 	return g.status
+}
+
+func (g *Gadget) Register(addr, token string) (string, error) {
+	m := map[string]string{"address": addr, "token": token}
+
+	buf := &bytes.Buffer{}
+	err := json.NewEncoder(buf).Encode(&m)
+	if err != nil {
+		return "", err
+	}
+
+	r, err := http.Post(fmt.Sprintf("%s/clients", g.URL), "application/json", buf)
+	if err != nil {
+		return "", err
+	}
+
+	r.Body.Close()
+	if r.StatusCode != http.StatusOK {
+		return "", fmt.Errorf("unexpected response from %s: %d", g.URL, r.StatusCode)
+	}
+
+	return g.URL, nil
 }
 
 // FetchStatus queries the gadget to get its current
