@@ -35,6 +35,7 @@ func Render(r RenderFunc) func(w http.ResponseWriter, req *http.Request) error {
 
 // Renderer supplies the data needed to render html
 type Renderer interface {
+	Name() string
 	AddScripts([]string)
 	AddStylesheets([]string)
 	Template() string

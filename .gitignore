@@ -30,3 +30,6 @@ dist
 bower_components
 nohup.out
 keys
+
+*pem
+*p12

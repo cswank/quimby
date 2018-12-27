@@ -40,11 +40,15 @@ type link struct {
 }
 
 type page struct {
-	Name        string
+	name        string
 	Links       []link
 	Scripts     []string
 	Stylesheets []string
 	template    string
+}
+
+func (p *page) Name() string {
+	return p.name
 }
 
 func (p *page) AddScripts(s []string) {
@@ -74,6 +78,7 @@ func (g GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middleware
 	return &gadgetsPage{
 		Gadgets: gadgets,
 		page: page{
+			name:     "Quimby",
 			template: "gadgets.ghtml",
 		},
 	}, nil
@@ -99,6 +104,7 @@ func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Re
 	return &gadgetPage{
 		Gadget: gadget,
 		page: page{
+			name:     gadget.Name,
 			template: "gadget.ghtml",
 		},
 	}, nil

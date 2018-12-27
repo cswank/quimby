@@ -1,13 +1,12 @@
 {{define "content"}}
   <div id="content">
-    {{.Gadget.Name}}
     {{range $location, $devices := .Gadget.Status}}
-      <div>{{$location}}</div>
-      <div>
+      <dl>
+        <h4>{{$location}}</h4>
         {{range $key, $device := $devices}}
           {{ template "device" $device}}
         {{end}}
-      </div>
+      </dl>
     {{end}}
   </div>
 {{end}}

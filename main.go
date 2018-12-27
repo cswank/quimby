@@ -1,7 +1,10 @@
 package main
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -46,6 +49,13 @@ func main() {
 
 }
 
+func doCreate(name, url string) error {
+	repo := repository.New()
+	g, err := repo.Create(name, url)
+	fmt.Printf("%+v\n", g)
+	return err
+}
+
 func doServe() error {
 	box := rice.MustFindBox("templates")
 	templates.Box(box)
@@ -53,12 +63,27 @@ func doServe() error {
 
 	userhttp.New(r)
 	gadgethttp.New(r, box)
-	return http.ListenAndServe(":3333", r)
+	server := getServer(r)
+	return server.ListenAndServeTLS("server_cert.pem", "server_key.pem") //private cert
 }
 
-func doCreate(name, url string) error {
-	repo := repository.New()
-	g, err := repo.Create(name, url)
-	fmt.Printf("%+v\n", g)
-	return err
+func getServer(h http.Handler) *http.Server {
+	caCert, err := ioutil.ReadFile("server_cert.pem")
+	if err != nil {
+		log.Fatal(err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	tlsConfig := &tls.Config{
+		ClientCAs:  caCertPool,
+		ClientAuth: tls.RequireAndVerifyClientCert,
+	}
+	tlsConfig.BuildNameToCertificate()
+
+	return &http.Server{
+		Addr:      ":3333",
+		TLSConfig: tlsConfig,
+		Handler:   h,
+	}
 }
