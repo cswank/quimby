@@ -1,6 +1,7 @@
 package gadgethttp
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
@@ -115,7 +116,6 @@ func (g GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Re
 // a websocket.  It pushes new messages from the
 // instance to the websocket and vice versa.
 func Connect(w http.ResponseWriter, req *http.Request) error {
-	args := GetArgs(req)
 	if err := quimby.Register(*args.Gadget); err != nil {
 		return err
 	}
@@ -148,6 +148,32 @@ func Connect(w http.ResponseWriter, req *http.Request) error {
 		case <-q:
 			quimby.Clients.Delete(args.Gadget.Host, uuid)
 			return nil
+		}
+	}
+}
+
+//Send a message via the web socket.
+func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
+	d, _ := json.Marshal(m)
+	conn.WriteMessage(websocket.TextMessage, d)
+}
+
+func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
+	for {
+		t, p, err := conn.ReadMessage()
+		if err != nil {
+			q <- true
+			return
+		}
+		if t == websocket.TextMessage {
+			var m gogadgets.Message
+			if err := json.Unmarshal(p, &m); err != nil {
+				return
+			}
+			ch <- m
+		} else if t == websocket.CloseMessage || t == -1 {
+			q <- true
+			return
 		}
 	}
 }
