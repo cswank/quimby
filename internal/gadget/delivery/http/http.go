@@ -15,7 +15,7 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func New(r chi.Router, box *rice.Box) {
+func Init(r chi.Router, box *rice.Box) {
 	g := &GadgetHTTP{
 		box:     box,
 		usecase: usecase.New(),

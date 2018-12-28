@@ -21,8 +21,4 @@ Bundle it:
 
     openssl pkcs12 -export -clcerts -in craig_dev_cert.pem -inkey craig_dev_key.pem -out craig_dev.p12
 
-Add the p12 file to your certificates in Keychain Access on macos.
-
-
-
-
+Add the p12 file to your certificates in Keychain Access on macos (double click on the p12 file).
