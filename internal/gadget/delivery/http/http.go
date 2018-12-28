@@ -15,17 +15,18 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-func Init(r chi.Router, box *rice.Box) {
+func Init(pub, priv chi.Router, box *rice.Box) {
 	g := &GadgetHTTP{
 		box:     box,
 		usecase: usecase.New(),
 	}
 
-	r.Get("/", middleware.Handle(g.Redirect))
-	r.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
-	r.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
-	r.Get("/static/*", middleware.Handle(g.Static()))
+	pub.Get("/", middleware.Handle(g.Redirect))
+	pub.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
+	pub.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
+	pub.Get("/static/*", middleware.Handle(g.Static()))
 
+	priv.Post("/status", middleware.Handle(g.Update))
 }
 
 // GadgetHTTP renders html
@@ -101,18 +102,18 @@ func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
 
 	for {
 		select {
-		case msg := <-ws:
+		case msg := <-ws: // user is sending a command
 			gadget.UpdateMessage(msg)
-		case msg := <-ch:
+		case msg := <-ch: // gadget is sending an update to all those that care.
 			sendSocketMessage(conn, msg)
-		case <-q:
+		case <-q: // user has left the page where the websocket lived.
 			g.clients.Delete(gadget.URL, uuid)
 			return nil
 		}
 	}
 }
 
-//Send a message via the web socket.
+// Send a message via the web socket.
 func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
 	d, _ := json.Marshal(m)
 	conn.WriteMessage(websocket.TextMessage, d)
@@ -153,6 +154,11 @@ func (g *GadgetHTTP) Static() middleware.Handler {
 		s.ServeHTTP(w, req)
 		return nil
 	}
+}
+
+// Update is where the gadgets post their updates to the UI.
+func (g GadgetHTTP) Update(w http.ResponseWriter, req *http.Request) error {
+	return nil
 }
 
 // Redirect -> /gadgets

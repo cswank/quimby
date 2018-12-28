@@ -64,10 +64,18 @@ func doCreate(name, url string) error {
 func doServe() error {
 	box := rice.MustFindBox("templates")
 	templates.Box(box)
-	r := chi.NewRouter()
 
-	gadgethttp.Init(r, box)
-	server := getServer(r)
+	pub := chi.NewRouter()
+	priv := chi.NewRouter()
+	gadgethttp.Init(pub, priv, box)
+
+	go func(r chi.Router) {
+		if err := http.ListenAndServe(":3334", r); err != nil {
+			log.Fatalf("unable to start private server: %s", err)
+		}
+	}(priv)
+
+	server := getServer(pub)
 	return server.ListenAndServeTLS(*cert, *key)
 }
 
