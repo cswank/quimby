@@ -7,6 +7,7 @@ import (
 
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/internal/clients"
 	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/gadget/usecase"
 	"github.com/cswank/quimby/internal/middleware"
@@ -19,6 +20,7 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 	g := &GadgetHTTP{
 		box:     box,
 		usecase: usecase.New(),
+		clients: clients.New(),
 	}
 
 	pub.Get("/", middleware.Handle(g.Redirect))
@@ -33,6 +35,7 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 type GadgetHTTP struct {
 	usecase gadget.Usecase
 	box     *rice.Box
+	clients *clients.Clients
 }
 
 // GetAll shows all the gadgets
@@ -158,6 +161,12 @@ func (g *GadgetHTTP) Static() middleware.Handler {
 
 // Update is where the gadgets post their updates to the UI.
 func (g GadgetHTTP) Update(w http.ResponseWriter, req *http.Request) error {
+	var msg gogadgets.Message
+	if err := json.NewDecoder(req.Body).Decode(&msg); err != nil {
+		return err
+	}
+
+	g.clients.Update(msg)
 	return nil
 }
 

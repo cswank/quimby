@@ -1,28 +1,27 @@
-package gadgethttp
+package clients
 
 import (
-	"encoding/json"
 	"sync"
 
 	"github.com/cswank/gogadgets"
 )
 
-//ClientHolder keeps track of the connected websocket clients.  It holds the chans
+//Clients keeps track of the connected websocket clients.  It holds the chans
 //that get written to when a Gogadgets system sends an update to Quimby.  That chan
 //is used to relay the message the correct websocket.
-type ClientHolder struct {
+type Clients struct {
 	clients map[string]map[string](chan gogadgets.Message)
 	lock    sync.Mutex
 }
 
-func (c *ClientHolder) Get(key string) (map[string](chan gogadgets.Message), bool) {
+func (c *Clients) Get(key string) (map[string](chan gogadgets.Message), bool) {
 	c.lock.Lock()
 	m, ok := c.clients[key]
 	c.lock.Unlock()
 	return m, ok
 }
 
-func (c *ClientHolder) Add(host, key string, ch chan gogadgets.Message) {
+func (c *Clients) Add(host, key string, ch chan gogadgets.Message) {
 	c.lock.Lock()
 	chs, ok := c.clients[host]
 	if !ok {
@@ -33,7 +32,7 @@ func (c *ClientHolder) Add(host, key string, ch chan gogadgets.Message) {
 	c.lock.Unlock()
 }
 
-func (c *ClientHolder) Delete(host, uuid string) {
+func (c *Clients) Delete(host, uuid string) {
 	c.lock.Lock()
 	m, ok := c.clients[host]
 	if ok {
@@ -43,18 +42,21 @@ func (c *ClientHolder) Delete(host, uuid string) {
 	c.lock.Unlock()
 }
 
-func (c *ClientHolder) MarshalJSON() ([]byte, error) {
-	m := map[string]int{}
+func (c *Clients) Update(msg gogadgets.Message) {
 	c.lock.Lock()
-	for k, v := range Clients.clients {
-		m[k] = len(v)
+	defer c.lock.Unlock()
+	chs, ok := c.clients[msg.Host]
+	if !ok {
+		return
 	}
-	c.lock.Unlock()
-	return json.Marshal(m)
+
+	for _, ch := range chs {
+		ch <- msg
+	}
 }
 
-func NewClientHolder() *ClientHolder {
-	return &ClientHolder{
+func New() *Clients {
+	return &Clients{
 		clients: make(map[string]map[string](chan gogadgets.Message)),
 	}
 }
