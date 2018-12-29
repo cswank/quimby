@@ -43,12 +43,30 @@ func (g *Gadget) Register(addr, token string) (string, error) {
 	return g.URL, nil
 }
 
-func (g *Gadget) Command(msg gogadgets.Message) error {
-	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+func (g *Gadget) Send(m gogadgets.Message) error {
+	buf := bytes.Buffer{}
+	enc := json.NewEncoder(&buf)
+	if err := enc.Encode(m); err != nil {
 		return err
 	}
+	resp, err := http.Post(fmt.Sprintf("%s/gadgets", g.URL), "application/json", &buf)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response from %s: %d", g.URL, resp.StatusCode)
+	}
+	return nil
+}
 
+func (g *Gadget) Command(cmd string) error {
+	return g.Send(gogadgets.Message{
+		UUID:   gogadgets.GetUUID(),
+		Sender: "quimby",
+		Type:   gogadgets.COMMAND,
+		Body:   cmd,
+	})
 }
 
 // Fetch queries the gadget to get its current status

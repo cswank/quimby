@@ -106,7 +106,7 @@ func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
 	for {
 		select {
 		case msg := <-ws: // user is sending a command
-			if err := gadget.Command(msg); err != nil {
+			if err := gadget.Send(msg); err != nil {
 				return err
 			}
 		case msg := <-ch: // gadget is sending an update to all those that care.
