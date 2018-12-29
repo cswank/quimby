@@ -27,7 +27,7 @@ func (u Usecase) Get(id int) (schema.Gadget, error) {
 		return g, err
 	}
 
-	return g, g.FetchStatus()
+	return g, g.Fetch()
 }
 
 func (u Usecase) Create(name, url string) (*schema.Gadget, error) {

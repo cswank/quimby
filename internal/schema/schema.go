@@ -43,8 +43,16 @@ func (g *Gadget) Register(addr, token string) (string, error) {
 	return g.URL, nil
 }
 
-// FetchStatus queries the gadget to get its current
-func (g *Gadget) FetchStatus() error {
+func (g *Gadget) Command(msg gogadgets.Message) error {
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
+		return err
+	}
+
+}
+
+// Fetch queries the gadget to get its current status
+func (g *Gadget) Fetch() error {
 	resp, err := http.Get(fmt.Sprintf("%s/gadgets", g.URL))
 	if err != nil {
 		return err

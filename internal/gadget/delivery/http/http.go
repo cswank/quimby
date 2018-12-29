@@ -106,7 +106,9 @@ func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
 	for {
 		select {
 		case msg := <-ws: // user is sending a command
-			gadget.UpdateMessage(msg)
+			if err := gadget.Command(msg); err != nil {
+				return err
+			}
 		case msg := <-ch: // gadget is sending an update to all those that care.
 			sendSocketMessage(conn, msg)
 		case <-q: // user has left the page where the websocket lived.
