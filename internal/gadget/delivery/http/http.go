@@ -2,8 +2,10 @@ package gadgethttp
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
 	"strconv"
+	"time"
 
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/cswank/gogadgets"
@@ -15,6 +17,8 @@ import (
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 )
+
+var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 func Init(pub, priv chi.Router, box *rice.Box) {
 	g := &GadgetHTTP{
@@ -33,13 +37,15 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 
 // GadgetHTTP renders html
 type GadgetHTTP struct {
-	usecase gadget.Usecase
-	box     *rice.Box
-	clients *clients.Clients
+	usecase     gadget.Usecase
+	box         *rice.Box
+	clients     *clients.Clients
+	internalURL string
 }
 
 // GetAll shows all the gadgets
 func (g *GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+	rand.Seed(time.Now().UnixNano())
 	gadgets, err := g.usecase.GetAll()
 	if err != nil {
 		return nil, err
@@ -116,6 +122,19 @@ func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
 			return nil
 		}
 	}
+}
+
+func (g *GadgetHTTP) register(gadget *schema.Gadget) error {
+	_, err := gadget.Register(g.internalURL, g.randString())
+	return err
+}
+
+func (g *GadgetHTTP) randString() string {
+	b := make([]rune, 32)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
 }
 
 // Send a message via the web socket.
