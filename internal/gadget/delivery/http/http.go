@@ -124,7 +124,7 @@ func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
 	}
 }
 
-func (g *GadgetHTTP) register(gadget *schema.Gadget) error {
+func (g *GadgetHTTP) register(gadget schema.Gadget) error {
 	_, err := gadget.Register(g.internalURL, g.randString())
 	return err
 }
