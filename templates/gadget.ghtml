@@ -10,7 +10,7 @@
     {{end}}
   </div>
   <script>
-   
+   {{ template "base.js" .}}
   </script>
 {{end}}
 

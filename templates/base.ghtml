@@ -9,9 +9,6 @@
           {{template "content" .}}
         </div>
       </div>
-      <script>
-       {{template "base.js" .}}
-      </script>
     </body>
   </html>
 {{end}}

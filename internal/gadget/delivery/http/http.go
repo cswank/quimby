@@ -2,6 +2,7 @@ package gadgethttp
 
 import (
 	"encoding/json"
+	"fmt"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -30,6 +31,7 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 	pub.Get("/", middleware.Handle(g.Redirect))
 	pub.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
 	pub.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
+	pub.Get("/gadgets/{id}/websocket", middleware.Handle(g.Connect))
 	pub.Get("/static/*", middleware.Handle(g.Static()))
 
 	priv.Post("/status", middleware.Handle(g.Update))
@@ -68,7 +70,8 @@ func (g *GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.R
 	}
 
 	return &gadgetPage{
-		Gadget: gadget,
+		Gadget:    gadget,
+		Websocket: fmt.Sprintf("wss://localhost:3333/gadgets/%d/websocket", gadget.ID),
 		page: page{
 			name:     gadget.Name,
 			template: "gadget.ghtml",
@@ -81,6 +84,8 @@ func (g *GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.R
 // instance to the websocket and vice versa.
 func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
 	gadget, err := g.gadget(req)
+	fmt.Println("got here")
+
 	if err != nil {
 		return err
 	}
@@ -235,5 +240,6 @@ type gadgetsPage struct {
 
 type gadgetPage struct {
 	page
-	Gadget schema.Gadget
+	Gadget    schema.Gadget
+	Websocket string
 }
