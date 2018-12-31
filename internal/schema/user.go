@@ -5,4 +5,5 @@ type User struct {
 	ID       int `storm:"id,increment"`
 	Name     string
 	Password []byte
+	TFA      []byte
 }

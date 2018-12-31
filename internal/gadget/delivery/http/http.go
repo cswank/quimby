@@ -15,6 +15,7 @@ import (
 	"github.com/cswank/quimby/internal/gadget/usecase"
 	"github.com/cswank/quimby/internal/middleware"
 	"github.com/cswank/quimby/internal/schema"
+	"github.com/cswank/quimby/internal/templates"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 )
@@ -28,11 +29,14 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 		clients: clients.New(),
 	}
 
-	pub.Get("/", middleware.Handle(g.Redirect))
-	pub.Get("/gadgets", middleware.Handle(middleware.Render(g.GetAll)))
-	pub.Get("/gadgets/{id}", middleware.Handle(middleware.Render(g.Get)))
-	pub.Get("/gadgets/{id}/websocket", middleware.Handle(g.Connect))
 	pub.Get("/static/*", middleware.Handle(g.Static()))
+
+	pub.With(middleware.Auth).Get("/", middleware.Handle(g.Redirect))
+	pub.Route("/gadgets", func(r chi.Router) {
+		r.With(middleware.Auth).Get("/", middleware.Handle(middleware.Render(g.GetAll)))
+		r.With(middleware.Auth).Get("/{id}", middleware.Handle(middleware.Render(g.Get)))
+		r.With(middleware.Auth).Get("/{id}/websocket", middleware.Handle(g.Connect))
+	})
 
 	priv.Post("/status", middleware.Handle(g.Update))
 }
@@ -55,10 +59,7 @@ func (g *GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middlewar
 
 	return &gadgetsPage{
 		Gadgets: gadgets,
-		page: page{
-			name:     "Quimby",
-			template: "gadgets.ghtml",
-		},
+		Page:    templates.NewPage("Quimby", "gadgets.ghtml"),
 	}, nil
 }
 
@@ -72,10 +73,7 @@ func (g *GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.R
 	return &gadgetPage{
 		Gadget:    gadget,
 		Websocket: fmt.Sprintf("wss://localhost:3333/gadgets/%d/websocket", gadget.ID),
-		page: page{
-			name:     gadget.Name,
-			template: "gadget.ghtml",
-		},
+		Page:      templates.NewPage(gadget.Name, "gadget.ghtml"),
 	}, nil
 }
 
@@ -202,44 +200,13 @@ func (g GadgetHTTP) Redirect(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-type link struct {
-	Name     string
-	Link     string
-	Selected string
-	Children []link
-}
-
-type page struct {
-	name        string
-	Links       []link
-	Scripts     []string
-	Stylesheets []string
-	template    string
-}
-
-func (p *page) Name() string {
-	return p.name
-}
-
-func (p *page) AddScripts(s []string) {
-	p.Scripts = s
-}
-
-func (p *page) AddStylesheets(s []string) {
-	p.Stylesheets = s
-}
-
-func (p *page) Template() string {
-	return p.template
-}
-
 type gadgetsPage struct {
-	page
+	templates.Page
 	Gadgets []schema.Gadget
 }
 
 type gadgetPage struct {
-	page
+	templates.Page
 	Gadget    schema.Gadget
 	Websocket string
 }

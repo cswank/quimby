@@ -27,7 +27,7 @@ func (r Repo) Get(id int) (schema.User, error) {
 	return g, r.db.One("ID", id, &g)
 }
 
-func (r Repo) Create(name string, pw []byte) (*schema.User, error) {
-	u := &schema.User{Name: name, Password: pw}
+func (r Repo) Create(name string, pw, tfa []byte) (*schema.User, error) {
+	u := &schema.User{Name: name, Password: pw, TFA: tfa}
 	return u, r.db.Save(u)
 }
