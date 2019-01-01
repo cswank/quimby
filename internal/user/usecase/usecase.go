@@ -1,4 +1,4 @@
-package repository
+package usecase
 
 import (
 	"crypto"
@@ -38,6 +38,19 @@ func (u Usecase) Create(name, pws string) (*schema.User, []byte, error) {
 	tfa, qr, err := u.tfa(name)
 	user, err := u.repo.Create(name, pw, tfa)
 	return user, qr, err
+}
+
+func (u Usecase) Check(id int, pw, token string) (bool, error) {
+	usr, err := u.repo.Get(id)
+	if err != nil {
+		return false, err
+	}
+
+	if err := bcrypt.CompareHashAndPassword(usr.Password, []byte(pw)); err != nil {
+		return false, err
+	}
+
+	return true, nil
 }
 
 func (u Usecase) tfa(username string) ([]byte, []byte, error) {

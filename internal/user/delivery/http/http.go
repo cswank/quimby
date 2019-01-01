@@ -7,20 +7,20 @@ import (
 	"github.com/cswank/quimby/internal/middleware"
 	"github.com/cswank/quimby/internal/templates"
 	"github.com/cswank/quimby/internal/user"
-	"github.com/cswank/quimby/internal/user/repository"
+	"github.com/cswank/quimby/internal/user/usecase"
 	"github.com/go-chi/chi"
 )
 
 // userHTTP renders html
 type userHTTP struct {
-	repo user.Repository
-	box  *rice.Box
+	usecase user.Usecase
+	box     *rice.Box
 }
 
 func Init(r chi.Router, box *rice.Box) {
 	u := &userHTTP{
-		repo: repository.New(),
-		box:  box,
+		usecase: usecase.New(),
+		box:     box,
 	}
 
 	r.Get("/login", middleware.Handle(middleware.Render(u.renderLogin)))
@@ -33,5 +33,13 @@ func (u *userHTTP) renderLogin(w http.ResponseWriter, req *http.Request) (middle
 }
 
 func (u *userHTTP) login(w http.ResponseWriter, req *http.Request) error {
+	if err := req.ParseForm(); err != nil {
+		return err
+	}
+
+	username := req.Form.Get("username")
+	pw := req.Form.Get("password")
+	token := req.Form.Get("token")
+	ok, err := u.usecase.CheckUser(username, password, token)
 	return nil
 }

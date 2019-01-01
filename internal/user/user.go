@@ -13,5 +13,5 @@ type Repository interface {
 type Usecase interface {
 	GetAll() ([]schema.User, error)
 	Get(id int) (schema.User, error)
-	Create(name string, pw []byte) (*schema.User, []byte, error)
+	Create(name, pw string) (*schema.User, []byte, error)
 }
