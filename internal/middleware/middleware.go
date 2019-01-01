@@ -29,6 +29,7 @@ func Render(r RenderFunc) func(w http.ResponseWriter, req *http.Request) error {
 		t, scripts, stylesheets := templates.Get(pg.Template())
 		pg.AddScripts(scripts)
 		pg.AddStylesheets(stylesheets)
+		pg.AddLinks([]templates.Link{{Name: "logout", Link: "/logout"}})
 		return t.ExecuteTemplate(w, "base", pg)
 	}
 }
@@ -37,6 +38,7 @@ func Render(r RenderFunc) func(w http.ResponseWriter, req *http.Request) error {
 type Renderer interface {
 	Name() string
 	AddScripts([]string)
+	AddLinks([]templates.Link)
 	AddStylesheets([]string)
 	Template() string
 }

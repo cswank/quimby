@@ -9,10 +9,8 @@ type Page struct {
 }
 
 type Link struct {
-	Name     string
-	Link     string
-	Selected string
-	Children []Link
+	Name string
+	Link string
 }
 
 func NewPage(name, template string) Page {
@@ -28,6 +26,10 @@ func (p *Page) Name() string {
 
 func (p *Page) AddScripts(s []string) {
 	p.Scripts = s
+}
+
+func (p *Page) AddLinks(l []Link) {
+	p.Links = append(p.Links, l...)
 }
 
 func (p *Page) AddStylesheets(s []string) {

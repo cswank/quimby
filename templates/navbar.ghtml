@@ -1,16 +1,16 @@
 {{define "navbar"}}
   <div class="container">
     <div class="row">
-      <div class="column-75">
+      <div class="column column-75">
         <h1><a href="/gadgets">{{.Name}}</a></h1>
       </div>
-      <div class="column-25">
-        <ul class="pure-menu-list">
+      <div class="column column-25">
+        <div class="dropdown">
+          <span>Mouse over me</span>
           {{range $link := .Links}}
             {{template "menu-item" $link}}
           {{end}}
-        </ul>
+        </div>
       </div>
-    </div>
   </div>
 {{end}}

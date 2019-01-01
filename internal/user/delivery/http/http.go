@@ -23,15 +23,15 @@ func Init(r chi.Router, box *rice.Box) {
 		box:     box,
 	}
 
-	r.Get("/login", middleware.Handle(middleware.Render(u.render("login", "login.ghtml"))))
+	r.Get("/login", middleware.Handle(middleware.Render(u.render("login.ghtml"))))
 	r.Post("/login", middleware.Handle(u.login))
-	r.Get("/logout", middleware.Handle(middleware.Render(u.render("logout", "logout.ghtml"))))
+	r.Get("/logout", middleware.Handle(middleware.Render(u.render("logout.ghtml"))))
 	r.Post("/logout", middleware.Handle(u.logout))
 }
 
-func (u *userHTTP) render(name, template string) middleware.RenderFunc {
+func (u *userHTTP) render(template string) middleware.RenderFunc {
 	return func(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
-		p := templates.NewPage(name, template)
+		p := templates.NewPage("Quimby", template)
 		return &p, nil
 	}
 }
