@@ -2,7 +2,6 @@ package middleware
 
 import (
 	"errors"
-	"fmt"
 	"net/http"
 	"os"
 
@@ -31,8 +30,6 @@ func NewAuth() *Auth {
 func (a *Auth) Auth(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		u, err := getUserFromCookie(req)
-		//u, err := a.repo.Get(1)
-		fmt.Println(u, err)
 		if err != nil || u == nil {
 			http.Redirect(w, req, "/login", http.StatusSeeOther)
 		} else {
@@ -41,18 +38,18 @@ func (a *Auth) Auth(h http.Handler) http.Handler {
 	})
 }
 
-func GenerateCookie(username string) *http.Cookie {
+func GenerateCookie(username string) (*http.Cookie, error) {
 	value := map[string]string{
-		"user": username,
+		"username": username,
 	}
 
-	encoded, _ := sc.Encode("quimby", value)
+	encoded, err := sc.Encode("quimby", value)
 	return &http.Cookie{
 		Name:     "quimby",
 		Value:    encoded,
 		Path:     "/",
 		HttpOnly: true,
-	}
+	}, err
 }
 
 func getUserFromCookie(r *http.Request) (*schema.User, error) {
@@ -68,12 +65,12 @@ func getUserFromCookie(r *http.Request) (*schema.User, error) {
 		return nil, err
 	}
 
-	username, ok := m["user"]
-	if !ok || username == "" {
+	un, ok := m["username"]
+	if !ok || un == "" {
 		return nil, errors.New("no way, eh")
 	}
 
 	return &schema.User{
-		Name: username,
+		Name: un,
 	}, nil
 }

@@ -40,6 +40,10 @@ func (u *userHTTP) login(w http.ResponseWriter, req *http.Request) error {
 	username := req.Form.Get("username")
 	pw := req.Form.Get("password")
 	token := req.Form.Get("token")
-	ok, err := u.usecase.CheckUser(username, password, token)
-	return nil
+	if err := u.usecase.Check(username, pw, token); err != nil {
+		return err
+	}
+
+	cookie, err := middleware.GenerateCookie(username)
+
 }

@@ -22,9 +22,9 @@ func (r Repo) GetAll() ([]schema.User, error) {
 	return g, r.db.All(&g)
 }
 
-func (r Repo) Get(id int) (schema.User, error) {
+func (r Repo) Get(username string) (schema.User, error) {
 	var g schema.User
-	return g, r.db.One("ID", id, &g)
+	return g, r.db.One("Name", username, &g)
 }
 
 func (r Repo) Create(name string, pw, tfa []byte) (*schema.User, error) {

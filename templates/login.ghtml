@@ -1,6 +1,6 @@
 {{define "content"}}
 <div id="content">
-  <form>
+  <form method="POST" action="/login">
     <fieldset>
       <label for="username">Username</label>
       <input type="text" id="username">

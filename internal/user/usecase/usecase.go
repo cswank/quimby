@@ -2,6 +2,7 @@ package usecase
 
 import (
 	"crypto"
+	"fmt"
 
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/cswank/quimby/internal/user"
@@ -25,8 +26,8 @@ func (u Usecase) GetAll() ([]schema.User, error) {
 	return u.repo.GetAll()
 }
 
-func (u Usecase) Get(id int) (schema.User, error) {
-	return u.repo.Get(id)
+func (u Usecase) Get(username string) (schema.User, error) {
+	return u.repo.Get(username)
 }
 
 func (u Usecase) Create(name, pws string) (*schema.User, []byte, error) {
@@ -40,17 +41,25 @@ func (u Usecase) Create(name, pws string) (*schema.User, []byte, error) {
 	return user, qr, err
 }
 
-func (u Usecase) Check(id int, pw, token string) (bool, error) {
-	usr, err := u.repo.Get(id)
+func (u Usecase) Check(username, pw, token string) error {
+	usr, err := u.repo.Get(username)
+	fmt.Println("user", usr, err)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	if err := bcrypt.CompareHashAndPassword(usr.Password, []byte(pw)); err != nil {
-		return false, err
+		fmt.Println("password", err)
+		return err
 	}
 
-	return true, nil
+	otp, err := twofactor.TOTPFromBytes(usr.TFA, "quimby")
+	if err != nil {
+		fmt.Println("tfa", err)
+		return err
+	}
+
+	return otp.Validate(token)
 }
 
 func (u Usecase) tfa(username string) ([]byte, []byte, error) {
