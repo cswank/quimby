@@ -1,3 +1,11 @@
+.navbar {
+  height: 60px;
+}
+
+.vertical-center {
+  padding: 15px 0;
+}
+
 .dropdown {
   position: relative;
   display: inline-block;
@@ -9,10 +17,14 @@
   background-color: #f9f9f9;
   min-width: 160px;
   box-shadow: 0px 8px 16px 0px rgba(0,0,0,0.2);
-  padding: 12px 16px;
+  padding: 4px 4px;
   z-index: 1;
 }
 
 .dropdown:hover .dropdown-content {
   display: block;
+}
+
+svg#menu-icon path {
+  fill: #9b4dca;
 }
