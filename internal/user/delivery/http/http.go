@@ -15,12 +15,14 @@ import (
 type userHTTP struct {
 	usecase user.Usecase
 	box     *rice.Box
+	auth    *middleware.Auth
 }
 
 func Init(r chi.Router, box *rice.Box) {
 	u := &userHTTP{
 		usecase: usecase.New(),
 		box:     box,
+		auth:    middleware.NewAuth(),
 	}
 
 	r.Get("/login", middleware.Handle(middleware.Render(u.render("login.ghtml"))))
@@ -48,7 +50,7 @@ func (u *userHTTP) login(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	cookie, err := middleware.GenerateCookie(username)
+	cookie, err := u.auth.GenerateCookie(username)
 	if err != nil {
 		return err
 	}

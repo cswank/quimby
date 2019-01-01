@@ -31,6 +31,7 @@ function isNumeric(n) {
 }
 
 function doSendComamnd(cmd) {
+    console.log("sending command", cmd);
     var msg = JSON.stringify({
         sender: "quimby",
         type: "command",
@@ -76,6 +77,7 @@ waitForSocketConnection(ws, function() {
 
 ws.onmessage = function(message) {
     var msg = JSON.parse(message.data);
+    console.log("got websocket message", msg);
     if ((msg.type == "update" && msg.sender == "method runner") || msg.type == "method update") {
         showMethod(msg.method);
     } else if (msg.type == "update") {

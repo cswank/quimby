@@ -11,6 +11,7 @@ import (
 	rice "github.com/GeertJohan/go.rice"
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/internal/clients"
+	"github.com/cswank/quimby/internal/config"
 	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/gadget/usecase"
 	"github.com/cswank/quimby/internal/middleware"
@@ -23,18 +24,20 @@ import (
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
 func Init(pub, priv chi.Router, box *rice.Box) {
-	g := &GadgetHTTP{
-		box:     box,
-		usecase: usecase.New(),
-		clients: clients.New(),
-	}
+	cfg := config.Get()
 
-	auth := middleware.NewAuth()
+	g := &GadgetHTTP{
+		box:         box,
+		usecase:     usecase.New(),
+		clients:     clients.New(),
+		internalURL: cfg.InternalAddress,
+		auth:        middleware.NewAuth(),
+	}
 
 	pub.Get("/", g.redirect)
 	pub.Get("/static/*", middleware.Handle(g.Static()))
 
-	pub.With(auth.Auth).Route("/gadgets", func(r chi.Router) {
+	pub.With(g.auth.Auth).Route("/gadgets", func(r chi.Router) {
 		r.Get("/", middleware.Handle(middleware.Render(g.getAll)))
 		r.Get("/{id}", middleware.Handle(middleware.Render(g.get)))
 		r.Get("/{id}/websocket", middleware.Handle(g.connect))
@@ -49,6 +52,7 @@ type GadgetHTTP struct {
 	box         *rice.Box
 	clients     *clients.Clients
 	internalURL string
+	auth        *middleware.Auth
 }
 
 // getAll shows all the gadgets
@@ -190,6 +194,7 @@ func (g GadgetHTTP) update(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
+	fmt.Println("got and update", msg)
 	g.clients.Update(msg)
 	return nil
 }

@@ -12,6 +12,7 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/cswank/quimby/internal/config"
 	gadgethttp "github.com/cswank/quimby/internal/gadget/delivery/http"
 	"github.com/cswank/quimby/internal/gadget/repository"
 	"github.com/cswank/quimby/internal/storage"
@@ -25,9 +26,7 @@ import (
 )
 
 var (
-	srv  = kingpin.Command("serve", "start server")
-	cert = srv.Flag("cert", "tls certificate file").Short('c').Required().String()
-	key  = srv.Flag("key", "tls key file").Short('k').Required().String()
+	srv = kingpin.Command("serve", "start server")
 
 	gdt    = kingpin.Command("gadget", "gadget crud")
 	create = gdt.Command("create", "create a gadget")
@@ -114,5 +113,6 @@ func doServe() error {
 		}
 	}(priv)
 
-	return http.ListenAndServeTLS(":3333", *cert, *key, pub)
+	cfg := config.Get()
+	return http.ListenAndServeTLS(":3333", cfg.TLSCert, cfg.TLSKey, pub)
 }
