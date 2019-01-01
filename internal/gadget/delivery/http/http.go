@@ -31,15 +31,16 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 
 	auth := middleware.NewAuth()
 
+	pub.Get("/", g.redirect)
 	pub.Get("/static/*", middleware.Handle(g.Static()))
 
 	pub.With(auth.Auth).Route("/gadgets", func(r chi.Router) {
-		r.Get("/", middleware.Handle(middleware.Render(g.GetAll)))
-		r.Get("/{id}", middleware.Handle(middleware.Render(g.Get)))
-		r.Get("/{id}/websocket", middleware.Handle(g.Connect))
+		r.Get("/", middleware.Handle(middleware.Render(g.getAll)))
+		r.Get("/{id}", middleware.Handle(middleware.Render(g.get)))
+		r.Get("/{id}/websocket", middleware.Handle(g.connect))
 	})
 
-	priv.Post("/status", middleware.Handle(g.Update))
+	priv.Post("/status", middleware.Handle(g.update))
 }
 
 // GadgetHTTP renders html
@@ -50,8 +51,8 @@ type GadgetHTTP struct {
 	internalURL string
 }
 
-// GetAll shows all the gadgets
-func (g *GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+// getAll shows all the gadgets
+func (g *GadgetHTTP) getAll(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
 	rand.Seed(time.Now().UnixNano())
 	gadgets, err := g.usecase.GetAll()
 	if err != nil {
@@ -64,8 +65,8 @@ func (g *GadgetHTTP) GetAll(w http.ResponseWriter, req *http.Request) (middlewar
 	}, nil
 }
 
-// Get shows a single gadget
-func (g *GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+// get shows a single gadget
+func (g *GadgetHTTP) get(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
 	gadget, err := g.gadget(req)
 	if err != nil {
 		return nil, err
@@ -78,10 +79,10 @@ func (g *GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.R
 	}, nil
 }
 
-// Connect registers with a gogadget instance and starts up
+// connect registers with a gogadget instance and starts up
 // a websocket.  It pushes new messages from the
 // instance to the websocket and vice versa.
-func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
+func (g *GadgetHTTP) connect(w http.ResponseWriter, req *http.Request) error {
 	gadget, err := g.gadget(req)
 	if err != nil {
 		return err
@@ -182,8 +183,8 @@ func (g *GadgetHTTP) Static() middleware.Handler {
 	}
 }
 
-// Update is where the gadgets post their updates to the UI.
-func (g GadgetHTTP) Update(w http.ResponseWriter, req *http.Request) error {
+// update is where the gadgets post their updates to the UI.
+func (g GadgetHTTP) update(w http.ResponseWriter, req *http.Request) error {
 	var msg gogadgets.Message
 	if err := json.NewDecoder(req.Body).Decode(&msg); err != nil {
 		return err
@@ -193,10 +194,9 @@ func (g GadgetHTTP) Update(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-// Redirect -> /gadgets
-func (g GadgetHTTP) Redirect(w http.ResponseWriter, req *http.Request) error {
+// redirect -> /gadgets
+func (g GadgetHTTP) redirect(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/gadgets", http.StatusSeeOther)
-	return nil
 }
 
 type gadgetsPage struct {

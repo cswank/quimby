@@ -3,103 +3,250 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:6204a59b379aadf05380cf8cf3ae0f5867588ba028fe84f260312a79ae717272"
   name = "github.com/GeertJohan/go.rice"
-  packages = [".","embedded"]
+  packages = [
+    ".",
+    "embedded",
+  ]
+  pruneopts = ""
   revision = "c02ca9a983da5807ddf7d796784928f5be4afd09"
 
 [[projects]]
   branch = "master"
+  digest = "1:a74730e052a45a3fab1d310fdef2ec17ae3d6af16228421e238320846f2aaec8"
   name = "github.com/alecthomas/template"
-  packages = [".","parse"]
+  packages = [
+    ".",
+    "parse",
+  ]
+  pruneopts = ""
   revision = "a0175ee3bccc567396460bf5acd36800cb10c49c"
 
 [[projects]]
   branch = "master"
+  digest = "1:8483994d21404c8a1d489f6be756e25bfccd3b45d65821f25695577791a08e68"
   name = "github.com/alecthomas/units"
   packages = ["."]
+  pruneopts = ""
   revision = "2efee857e7cfd4f3d0138cc3cbb1b4966962b93a"
 
 [[projects]]
+  digest = "1:526e8f3d76cbe61ad8638dc582278745e814739da4c3b98e550e468b79376ec9"
   name = "github.com/asdine/storm"
-  packages = [".","codec","codec/json","index","internal","q"]
+  packages = [
+    ".",
+    "codec",
+    "codec/json",
+    "index",
+    "internal",
+    "q",
+  ]
+  pruneopts = ""
   revision = "5a6fe65e3993f63951c8e3f64c812536c9e23595"
   version = "v2.1.2"
 
 [[projects]]
   branch = "master"
+  digest = "1:ea040951144214212d0402e862a786e8d68d2a1734f975933e6ba084b4d05f2f"
   name = "github.com/creack/goselect"
   packages = ["."]
+  pruneopts = ""
   revision = "58854f77ee8d858ce751b0a9bcc5533fef7bfa9e"
 
 [[projects]]
   branch = "master"
+  digest = "1:7951a275d4a6a8a95cc9d4d92bcb5ce7ace34866419461ba3d57e29e5377c2d4"
   name = "github.com/cswank/gogadgets"
-  packages = [".","lib/cron"]
+  packages = [
+    ".",
+    "lib/cron",
+  ]
+  pruneopts = ""
   revision = "fc61de179100f2f02d846a0012f96819da86ff7f"
 
 [[projects]]
   branch = "master"
+  digest = "1:ab2693ed7c6c6bff91d2a76da6715622c21a3302f397de3df5b63b1eadb98b29"
   name = "github.com/cswank/xbee"
   packages = ["."]
+  pruneopts = ""
   revision = "01fa50b7be9baf431bc8a332b7be2f94519f31be"
 
 [[projects]]
   branch = "master"
+  digest = "1:5fd5c4d4282935b7a575299494f2c09e9d2cacded7815c83aff7c1602aff3154"
   name = "github.com/daaku/go.zipexe"
   packages = ["."]
+  pruneopts = ""
   revision = "a5fe2436ffcb3236e175e5149162b41cd28bd27d"
 
 [[projects]]
+  digest = "1:3cc6cc81e607288ff63cc34b8b8f5f57a0f47e5bc554b86e31bf723612121763"
   name = "github.com/go-chi/chi"
   packages = ["."]
+  pruneopts = ""
   revision = "b5294d10673813fac8558e7f47242bc9e61b4c25"
   version = "v3.3.3"
 
 [[projects]]
+  digest = "1:dbbeb8ddb0be949954c8157ee8439c2adfd8dc1c9510eb44a6e58cb68c3dce28"
   name = "github.com/gorilla/context"
   packages = ["."]
+  pruneopts = ""
   revision = "08b5f424b9271eedf6f9f0ce86cb9396ed337a42"
   version = "v1.1.1"
 
 [[projects]]
+  digest = "1:c2c8666b4836c81a1d247bdf21c6a6fc1ab586538ab56f74437c2e0df5c375e1"
   name = "github.com/gorilla/mux"
   packages = ["."]
+  pruneopts = ""
   revision = "e3702bed27f0d39777b0b37b664b6280e8ef8fbf"
   version = "v1.6.2"
 
 [[projects]]
+  digest = "1:51a1d17ba9fe6648d9fdd5b822baa616d6ec7f28c8669c2091126d206796b5ae"
+  name = "github.com/gorilla/securecookie"
+  packages = ["."]
+  pruneopts = ""
+  revision = "e59506cc896acb7f7bf732d4fdf5e25f7ccd8983"
+  version = "v1.1.1"
+
+[[projects]]
+  digest = "1:09aa5dd1332b93c96bde671bafb053249dc813febf7d5ca84e8f382ba255d67d"
+  name = "github.com/gorilla/websocket"
+  packages = ["."]
+  pruneopts = ""
+  revision = "66b9c49e59c6c48f0ffce28c2d8b8a5678502c6d"
+  version = "v1.4.0"
+
+[[projects]]
   branch = "master"
+  digest = "1:2c5ad58492804c40bdaf5d92039b0cde8b5becd2b7feeb37d7d1cc36a8aa8dbe"
   name = "github.com/kardianos/osext"
   packages = ["."]
+  pruneopts = ""
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
+  digest = "1:9e40609ebb0bf8783790216b7a078ac735e3f543e9bb2e1dc8a80fbb7e0f86be"
+  name = "github.com/sec51/convert"
+  packages = [
+    ".",
+    "bigendian",
+    "smallendian",
+  ]
+  pruneopts = ""
+  revision = "3276ac712ca35cb9cc9a823b564fdaf89f4ac803"
+  version = "1.0.1"
+
+[[projects]]
+  digest = "1:f6e5334361cd607d206b42a5a46bc982f4dacabf2c07d52a05a091aaedf820e6"
+  name = "github.com/sec51/cryptoengine"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2306d105a49ec564d9d376570a1881d557fc4a82"
+  version = "0.0.1"
+
+[[projects]]
   branch = "master"
+  digest = "1:fd10da483ef00d87f75904471f790ab317756878af62171a02b193b1c6e929ba"
+  name = "github.com/sec51/gf256"
+  packages = ["."]
+  pruneopts = ""
+  revision = "2454accbeb9e6b0e2e53b01e1d641c7157251ed4"
+
+[[projects]]
+  branch = "master"
+  digest = "1:91a27cb4fd51fa7c4f5c4dfaa91d3dc65ad8a3aaf33375865c8fcd982e44f482"
+  name = "github.com/sec51/qrcode"
+  packages = [
+    ".",
+    "coding",
+  ]
+  pruneopts = ""
+  revision = "b7779abbcaf1ec4de65f586a85fe24db31d45e7c"
+
+[[projects]]
+  digest = "1:6790e809fa72750eacbf393c70f395d739bf25936f60efdfeb2e537bc7686267"
+  name = "github.com/sec51/twofactor"
+  packages = ["."]
+  pruneopts = ""
+  revision = "cd97c894b2cc5815662875774345bc852395bd4c"
+  version = "1.0.1"
+
+[[projects]]
+  branch = "master"
+  digest = "1:488c97dd29d2f0ddb48e8a04aed2da02f43efbd6e6c9a7bf9653819f55c8e90c"
   name = "go.bug.st/serial.v1"
-  packages = [".","unixutils"]
+  packages = [
+    ".",
+    "unixutils",
+  ]
+  pruneopts = ""
   revision = "5f7892a7bb453066bdc6683b9b5d24d9dee03ec1"
 
 [[projects]]
+  digest = "1:6150d0a72956eb2e50226e13ce59ef2a9636c0e8e1ac900d72f9b2097121cdf9"
   name = "go.etcd.io/bbolt"
   packages = ["."]
+  pruneopts = ""
   revision = "583e8937c61f1af6513608ccc75c97b6abdf4ff9"
   version = "v1.3.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:887074c37fcefc2f49b5ae9c6f9f36107341aec23185613d0e9f1ee81db7f94a"
+  name = "golang.org/x/crypto"
+  packages = [
+    "bcrypt",
+    "blowfish",
+    "curve25519",
+    "hkdf",
+    "internal/subtle",
+    "nacl/box",
+    "nacl/secretbox",
+    "poly1305",
+    "salsa20/salsa",
+    "ssh/terminal",
+  ]
+  pruneopts = ""
+  revision = "505ab145d0a99da450461ae2c1a9f6cd10d1f447"
+
+[[projects]]
+  branch = "master"
+  digest = "1:e6d1805ead5b8f2439808f76187f54042ed35ee26eb9ca63127259a0e612b119"
   name = "golang.org/x/sys"
-  packages = ["unix","windows"]
+  packages = [
+    "unix",
+    "windows",
+  ]
+  pruneopts = ""
   revision = "b4a75ba826a64a70990f11a225237acd6ef35c9f"
 
 [[projects]]
+  digest = "1:15d017551627c8bb091bde628215b2861bed128855343fdd570c62d08871f6e1"
   name = "gopkg.in/alecthomas/kingpin.v2"
   packages = ["."]
+  pruneopts = ""
   revision = "947dcec5ba9c011838740e680966fd7087a71d0d"
   version = "v2.2.6"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6ccb87e0d0447659473d7b8b233447f7d21ef0aa4917e7b2ecd57beefee169a2"
+  input-imports = [
+    "github.com/GeertJohan/go.rice",
+    "github.com/asdine/storm",
+    "github.com/cswank/gogadgets",
+    "github.com/go-chi/chi",
+    "github.com/gorilla/securecookie",
+    "github.com/gorilla/websocket",
+    "github.com/sec51/twofactor",
+    "golang.org/x/crypto/bcrypt",
+    "golang.org/x/crypto/ssh/terminal",
+    "gopkg.in/alecthomas/kingpin.v2",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1
