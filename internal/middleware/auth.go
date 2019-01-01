@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -39,6 +40,10 @@ func (a *Auth) Auth(h http.Handler) http.Handler {
 }
 
 func GenerateCookie(username string) (*http.Cookie, error) {
+	if len(hashKey) != 16 || len(blockKey) != 16 {
+		return nil, fmt.Errorf("you must set QUIMBY_HASH_KEY and QUIMBY_BLOCK_KEY, 16 characters each")
+	}
+
 	value := map[string]string{
 		"username": username,
 	}
