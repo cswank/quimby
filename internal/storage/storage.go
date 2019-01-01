@@ -34,6 +34,10 @@ func init() {
 	if err := db.Init(&schema.Gadget{}); err != nil {
 		log.Fatalf("could not Init db: %v", err)
 	}
+
+	if err := db.Init(&schema.User{}); err != nil {
+		log.Fatalf("could not Init db: %v", err)
+	}
 }
 
 func dbPath() (string, error) {

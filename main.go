@@ -1,12 +1,13 @@
 package main
 
 import (
-	"crypto/tls"
-	"crypto/x509"
+	"bytes"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"syscall"
 
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
@@ -15,6 +16,10 @@ import (
 	"github.com/cswank/quimby/internal/gadget/repository"
 	"github.com/cswank/quimby/internal/storage"
 	"github.com/cswank/quimby/internal/templates"
+	userhttp "github.com/cswank/quimby/internal/user/delivery/http"
+	userusecase "github.com/cswank/quimby/internal/user/usecase"
+
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/go-chi/chi"
 )
@@ -28,6 +33,10 @@ var (
 	create = gdt.Command("create", "create a gadget")
 	name   = create.Flag("name", "name of the gadget").Short('n').Required().String()
 	url    = create.Flag("url", "url of the gadget").Short('u').Required().String()
+
+	usr        = kingpin.Command("user", "user crud")
+	createUser = usr.Command("create", "create a user")
+	username   = createUser.Arg("username", "username").Required().String()
 )
 
 func main() {
@@ -39,7 +48,9 @@ func main() {
 	case "serve":
 		err = doServe()
 	case "gadget create":
-		err = doCreate(*name, *url)
+		err = doCreateGadget(*name, *url)
+	case "user create":
+		err = doCreateUser(*username)
 	default:
 		err = fmt.Errorf("unknown command '%s'", cmd)
 	}
@@ -50,7 +61,7 @@ func main() {
 
 }
 
-func doCreate(name, url string) error {
+func doCreateGadget(name, url string) error {
 	repo := repository.New()
 	g, err := repo.Create(name, url)
 	if err != nil {
@@ -61,6 +72,33 @@ func doCreate(name, url string) error {
 	return nil
 }
 
+func doCreateUser(name string) error {
+	fmt.Print("Enter Password: ")
+	pw, err := terminal.ReadPassword(int(syscall.Stdin))
+	if err != nil {
+		return err
+	}
+
+	uc := userusecase.New()
+	u, qa, err := uc.Create(name, string(pw))
+	if err != nil {
+		return err
+	}
+
+	f, err := ioutil.TempFile("", "")
+	if err != nil {
+		return err
+	}
+
+	_, err = io.Copy(f, bytes.NewBuffer(qa))
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("created user\n: %+v, scan qa code at %s (and then delete it), \n", u, f.Name())
+	return nil
+}
+
 func doServe() error {
 	box := rice.MustFindBox("templates")
 	templates.Box(box)
@@ -68,6 +106,7 @@ func doServe() error {
 	pub := chi.NewRouter()
 	priv := chi.NewRouter()
 	gadgethttp.Init(pub, priv, box)
+	userhttp.Init(pub, box)
 
 	go func(r chi.Router) {
 		if err := http.ListenAndServe(":3334", r); err != nil {
@@ -75,29 +114,5 @@ func doServe() error {
 		}
 	}(priv)
 
-	server := getServer(pub)
-	return server.ListenAndServeTLS(*cert, *key)
-}
-
-func getServer(h http.Handler) *http.Server {
-	caCert, err := ioutil.ReadFile(*cert)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	pool := x509.NewCertPool()
-	pool.AppendCertsFromPEM(caCert)
-
-	cfg := &tls.Config{
-		ClientCAs:  pool,
-		ClientAuth: tls.RequireAndVerifyClientCert,
-	}
-
-	cfg.BuildNameToCertificate()
-
-	return &http.Server{
-		Addr:      ":3333",
-		TLSConfig: cfg,
-		Handler:   h,
-	}
+	return http.ListenAndServeTLS(":3333", *cert, *key, pub)
 }

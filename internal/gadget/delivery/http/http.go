@@ -29,13 +29,14 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 		clients: clients.New(),
 	}
 
+	auth := middleware.NewAuth()
+
 	pub.Get("/static/*", middleware.Handle(g.Static()))
 
-	pub.With(middleware.Auth).Get("/", middleware.Handle(g.Redirect))
-	pub.Route("/gadgets", func(r chi.Router) {
-		r.With(middleware.Auth).Get("/", middleware.Handle(middleware.Render(g.GetAll)))
-		r.With(middleware.Auth).Get("/{id}", middleware.Handle(middleware.Render(g.Get)))
-		r.With(middleware.Auth).Get("/{id}/websocket", middleware.Handle(g.Connect))
+	pub.With(auth.Auth).Route("/gadgets", func(r chi.Router) {
+		r.Get("/", middleware.Handle(middleware.Render(g.GetAll)))
+		r.Get("/{id}", middleware.Handle(middleware.Render(g.Get)))
+		r.Get("/{id}/websocket", middleware.Handle(g.Connect))
 	})
 
 	priv.Post("/status", middleware.Handle(g.Update))
