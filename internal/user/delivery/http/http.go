@@ -23,13 +23,17 @@ func Init(r chi.Router, box *rice.Box) {
 		box:     box,
 	}
 
-	r.Get("/login", middleware.Handle(middleware.Render(u.renderLogin)))
+	r.Get("/login", middleware.Handle(middleware.Render(u.render("login", "login.ghtml"))))
 	r.Post("/login", middleware.Handle(u.login))
+	r.Get("/logout", middleware.Handle(middleware.Render(u.render("logout", "logout.ghtml"))))
+	r.Post("/logout", middleware.Handle(u.logout))
 }
 
-func (u *userHTTP) renderLogin(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
-	p := templates.NewPage("login", "login.ghtml")
-	return &p, nil
+func (u *userHTTP) render(name, template string) middleware.RenderFunc {
+	return func(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+		p := templates.NewPage(name, template)
+		return &p, nil
+	}
 }
 
 func (u *userHTTP) login(w http.ResponseWriter, req *http.Request) error {
@@ -54,61 +58,14 @@ func (u *userHTTP) login(w http.ResponseWriter, req *http.Request) error {
 	return nil
 }
 
-// func Logout(w http.ResponseWriter, r *http.Request) {
-// 	cookie := &http.Cookie{
-// 		Name:   "quimby",
-// 		Value:  "",
-// 		Path:   "/",
-// 		MaxAge: -1,
-// 	}
-// 	http.SetCookie(w, cookie)
-// 	args := GetArgs(r)
-// 	if args.Args.Get("web") == "true" {
-// 		w.Header().Set("Location", "/login.html")
-// 		w.WriteHeader(http.StatusTemporaryRedirect)
-// 	}
-// }
-
-// func Login(w http.ResponseWriter, r *http.Request) {
-// 	user := quimby.NewUser("", quimby.UserTFA(TFA))
-// 	dec := json.NewDecoder(r.Body)
-// 	err := dec.Decode(user)
-// 	if err != nil {
-// 		http.Error(w, "bad request", http.StatusBadRequest)
-// 		return
-// 	}
-// 	if err := DoLogin(user, w, r); err != nil {
-// 		http.Error(w, "bad request", http.StatusBadRequest)
-// 	}
-// }
-
-// func DoLogin(user *quimby.User, w http.ResponseWriter, req *http.Request) error {
-// 	goodPassword, err := user.CheckPassword()
-// 	if !goodPassword || err != nil {
-// 		return fmt.Errorf("bad request")
-// 	}
-
-// 	params := req.URL.Query()
-// 	methods, ok := params["auth"]
-// 	user.TFAData = []byte{}
-// 	if ok && methods[0] == "jwt" {
-// 		setToken(w, user)
-// 	} else {
-// 		setCookie(w, user)
-// 	}
-// 	return nil
-// }
-
-// func setToken(w http.ResponseWriter, user *quimby.User) {
-// 	token, err := quimby.GenerateToken(user.Username, exp)
-// 	if err != nil {
-// 		w.WriteHeader(http.StatusUnauthorized)
-// 	} else {
-
-// 		w.Header().Set("Authorization", token)
-// 	}
-// }
-
-// func setCookie(w http.ResponseWriter, user *quimby.User) {
-
-// }
+func (u *userHTTP) logout(w http.ResponseWriter, req *http.Request) error {
+	cookie := &http.Cookie{
+		Name:   "quimby",
+		Value:  "",
+		Path:   "/",
+		MaxAge: -1,
+	}
+	http.SetCookie(w, cookie)
+	http.Redirect(w, req, "/login", http.StatusSeeOther)
+	return nil
+}

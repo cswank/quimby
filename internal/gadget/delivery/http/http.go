@@ -83,8 +83,6 @@ func (g *GadgetHTTP) Get(w http.ResponseWriter, req *http.Request) (middleware.R
 // instance to the websocket and vice versa.
 func (g *GadgetHTTP) Connect(w http.ResponseWriter, req *http.Request) error {
 	gadget, err := g.gadget(req)
-	fmt.Println("got here")
-
 	if err != nil {
 		return err
 	}

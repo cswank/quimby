@@ -1,0 +1,10 @@
+{{define "content"}}
+<div id="content">
+  <form method="POST" action="/logout">
+    <fieldset>
+      <input class="button-primary" type="submit" value="Logout">
+    </fieldset>
+  </form>
+</div>
+{{end}}
+

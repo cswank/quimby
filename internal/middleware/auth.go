@@ -59,7 +59,6 @@ func GenerateCookie(username string) (*http.Cookie, error) {
 
 func getUserFromCookie(r *http.Request) (*schema.User, error) {
 	cookie, err := r.Cookie("quimby")
-
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,6 @@ package usecase
 
 import (
 	"crypto"
-	"fmt"
 
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/cswank/quimby/internal/user"
@@ -43,19 +42,16 @@ func (u Usecase) Create(name, pws string) (*schema.User, []byte, error) {
 
 func (u Usecase) Check(username, pw, token string) error {
 	usr, err := u.repo.Get(username)
-	fmt.Println("user", usr, err)
 	if err != nil {
 		return err
 	}
 
 	if err := bcrypt.CompareHashAndPassword(usr.Password, []byte(pw)); err != nil {
-		fmt.Println("password", err)
 		return err
 	}
 
 	otp, err := twofactor.TOTPFromBytes(usr.TFA, "quimby")
 	if err != nil {
-		fmt.Println("tfa", err)
 		return err
 	}
 
