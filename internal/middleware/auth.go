@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 
@@ -28,4 +29,40 @@ func (a *Auth) Auth(h http.Handler) http.Handler {
 			h.ServeHTTP(w, req)
 		}
 	})
+}
+
+func GenerateCookie(username string) *http.Cookie {
+	value := map[string]string{
+		"user": username,
+	}
+
+	encoded, _ := SC.Encode("quimby", value)
+	return &http.Cookie{
+		Name:     "quimby",
+		Value:    encoded,
+		Path:     "/",
+		HttpOnly: true,
+	}
+}
+
+func GetUserFromCookie(r *http.Request) (*User, error) {
+	user := NewUser("")
+	cookie, err := r.Cookie("quimby")
+
+	if err != nil {
+		return nil, err
+	}
+	var m map[string]string
+	err = SC.Decode("quimby", cookie.Value, &m)
+	if err != nil {
+		return nil, err
+	}
+	if m["user"] == "" {
+		return nil, errors.New("no way, eh")
+	}
+	user.Username = m["user"]
+	err = user.Fetch()
+	user.HashedPassword = []byte{}
+	user.TFAData = []byte{}
+	return user, err
 }
