@@ -94,7 +94,7 @@ func doCreateUser(name string) error {
 		return err
 	}
 
-	fmt.Printf("created user\n: %+v, scan qa code at %s (and then delete it), \n", u, f.Name())
+	fmt.Printf("created user\n: %+v, scan qa code at %s (and then delete it)\n", u, f.Name())
 	return nil
 }
 
