@@ -130,6 +130,14 @@
   revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
+  digest = "1:b60a24f942c7031ece6c48bcab0b683c7d3d6aa9fd17e21459d9ae604da258fa"
+  name = "github.com/kelseyhightower/envconfig"
+  packages = ["."]
+  pruneopts = ""
+  revision = "f611eb38b3875cc3bd991ca91c51d06446afa14c"
+  version = "v1.3.0"
+
+[[projects]]
   digest = "1:9e40609ebb0bf8783790216b7a078ac735e3f543e9bb2e1dc8a80fbb7e0f86be"
   name = "github.com/sec51/convert"
   packages = [
@@ -243,6 +251,7 @@
     "github.com/go-chi/chi",
     "github.com/gorilla/securecookie",
     "github.com/gorilla/websocket",
+    "github.com/kelseyhightower/envconfig",
     "github.com/sec51/twofactor",
     "golang.org/x/crypto/bcrypt",
     "golang.org/x/crypto/ssh/terminal",
