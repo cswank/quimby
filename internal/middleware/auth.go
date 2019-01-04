@@ -3,12 +3,17 @@ package middleware
 import (
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/cswank/quimby/internal/config"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/cswank/quimby/internal/user"
 	"github.com/cswank/quimby/internal/user/repository"
 	"github.com/gorilla/securecookie"
+)
+
+const (
+	week = 24 * 7 * time.Hour
 )
 
 type Auth struct {
@@ -45,6 +50,7 @@ func (a *Auth) GenerateCookie(username string) (*http.Cookie, error) {
 		Name:     "quimby",
 		Value:    encoded,
 		Path:     "/",
+		Expires:  time.Now().Add(week),
 		HttpOnly: true,
 	}, err
 }
