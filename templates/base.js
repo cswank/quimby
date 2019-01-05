@@ -1,7 +1,7 @@
 {{define "base.js"}}
 
 var ready = false;
-var ws = new WebSocket("{{.Websocket}}");
+var ws = new WebSocket("wss://localhost:3333/gadgets/{{.Gadget.ID}}/websocket");
 
 window.onbeforeunload = function() {
     ws.onclose = function () {};
@@ -54,7 +54,7 @@ function waitForSocketConnection(ws, callback) {
         }, 50);
 }
 
-var id = {{.Gadget.ID}};
+var id =  3 ;
 var ready = false;
 
 function sendCommand(id, info) {
@@ -84,5 +84,5 @@ ws.onmessage = function(message) {
         updateIO(msg);
     }
 };
-
+  
 {{end}}

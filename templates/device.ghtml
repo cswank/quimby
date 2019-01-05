@@ -4,12 +4,12 @@
     {{if eq .Info.Direction "output"}}
       {{if eq .Value.Value true}}
         <label class="switch">
-          <input type="checkbox" checked="checked">
+          <input id="{{.Location}}-{{.Name}}" type="checkbox" checked="checked">
           <span class="slider round"></span>
         </label>
       {{else}}
         <label class="switch">
-          <input type="checkbox">
+          <input id="{{.Location}}-{{.Name}}" type="checkbox">
           <span class="slider round"></span>
         </label>
       {{end}}
