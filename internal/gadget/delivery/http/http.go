@@ -79,7 +79,11 @@ func (g *GadgetHTTP) get(w http.ResponseWriter, req *http.Request) (middleware.R
 	return &gadgetPage{
 		Gadget:    gadget,
 		Websocket: fmt.Sprintf("wss://localhost:3333/gadgets/%d/websocket", gadget.ID),
-		Page:      templates.NewPage(gadget.Name, "gadget.ghtml"),
+		Page: templates.NewPage(
+			gadget.Name,
+			"gadget.ghtml",
+			templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
+		),
 	}, nil
 }
 
@@ -194,7 +198,6 @@ func (g GadgetHTTP) update(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	fmt.Println("got and update", msg)
 	g.clients.Update(msg)
 	return nil
 }

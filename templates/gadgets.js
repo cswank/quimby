@@ -1,4 +1,4 @@
-{{define "base.js"}}
+{{define "gadgets.js"}}
 
 var ready = false;
 var ws = new WebSocket("wss://localhost:3333/gadgets/{{.Gadget.ID}}/websocket");

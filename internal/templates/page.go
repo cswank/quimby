@@ -1,5 +1,7 @@
 package templates
 
+import "fmt"
+
 type Page struct {
 	name        string
 	Links       []Link
@@ -13,10 +15,23 @@ type Link struct {
 	Link string
 }
 
-func NewPage(name, template string) Page {
-	return Page{
+func NewPage(name, template string, opts ...func(*Page)) Page {
+	p := Page{
 		name:     name,
 		template: template,
+	}
+
+	for _, opt := range opts {
+		opt(&p)
+	}
+
+	fmt.Printf("page: %+v\n", p)
+	return p
+}
+
+func WithScripts(s []string) func(*Page) {
+	return func(p *Page) {
+		p.Scripts = s
 	}
 }
 
@@ -25,7 +40,7 @@ func (p *Page) Name() string {
 }
 
 func (p *Page) AddScripts(s []string) {
-	p.Scripts = s
+	p.Scripts = append(p.Scripts, s...)
 }
 
 func (p *Page) AddLinks(l []Link) {
@@ -33,7 +48,7 @@ func (p *Page) AddLinks(l []Link) {
 }
 
 func (p *Page) AddStylesheets(s []string) {
-	p.Stylesheets = s
+	p.Stylesheets = append(p.Stylesheets, s...)
 }
 
 func (p *Page) Template() string {

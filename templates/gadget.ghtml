@@ -1,16 +1,26 @@
 {{define "content"}}
   <div id="content">
-    {{range $location, $devices := .Gadget.Status}}
-      <dl>
-        <h4>{{$location}}</h4>
-        {{range $key, $device := $devices}}
-          {{ template "device" $device}}
+    <div class="row">
+      <div class="column">
+        {{range $location, $devices := .Gadget.Status}}
+          <dl>
+            <h4>{{$location}}</h4>
+            {{range $key, $device := $devices}}
+              {{ template "device" $device}}
+            {{end}}
+          </dl>
         {{end}}
-      </dl>
-    {{end}}
+      </div>
+      <div class="column">
+        {{template "method"}}
+      </div>
+    </div>
   </div>
   <script>
-   {{ template "base.js" .}}
+   {{ template "gadgets.js" .}}
+  </script>
+  <script>
+   {{ template "method.js" .}}
   </script>
 {{end}}
 

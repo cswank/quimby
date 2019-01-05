@@ -35,3 +35,17 @@ body {
 svg#menu-icon path {
   fill: #9b4dca;
 }
+
+.complete {
+    text-decoration: line-through;
+    color: red;
+}
+
+.step {
+    margin-top: 2px;
+}
+
+.confirm {
+    margin-left: 5px;
+    color: green;
+}
