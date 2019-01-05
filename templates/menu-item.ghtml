@@ -1,7 +1,5 @@
 {{define "menu-item"}}
-  <div class="dropdown-content vertical-center">
     <p>
       <a href="{{.Link}}" id="{{.Name}}" class="pure-menu-link">{{.Name}}</a>
     </p>
-  </div>
 {{end}}

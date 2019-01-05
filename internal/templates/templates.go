@@ -57,10 +57,11 @@ func Box(box *rice.Box) {
 	}
 
 	templates = map[string]tmpl{
-		"login.ghtml":   {},
-		"logout.ghtml":  {},
-		"gadgets.ghtml": {},
-		"gadget.ghtml":  {files: []string{"device.ghtml", "method.ghtml", "gadgets.js", "method.js"}, stylesheets: []string{"/static/switch.css"}},
+		"login.ghtml":       {},
+		"logout.ghtml":      {},
+		"gadgets.ghtml":     {},
+		"edit-method.ghtml": {files: []string{"edit-method.js"}},
+		"gadget.ghtml":      {files: []string{"device.ghtml", "method.ghtml", "gadgets.js", "method.js"}, stylesheets: []string{"/static/switch.css"}},
 	}
 
 	base := []string{"head.ghtml", "base.ghtml", "navbar.ghtml", "menu-item.ghtml"}

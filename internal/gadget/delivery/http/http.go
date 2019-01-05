@@ -41,6 +41,8 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 		r.Get("/", middleware.Handle(middleware.Render(g.getAll)))
 		r.Get("/{id}", middleware.Handle(middleware.Render(g.get)))
 		r.Get("/{id}/websocket", middleware.Handle(g.connect))
+		r.Get("/{id}/method", middleware.Handle(middleware.Render(g.method)))
+		r.Post("/{id}/method", middleware.Handle(g.runMethod))
 	})
 
 	priv.Post("/status", middleware.Handle(g.update))
@@ -83,8 +85,46 @@ func (g *GadgetHTTP) get(w http.ResponseWriter, req *http.Request) (middleware.R
 			gadget.Name,
 			"gadget.ghtml",
 			templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
+			templates.WithLinks([]templates.Link{{Name: "method", Link: fmt.Sprintf("/gadgets/%d/method", gadget.ID)}}),
 		),
 	}, nil
+}
+
+// method shows the method editor for a gadget
+func (g *GadgetHTTP) method(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+	gadget, err := g.gadget(req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &gadgetPage{
+		Page: templates.NewPage(
+			"Quimby",
+			"edit-method.ghtml",
+			templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
+		),
+		Gadget: gadget,
+	}, nil
+}
+
+func (g *GadgetHTTP) runMethod(w http.ResponseWriter, req *http.Request) error {
+	gadget, err := g.gadget(req)
+	if err != nil {
+		return err
+	}
+
+	var m gogadgets.Method
+	dec := json.NewDecoder(req.Body)
+	if err := dec.Decode(&m); err != nil {
+		return err
+	}
+
+	msg := gogadgets.Message{
+		Type:   gogadgets.METHOD,
+		Method: m,
+	}
+	fmt.Println("sending method", msg)
+	return gadget.Send(msg)
 }
 
 // connect registers with a gogadget instance and starts up
