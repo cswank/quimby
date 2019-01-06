@@ -30,7 +30,7 @@ function isNumeric(n) {
     return !isNaN(parseFloat(n)) && isFinite(n);
 }
 
-function doSendComamnd(cmd) {
+function doSendCommand(cmd) {
     console.log("sending command", cmd);
     var msg = JSON.stringify({
         sender: "quimby",
@@ -67,12 +67,13 @@ function sendCommand(id, info) {
     } else {
         cmd = info.off[0];
     }
-    doSendComamnd(cmd);
+    
+    doSendCommand(cmd);    
 }
 
 waitForSocketConnection(ws, function() {
     ready = true;
-    doSendComamnd("update");
+    doSendCommand("update");
 });
 
 ws.onmessage = function(message) {
