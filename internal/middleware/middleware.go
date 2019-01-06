@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
@@ -31,7 +30,6 @@ func Render(r RenderFunc) func(w http.ResponseWriter, req *http.Request) error {
 		pg.AddScripts(scripts)
 		pg.AddStylesheets(stylesheets)
 		pg.AddLinks([]templates.Link{{Name: "logout", Link: "/logout"}})
-		fmt.Printf("page: %+v\n", pg)
 		return t.ExecuteTemplate(w, "base", pg)
 	}
 }

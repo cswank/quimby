@@ -123,7 +123,6 @@ func (g *GadgetHTTP) runMethod(w http.ResponseWriter, req *http.Request) error {
 		Type:   gogadgets.METHOD,
 		Method: m,
 	}
-	fmt.Println("sending method", msg)
 	return gadget.Send(msg)
 }
 
