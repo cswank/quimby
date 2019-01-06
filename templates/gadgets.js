@@ -1,7 +1,7 @@
 {{define "gadgets.js"}}
 
 var ready = false;
-var ws = new WebSocket("wss://localhost:3333/gadgets/{{.Gadget.ID}}/websocket");
+var ws = new WebSocket("{{.Websocket}}");
 
 window.onbeforeunload = function() {
     ws.onclose = function () {};

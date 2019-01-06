@@ -3,6 +3,7 @@ package gadgethttp
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"math/rand"
 	"net/http"
 	"strconv"
@@ -28,6 +29,7 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 
 	g := &GadgetHTTP{
 		box:         box,
+		host:        cfg.Host,
 		usecase:     usecase.New(),
 		clients:     clients.New(),
 		internalURL: cfg.InternalAddress,
@@ -50,6 +52,7 @@ func Init(pub, priv chi.Router, box *rice.Box) {
 
 // GadgetHTTP renders html
 type GadgetHTTP struct {
+	host        string
 	usecase     gadget.Usecase
 	box         *rice.Box
 	clients     *clients.Clients
@@ -80,7 +83,7 @@ func (g *GadgetHTTP) get(w http.ResponseWriter, req *http.Request) (middleware.R
 
 	return &gadgetPage{
 		Gadget:    gadget,
-		Websocket: fmt.Sprintf("wss://localhost:3333/gadgets/%d/websocket", gadget.ID),
+		Websocket: fmt.Sprintf("wss://%s/gadgets/%d/websocket", g.host, gadget.ID),
 		Page: templates.NewPage(
 			gadget.Name,
 			"gadget.ghtml",
@@ -190,7 +193,9 @@ func (g *GadgetHTTP) randString() string {
 // Send a message via the web socket.
 func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
 	d, _ := json.Marshal(m)
-	conn.WriteMessage(websocket.TextMessage, d)
+	if err := conn.WriteMessage(websocket.TextMessage, d); err != nil {
+		log.Println("unable to write to websocket", err)
+	}
 }
 
 func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {

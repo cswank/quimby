@@ -7,19 +7,13 @@ import (
 )
 
 var (
-	cfg Config
+	cfg *Config
 )
-
-func init() {
-	err := envconfig.Process("quimby", &cfg)
-	if err != nil {
-		log.Fatal(err.Error())
-	}
-}
 
 // Config holds env vars
 type Config struct {
 	InternalAddress string `required:"true"`
+	Host            string `required:"true"`
 	BlockKey        string `required:"true"`
 	HashKey         string `required:"true"`
 	TLSCert         string `required:"true"`
@@ -27,5 +21,13 @@ type Config struct {
 }
 
 func Get() Config {
-	return cfg
+	if cfg == nil {
+		var c Config
+		err := envconfig.Process("quimby", &c)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		cfg = &c
+	}
+	return *cfg
 }
