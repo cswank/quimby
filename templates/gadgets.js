@@ -1,7 +1,10 @@
 {{define "gadgets.js"}}
 
 var ready = false;
+var timeoutID;
 var ws = new WebSocket("{{.Websocket}}");
+var holdTime = 1000;
+var commands = {{ command .Gadget.Status }};
 
 window.onbeforeunload = function() {
     ws.onclose = function () {};
@@ -74,6 +77,22 @@ function sendCommand(id, info) {
 waitForSocketConnection(ws, function() {
     ready = true;
     doSendCommand("update");
+
+    var devices = document.getElementsByClassName("device");
+    _.each(devices, function(dev) {
+        console.log("dev", dev);
+        dev.addEventListener('mousedown', function(event) { 
+            timeoutId = setTimeout(function() {
+                //dev.
+                showCommand(dev);
+            }, holdTime);
+            console.log("adding mouseup", timeoutId);
+            dev.addEventListener('mouseup', function(event) {
+                console.log("mouseup");
+                clearTimeout(timeoutId);
+            });
+        });
+    });
 });
 
 ws.onmessage = function(message) {
@@ -85,5 +104,22 @@ ws.onmessage = function(message) {
         updateIO(msg);
     }
 };
+
+
+function showCommand(label) {
+    var dev = label.getElementsByTagName("input")[0];
+    var msg = commands[dev.id];
+    
+    var state;
+    if (dev.checked) {
+        state = "off";
+    } else {
+        state = "on";
+    }
+
+    var cmd = msg.info[state];
+    cmd = cmd + ' ' + prompt(cmd);
+    doSendCommand(cmd);
+}
   
 {{end}}

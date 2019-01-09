@@ -9,24 +9,28 @@ import (
 	"strings"
 
 	rice "github.com/GeertJohan/go.rice"
+	"github.com/cswank/gogadgets"
 )
 
 var (
 	templates map[string]tmpl
 
 	deviceFuncs = template.FuncMap{
-		"truncate": func(text string) string {
-			if len(text) <= 10 {
-				return text
-			}
-			return fmt.Sprintf("%s...", text[:10])
-		},
 		"format": func(v driver.Value, decimals int) string {
 			if v == nil {
 				return ""
 			}
 			t := fmt.Sprintf("%%.%df", decimals)
 			return fmt.Sprintf(t, v.(float64))
+		},
+		"command": func(devices map[string]map[string]gogadgets.Message) map[string]gogadgets.Message {
+			out := map[string]gogadgets.Message{}
+			for location, statuses := range devices {
+				for dev, status := range statuses {
+					out[fmt.Sprintf("%s-%s", location, dev)] = status
+				}
+			}
+			return out
 		},
 	}
 )
@@ -61,7 +65,7 @@ func Box(box *rice.Box) {
 		"logout.ghtml":      {},
 		"gadgets.ghtml":     {},
 		"edit-method.ghtml": {files: []string{"edit-method.js"}},
-		"gadget.ghtml":      {files: []string{"device.ghtml", "method.ghtml", "gadgets.js", "method.js"}, stylesheets: []string{"/static/switch.css"}},
+		"gadget.ghtml":      {funcs: deviceFuncs, files: []string{"device.ghtml", "method.ghtml", "gadgets.js", "method.js"}, stylesheets: []string{"/static/switch.css"}},
 	}
 
 	base := []string{"head.ghtml", "base.ghtml", "navbar.ghtml", "menu-item.ghtml"}
