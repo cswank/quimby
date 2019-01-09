@@ -60,7 +60,8 @@ function waitForSocketConnection(ws, callback) {
 var id =  3 ;
 var ready = false;
 
-function sendCommand(id, info) {
+function sendCommand(id) {
+    var info = commands[id].info;
     if (!ready) {
         showNotReady(id);
     }
