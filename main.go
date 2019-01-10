@@ -32,6 +32,8 @@ var (
 	create = gdt.Command("create", "create a gadget")
 	name   = create.Flag("name", "name of the gadget").Short('n').Required().String()
 	url    = create.Flag("url", "url of the gadget").Short('u').Required().String()
+	del    = gdt.Command("delete", "delete a gadget")
+	id     = del.Arg("id", "id of the gadget").Required().Int()
 
 	usr        = kingpin.Command("user", "user crud")
 	createUser = usr.Command("create", "create a user")
@@ -48,6 +50,8 @@ func main() {
 		err = doServe()
 	case "gadget create":
 		err = doCreateGadget(*name, *url)
+	case "gadget delete":
+		err = doDeleteGadget(*id)
 	case "user create":
 		err = doCreateUser(*username)
 	default:
@@ -69,6 +73,11 @@ func doCreateGadget(name, url string) error {
 
 	fmt.Printf("created gadget\n: %+v\n", g)
 	return nil
+}
+
+func doDeleteGadget(id int) error {
+	repo := repository.New()
+	return repo.Delete(id)
 }
 
 func doCreateUser(name string) error {

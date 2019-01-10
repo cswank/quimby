@@ -31,3 +31,8 @@ func (r Repo) Create(name, url string) (*schema.Gadget, error) {
 	g := &schema.Gadget{Name: name, URL: url}
 	return g, r.db.Save(g)
 }
+
+func (r Repo) Delete(id int) error {
+	g := &schema.Gadget{ID: id}
+	return r.db.DeleteStruct(g)
+}
