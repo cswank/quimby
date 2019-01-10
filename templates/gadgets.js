@@ -118,9 +118,8 @@ function showCommand(label) {
         state = "on";
     }
 
-    var cmd = msg.info[state];
-    cmd = cmd + ' ' + prompt(cmd);
+    var cmd = prompt("send a command", msg.info[state]);
     doSendCommand(cmd);
 }
-  
+
 {{end}}
