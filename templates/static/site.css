@@ -51,3 +51,8 @@ svg#menu-icon path {
     margin-left: 5px;
     color: green;
 }
+
+ul#steps {
+  list-style: none;
+  line-height:75%;
+{

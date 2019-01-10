@@ -11,7 +11,7 @@ window.onbeforeunload = function() {
     ws.close();
 };
 
-ws.onerror = function(data) {console.log("error", data)};
+ws.onerror = function(data) {console.log("error", data);};
 
 function updateIO(msg) {
     var id = msg.location + "-" + msg.name;
@@ -34,7 +34,6 @@ function isNumeric(n) {
 }
 
 function doSendCommand(cmd) {
-    console.log("sending command", cmd);
     var msg = JSON.stringify({
         sender: "quimby",
         type: "command",
@@ -81,15 +80,12 @@ waitForSocketConnection(ws, function() {
 
     var devices = document.getElementsByClassName("device");
     _.each(devices, function(dev) {
-        console.log("dev", dev);
         dev.addEventListener('mousedown', function(event) { 
             timeoutId = setTimeout(function() {
                 //dev.
                 showCommand(dev);
             }, holdTime);
-            console.log("adding mouseup", timeoutId);
             dev.addEventListener('mouseup', function(event) {
-                console.log("mouseup");
                 clearTimeout(timeoutId);
             });
         });
@@ -98,7 +94,6 @@ waitForSocketConnection(ws, function() {
 
 ws.onmessage = function(message) {
     var msg = JSON.parse(message.data);
-    console.log("got websocket message", msg);
     if ((msg.type == "update" && msg.sender == "method runner") || msg.type == "method update") {
         showMethod(msg.method);
     } else if (msg.type == "update") {
