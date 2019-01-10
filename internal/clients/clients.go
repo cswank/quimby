@@ -1,0 +1,62 @@
+package clients
+
+import (
+	"sync"
+
+	"github.com/cswank/gogadgets"
+)
+
+//Clients keeps track of the connected websocket clients.  It holds the chans
+//that get written to when a Gogadgets system sends an update to Quimby.  That chan
+//is used to relay the message the correct websocket.
+type Clients struct {
+	clients map[string]map[string](chan gogadgets.Message)
+	lock    sync.Mutex
+}
+
+func (c *Clients) Get(key string) (map[string](chan gogadgets.Message), bool) {
+	c.lock.Lock()
+	m, ok := c.clients[key]
+	c.lock.Unlock()
+	return m, ok
+}
+
+func (c *Clients) Add(host, key string, ch chan gogadgets.Message) {
+	c.lock.Lock()
+	chs, ok := c.clients[host]
+	if !ok {
+		chs = map[string](chan gogadgets.Message){}
+	}
+	chs[key] = ch
+	c.clients[host] = chs
+	c.lock.Unlock()
+}
+
+func (c *Clients) Delete(host, uuid string) {
+	c.lock.Lock()
+	m, ok := c.clients[host]
+	if ok {
+		delete(m, uuid)
+	}
+	c.clients[host] = m
+	c.lock.Unlock()
+}
+
+func (c *Clients) Update(msg gogadgets.Message) {
+	c.lock.Lock()
+	defer c.lock.Unlock()
+	chs, ok := c.clients[msg.Host]
+	if !ok {
+		return
+	}
+
+	for _, ch := range chs {
+		ch <- msg
+	}
+}
+
+func New() *Clients {
+	return &Clients{
+		clients: make(map[string]map[string](chan gogadgets.Message)),
+	}
+}

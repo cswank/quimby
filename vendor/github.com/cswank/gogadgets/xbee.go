@@ -19,17 +19,33 @@ type address struct {
 	location string
 }
 
-type SerialFactory func(string, *serial.Mode) (serial.Port, error)
-
 type converter func(float64) (float64, string, address)
 
-var (
-	serialFactory SerialFactory
-)
-
-func moisture(location string) converter {
+/*
+Vegatronix VH400 (https://www.vegetronix.com/Products/VH400/VH400-Piecewise-Curve.phtml)
+0 to 1.1V	    VWC= 10*V-1
+1.1V to 1.3V	VWC= 25*V- 17.5
+1.3V  to 1.82V	VWC= 48.08*V- 47.5
+1.82V to 2.2V	VWC= 26.32*V- 7.89
+*/
+func vh400(location string) converter {
 	return func(v float64) (float64, string, address) {
-		return v / 1000.0, "%", address{"moisture", location}
+		v = v / 1000 //milivolts comint in
+		var m, b float64
+		if v < 1.1 {
+			m = 10
+			b = -1
+		} else if v < 1.3 {
+			m = 25
+			b = -17.5
+		} else if v < 1.82 {
+			m = 48.08
+			b = -47.5
+		} else {
+			m = 26.32
+			b = -7.89
+		}
+		return v*m + b, "VWC", address{"moisture", location}
 	}
 }
 
@@ -69,7 +85,7 @@ func (x XBeeConfig) getConversion(location string) map[string]converter {
 	for k, t := range x.ADC {
 		switch t {
 		case "moisture":
-			out[k] = moisture(location)
+			out[k] = vh400(location)
 		case "tmp36":
 			out[k] = tmp36(location)
 		}
@@ -77,12 +93,7 @@ func (x XBeeConfig) getConversion(location string) map[string]converter {
 	return out
 }
 
-func NewXBee(pin *Pin) (InputDevice, error) {
-	p, ok := pin.Args["port"].(string)
-	if !ok {
-		return nil, fmt.Errorf(`unable to create serial port for XBee, pin.Args["port"] should be the path to a serial device`)
-	}
-
+func NewXBee(pin *Pin, opts ...func(InputDevice) error) (InputDevice, error) {
 	j, ok := pin.Args["xbees"].(string)
 	if !ok {
 		return nil, fmt.Errorf(`can't create xbee: %v`, pin.Args["xbees"])
@@ -93,13 +104,6 @@ func NewXBee(pin *Pin) (InputDevice, error) {
 		return nil, fmt.Errorf(`can't create xbee: %v`, err)
 	}
 
-	mode := &serial.Mode{}
-
-	port, err := serialFactory(p, mode)
-	if err != nil {
-		return nil, fmt.Errorf(`unable to create serial port for XBee, err: %v`, err)
-	}
-
 	//           addr       pin
 	adc := map[string]map[string]converter{}
 	dio := map[string]map[string]address{}
@@ -108,11 +112,43 @@ func NewXBee(pin *Pin) (InputDevice, error) {
 		dio[addr] = x.getDigital(x.Location)
 	}
 
-	return &XBee{
-		port: port,
-		adc:  adc,
-		dio:  dio,
-	}, nil
+	x := &XBee{
+		adc: adc,
+		dio: dio,
+	}
+
+	for _, opt := range opts {
+		if err := opt(x); err != nil {
+			return nil, err
+		}
+	}
+
+	if x.port == nil {
+		p, ok := pin.Args["port"].(string)
+		if !ok {
+			return nil, fmt.Errorf(`unable to create serial port for XBee, pin.Args["port"] should be the path to a serial device`)
+		}
+		mode := &serial.Mode{}
+		var err error
+		x.port, err = serial.Open(p, mode)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return x, nil
+}
+
+func XBeeSerialPort(p serial.Port) func(InputDevice) error {
+	return func(i InputDevice) error {
+		x, ok := i.(*XBee)
+		if !ok {
+			return fmt.Errorf("invalid input device for XBeeSerialPort")
+		}
+
+		x.port = p
+		return nil
+	}
 }
 
 func (x *XBee) Start(ch <-chan Message, val chan<- Value) {
@@ -127,7 +163,6 @@ func (x *XBee) listen(ch chan<- Value) {
 	go x.readMessage(msgCh)
 	for {
 		msg := <-msgCh
-
 		x.getAnalog(msg, ch)
 		x.getDigital(msg, ch)
 	}
@@ -192,15 +227,15 @@ func (x *XBee) getAnalog(msg xbee.Message, ch chan<- Value) {
 
 func (x *XBee) readMessage(ch chan<- xbee.Message) {
 	for {
-		msg := xbee.ReadMessage(x.port, xbee.Verbose)
-		ch <- msg
+		msg, err := xbee.ReadMessage(x.port)
+		if err != nil {
+			log.Printf("unable to read xbee message: %s", err)
+		} else {
+			ch <- msg
+		}
 	}
 }
 
 func (x *XBee) GetValue() *Value {
 	return &Value{}
-}
-
-func (x *XBee) Config() ConfigHelper {
-	return ConfigHelper{}
 }

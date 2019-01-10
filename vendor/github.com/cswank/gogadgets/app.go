@@ -2,13 +2,8 @@ package gogadgets
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"os"
-)
-
-var (
-	lg Logger
 )
 
 //App holds all the gadgets and handles passing Messages
@@ -16,49 +11,15 @@ var (
 //central part of Gadgets system.
 type App struct {
 	gadgets []Gadgeter
-	master  string
-	host    string
-	port    int
 }
 
-//NewApp creates a new Gadgets system.  The cfg argument can be a
-//path to a json file or a Config object itself.
-func NewApp(cfg interface{}, gadgets ...Gadgeter) *App {
+// New creates a new Gadgets system.  The cfg argument can be a
+// path to a json file or a Config object itself.
+func New(cfg interface{}, gadgets ...Gadgeter) *App {
 	config := GetConfig(cfg)
-	if config.Logger != nil {
-		lg = config.Logger
-	} else {
-		lg = log.New(os.Stdout, "", log.Ldate|log.Ltime)
+	return &App{
+		gadgets: config.CreateGadgets(gadgets...),
 	}
-	if config.Port == 0 {
-		config.Port = 6111
-	}
-
-	a := &App{
-		master: config.Master,
-		host:   config.Host,
-		port:   config.Port,
-	}
-	a.GetGadgets(config.Gadgets)
-	a.gadgets = append(a.gadgets, gadgets...)
-	return a
-}
-
-//GetGadgets is a factory fuction that reads a GadgtConfig
-//and creates all the Gadgets that are defined in it.
-func (a *App) GetGadgets(configs []GadgetConfig) {
-	a.gadgets = make([]Gadgeter, len(configs))
-	for i, config := range configs {
-		gadget, err := NewGadget(&config)
-		if err != nil {
-			log.Fatal(err)
-		}
-		a.gadgets[i] = gadget
-	}
-	a.gadgets = append(a.gadgets, &MethodRunner{})
-	srv := NewServer(a.host, a.master, a.port, lg)
-	a.gadgets = append(a.gadgets, srv)
-
 }
 
 //Start is the main entry point for a Gadget system.  It takes
@@ -83,7 +44,7 @@ func (a *App) GoStart(input <-chan Message) {
 		channels[gadget.GetUID()] = out
 		go gadget.Start(out, collect)
 	}
-	lg.Println("started gagdgets")
+	log.Println("started gagdgets")
 	b := NewBroker(channels, input, collect)
 	b.Start()
 }
@@ -96,20 +57,27 @@ func GetConfig(config interface{}) *Config {
 	case *Config:
 		c = v
 	default:
-		lg.Fatal("invalid config")
+		log.Fatal("invalid config")
+	}
+
+	if c.Port == 0 {
+		c.Port = 6111
 	}
 	return c
 }
 
-func getConfigFromFile(configPath string) *Config {
+func getConfigFromFile(pth string) *Config {
 	c := &Config{}
-	b, err := ioutil.ReadFile(configPath)
+	f, err := os.Open(pth)
 	if err != nil {
-		panic(err)
+		log.Fatalf("unable to open config path %s: %s", pth, err)
 	}
-	err = json.Unmarshal(b, c)
+
+	defer f.Close()
+
+	err = json.NewDecoder(f).Decode(c)
 	if err != nil {
-		panic(err)
+		log.Fatalf("unable to parse json from config path %s: %s", pth, err)
 	}
 	return c
 }

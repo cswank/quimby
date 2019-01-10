@@ -1,0 +1,10 @@
+{{define "content"}}
+<div id="content">
+  {{range .Gadgets}}
+    <div>
+      <a href="/gadgets/{{.ID}}">{{.Name}}</a>
+    </div>
+  {{end}}
+</div>
+{{end}}
+

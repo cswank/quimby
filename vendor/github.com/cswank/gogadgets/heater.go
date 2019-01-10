@@ -34,7 +34,7 @@ func NewHeater(pin *Pin) (OutputDevice, error) {
 	if pin.Frequency == 0 {
 		pin.Frequency = 1
 	}
-	dev, err = NewGPIO(pin)
+	dev, err = newGPIO(pin)
 	if err == nil {
 		h = &Heater{
 			toggleTime: 100 * time.Hour,
@@ -50,14 +50,6 @@ func NewHeater(pin *Pin) (OutputDevice, error) {
 
 func (h *Heater) Commands(location, name string) *Commands {
 	return nil
-}
-
-func (h *Heater) Config() ConfigHelper {
-	return ConfigHelper{
-		PinType: "pwm",
-		Units:   []string{"C", "F"},
-		Pins:    Pins["pwm"],
-	}
 }
 
 func (h *Heater) Update(msg *Message) bool {
@@ -162,6 +154,9 @@ func (h *Heater) getTarget(val *Value) {
 }
 
 func (h *Heater) readTemperature(msg *Message) {
+	if msg.Name != "temperature" {
+		return
+	}
 	temp, ok := msg.Value.ToFloat()
 	if ok {
 		h.currentTemp = temp

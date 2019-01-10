@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math"
 	"strconv"
 	"strings"
 	"sync"
@@ -69,10 +68,10 @@ type Thermometer struct {
 	units      string
 	value      float64
 	sleep      time.Duration
-	lock       sync.Mutex
+	lock       *sync.Mutex
 }
 
-func NewThermometer(pin *Pin) (InputDevice, error) {
+func NewThermometer(pin *Pin, opts ...func(InputDevice) error) (InputDevice, error) {
 	var therm *Thermometer
 	var err error
 	if pin.OneWirePath == "" {
@@ -91,16 +90,6 @@ func NewThermometer(pin *Pin) (InputDevice, error) {
 	return therm, err
 }
 
-func (t *Thermometer) Config() ConfigHelper {
-	return ConfigHelper{
-		PinType: "thermometer",
-		Fields: map[string][]string{
-			"oneWireId": []string{},
-		},
-		Units: []string{"C", "F"},
-	}
-}
-
 func (t *Thermometer) GetValue() *Value {
 	return &Value{
 		Value: t.value,
@@ -109,11 +98,9 @@ func (t *Thermometer) GetValue() *Value {
 }
 
 func (t *Thermometer) getTemperature(out chan Value, err chan error) {
-	var previousTemperature *Value
 	for {
 		val, e := t.readFile()
-		if e == nil && t.isValid(val, previousTemperature) {
-			previousTemperature = val
+		if e == nil && t.isValid(val) {
 			t.value = val.Value.(float64)
 			out <- *val
 		}
@@ -124,8 +111,8 @@ func (t *Thermometer) getTemperature(out chan Value, err chan error) {
 //The 1-wire craps out once in a while and a value less than zero is a sign
 //that something went wrong.  Ususally the subsequent temperature value
 //is valid.
-func (t *Thermometer) isValid(value, previous *Value) bool {
-	return previous == nil || math.Abs(previous.Value.(float64)-value.Value.(float64)) < 10.0
+func (t *Thermometer) isValid(value *Value) bool {
+	return value.Value.(float64) > 0.0
 }
 
 // Linux (with certain kernels) on a Beaglebone and Raspberry Pi have

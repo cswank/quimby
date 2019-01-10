@@ -1,21 +1,24 @@
-THESE ARE JUST NOTES UNTIL I MAKE A REAL README
+# Quimby
 
-Install
-=======
 
-You can build Quimby so that the angular front end code is embedded in
-the binary.  Do this by calling
+## TLS
 
-    $ ./bin/build.sh
+### Server
 
-from the root of quimby.
+    openssl req -x509 -newkey rsa:4096 -keyout server_key.pem -out server_cert.pem -nodes -days 365 -subj "/CN=localhost/O=Client\ Certificate"
 
-DONT FORGET TO ADD QUIMBY_USER TO DB WITH WRITE PERMISSION
+### Client
 
-Secure Websockets on IOS
-========================
+Create:
 
-((make me nice))
-wws doesn't work on iphone unless your certificate organization name matches
-your dyn domain and you install the cert on the phone by exporting a .cer file
-and emailing it to the phone where it can be installed.
+    openssl req -newkey rsa:4096 -keyout craig_dev_key.pem -out craig_dev_csr.pem -nodes -days 365 -subj "/CN=Craig"
+
+Sign it:
+
+    openssl x509 -req -in craig_dev_csr.pem -CA server_cert.pem -CAkey server_key.pem -out craig_dev_cert.pem -set_serial 01 -days 365
+
+Bundle it:
+
+    openssl pkcs12 -export -clcerts -in craig_dev_cert.pem -inkey craig_dev_key.pem -out craig_dev.p12
+
+Add the p12 file to your certificates in Keychain Access on macos (double click on the p12 file).

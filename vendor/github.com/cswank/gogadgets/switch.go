@@ -9,72 +9,60 @@ import (
 //to change value (1 to 0 or 0 to 1).  When that change
 //happens it sends an update to the rest of the system.
 type Switch struct {
-	GPIO       Poller
-	Value      interface{}
-	TrueValue  interface{}
-	FalseValue interface{}
-	Units      string
-	out        chan<- Value
+	GPIO  Poller
+	Value bool
+	Units string
+	out   chan<- Value
+
+	delay    time.Duration
+	lastRead time.Time
 }
 
-func NewSwitch(pin *Pin) (InputDevice, error) {
+func NewSwitch(pin *Pin, opts ...func(InputDevice) error) (InputDevice, error) {
 	pin.Direction = "in"
 	pin.Edge = "both"
 	var err error
-	var s *Switch
-	gpio, err := NewGPIO(pin)
+	gpio, err := newGPIO(pin)
 	if err != nil {
 		return nil, err
 	}
 
-	s = &Switch{
-		GPIO:      gpio,
-		TrueValue: pin.Value,
-		Units:     pin.Units,
-	}
-	switch s.TrueValue.(type) {
-	case bool:
-		s.Value = false
-		s.FalseValue = false
-	default:
-		s.Value = float64(0.0)
-		s.FalseValue = float64(0.0)
-	}
-	return s, nil
-}
-
-func (s *Switch) Config() ConfigHelper {
-	return ConfigHelper{
-		PinType: "pwm",
-		Pins:    Pins["gpio"],
-		Fields: map[string][]string{
-			"edge": []string{"rising", "falling", "both"},
-		},
-	}
+	return &Switch{
+		GPIO:  gpio,
+		Units: pin.Units,
+		delay: time.Duration(50 * time.Millisecond),
+	}, nil
 }
 
 //The GPIO does the real waiting here.  This wraps it and adds
 //a delay so that the inevitable bounce in the signal from the
 //physical device is ignored.
-func (s *Switch) wait(out chan<- bool, err chan<- error) {
+func (s *Switch) wait(out chan<- bool) {
 	for {
-		val, e := s.GPIO.Wait()
+		e := s.doWait()
 		if e != nil {
-			err <- e
-			return
+			log.Printf("gpio wait error: %s", e)
+		} else {
+			out <- true
 		}
-		out <- val
-		time.Sleep(100 * time.Millisecond)
 	}
+}
+
+func (s *Switch) doWait() error {
+	n := time.Now()
+	if n.Sub(s.lastRead) < s.delay {
+		time.Sleep(s.delay)
+		return s.doWait()
+	}
+
+	err := s.GPIO.Wait()
+	s.lastRead = n
+	return err
 }
 
 func (s *Switch) readValue() {
 	v := s.GPIO.Status()
-	if v["gpio"] {
-		s.Value = s.TrueValue
-	} else {
-		s.Value = s.FalseValue
-	}
+	s.Value = v["gpio"]
 }
 
 func (s *Switch) SendValue() {
@@ -94,20 +82,18 @@ func (s *Switch) GetValue() *Value {
 func (s *Switch) Start(in <-chan Message, out chan<- Value) {
 	s.out = out
 	value := make(chan bool)
-	err := make(chan error)
 	s.readValue()
 	s.SendValue()
 	keepGoing := true
-	go s.wait(value, err)
+	go s.wait(value)
 	for keepGoing {
 		select {
 		case <-in:
 			//do nothing
 		case val := <-value:
 			s.Value = val
+			s.readValue()
 			s.SendValue()
-		case e := <-err:
-			log.Println(e)
 		}
 	}
 }

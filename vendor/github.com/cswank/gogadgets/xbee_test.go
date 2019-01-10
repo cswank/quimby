@@ -11,22 +11,19 @@ import (
 	serial "go.bug.st/serial.v1"
 )
 
-var (
-	fp *FakePort
-)
-
 type FakePort struct {
+	serial.Port
 	msg  []byte
 	i    int
 	lock sync.Mutex
 	end  int
 }
 
-func NewFakePort(p string, mode *serial.Mode) (serial.Port, error) {
-	return fp, nil
+func (f *FakePort) SetMode(mode *serial.Mode) error {
+	return nil
 }
 
-func (f *FakePort) SetMode(mode *serial.Mode) error {
+func (f *FakePort) BetModemStatusBits(mode *serial.Mode) error {
 	return nil
 }
 
@@ -61,12 +58,11 @@ var _ = Describe("xbee", func() {
 		msg    chan gogadgets.Message
 		val    chan gogadgets.Value
 		io     string
+		fp     *FakePort
 	)
 
 	BeforeEach(func() {
 		fp = &FakePort{}
-		gogadgets.Init(NewFakePort)
-
 	})
 
 	JustBeforeEach(func() {
@@ -83,7 +79,7 @@ var _ = Describe("xbee", func() {
 		msg = make(chan gogadgets.Message)
 
 		var err error
-		xbee, err = gogadgets.NewXBee(pin)
+		xbee, err = gogadgets.NewXBee(pin, gogadgets.XBeeSerialPort(fp))
 		Expect(err).To(BeNil())
 
 		go xbee.Start(msg, val)
@@ -148,7 +144,7 @@ var _ = Describe("xbee", func() {
 			Expect(vals[1].GetName()).To(Equal("gate"))
 			Expect(vals[1].Value.(bool)).To(BeFalse())
 			Expect(vals[2].GetName()).To(Equal("moisture"))
-			Expect(vals[2].Value.(float64)).To(BeNumerically("~", 0.5982404692082112, 0.001))
+			Expect(vals[2].Value.(float64)).To(BeNumerically("~", 4.9824046920821115, 0.001))
 			Expect(vals[3].GetName()).To(Equal("temperature"))
 			Expect(vals[3].Value.(float64)).To(BeNumerically("~", 60.0293255, 0.001))
 		})

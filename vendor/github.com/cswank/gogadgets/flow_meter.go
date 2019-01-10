@@ -25,10 +25,10 @@ type FlowMeter struct {
 	out     chan<- Value
 }
 
-func NewFlowMeter(pin *Pin) (InputDevice, error) {
+func NewFlowMeter(pin *Pin, opts ...func(InputDevice) error) (InputDevice, error) {
 	pin.Direction = "in"
 	pin.Value = true
-	gpio, err := NewGPIO(pin)
+	gpio, err := newGPIO(pin)
 	if err != nil {
 		return nil, err
 	}
@@ -42,16 +42,9 @@ func NewFlowMeter(pin *Pin) (InputDevice, error) {
 	}, nil
 }
 
-func (f *FlowMeter) Config() ConfigHelper {
-	return ConfigHelper{}
-}
-
 func (f *FlowMeter) wait(err chan<- error) {
 	for {
-		v, e := f.GPIO.Wait()
-		if !v {
-			continue
-		}
+		e := f.GPIO.Wait()
 		if e != nil {
 			err <- e
 			continue

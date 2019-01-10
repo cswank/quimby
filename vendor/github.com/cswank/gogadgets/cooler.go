@@ -12,7 +12,7 @@ type Cooler struct {
 func NewCooler(pin *Pin) (OutputDevice, error) {
 	var c *Cooler
 	var err error
-	g, err := NewGPIO(pin)
+	g, err := newGPIO(pin)
 	if err == nil {
 		c = &Cooler{
 			gpio:   g,
@@ -24,14 +24,6 @@ func NewCooler(pin *Pin) (OutputDevice, error) {
 
 func (c *Cooler) Commands(location, name string) *Commands {
 	return nil
-}
-
-func (c *Cooler) Config() ConfigHelper {
-	return ConfigHelper{
-		PinType: "gpio",
-		Units:   []string{"C", "F"},
-		Pins:    Pins["gpio"],
-	}
 }
 
 func (c *Cooler) Update(msg *Message) bool {

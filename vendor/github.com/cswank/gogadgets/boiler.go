@@ -58,7 +58,7 @@ type Boiler struct {
 func NewBoiler(pin *Pin) (OutputDevice, error) {
 	var b *Boiler
 	var err error
-	g, err := NewGPIO(pin)
+	g, err := newGPIO(pin)
 	var c cmp
 
 	var h, l float64
@@ -88,14 +88,6 @@ func NewBoiler(pin *Pin) (OutputDevice, error) {
 
 func (b *Boiler) Commands(location, name string) *Commands {
 	return nil
-}
-
-func (b *Boiler) Config() ConfigHelper {
-	return ConfigHelper{
-		PinType: "gpio",
-		Units:   []string{"C", "F"},
-		Pins:    Pins["gpio"],
-	}
 }
 
 func (b *Boiler) Update(msg *Message) bool {

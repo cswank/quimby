@@ -5,14 +5,12 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
+	"os"
 	"strconv"
 	"strings"
 	"time"
 )
-
-func Init(s SerialFactory) {
-	serialFactory = s
-}
 
 var (
 	units = map[string]string{
@@ -57,6 +55,7 @@ type Gadget struct {
 	Direction      string
 	OnCommands     []string
 	OffCommands    []string
+	inputLookup    map[bool]string
 	InitialValue   string
 	targetValue    *Value
 	UID            string
@@ -140,6 +139,7 @@ func (g *Gadget) doInputLoop(in <-chan Message) {
 		case msg := <-in:
 			g.readMessage(&msg)
 		case val := <-devOut:
+			val = g.translateBool(val)
 			location := g.Location
 			name := g.Name
 			sender := g.UID
@@ -164,6 +164,20 @@ func (g *Gadget) doInputLoop(in <-chan Message) {
 			}
 		}
 	}
+}
+
+func (g *Gadget) translateBool(val Value) Value {
+	if len(g.inputLookup) == 0 {
+		return val
+	}
+	t, ok := val.Value.(bool)
+	if ok {
+		v, ok := g.inputLookup[t]
+		if ok {
+			val.Value = v
+		}
+	}
+	return val
 }
 
 func (g *Gadget) readInitialValue() {
@@ -286,7 +300,8 @@ func (g *Gadget) setCompare(value float64, unit string, gadget string) {
 			return msg.Location == g.Location &&
 				ok &&
 				msg.Name == gadget &&
-				val <= value
+				(math.Abs(val-value) < 0.001 || val <= value)
+
 		}
 	} else if g.Operator == ">=" {
 		g.compare = func(msg *Message) bool {
@@ -294,7 +309,7 @@ func (g *Gadget) setCompare(value float64, unit string, gadget string) {
 			return msg.Location == g.Location &&
 				ok &&
 				msg.Name == gadget &&
-				val >= value
+				(math.Abs(val-value) < 0.001 || val >= value)
 		}
 	}
 }
@@ -408,4 +423,12 @@ func GetUUID() string {
 	// version 4 (pseudo-random); see section 4.1.3
 	uuid[6] = uuid[6]&^0xf0 | 0x40
 	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
+}
+
+// FileExists tells you if the file exists.
+func FileExists(path string) bool {
+	if _, err := os.Stat(path); err == nil {
+		return true
+	}
+	return false
 }

@@ -9,8 +9,6 @@ import (
 	"path"
 	"strings"
 	"syscall"
-
-	"github.com/cswank/gogadgets/utils"
 )
 
 var (
@@ -36,20 +34,13 @@ type GPIO struct {
 	direction     string
 	edge          string
 	activeLow     string
-	fd            int
-	fdSet         *syscall.FdSet
-	buf           []byte
 }
 
-func GPIOFactory(pin *Pin) (OutputDevice, error) {
-	g, err := NewGPIO(pin)
-	if err != nil {
-		return nil, err
-	}
-	return g, nil
+func NewGPIO(pin *Pin) (OutputDevice, error) {
+	return newGPIO(pin)
 }
 
-func NewGPIO(pin *Pin) (*GPIO, error) {
+func newGPIO(pin *Pin) (*GPIO, error) {
 	var export string
 	var ok bool
 	if pin.Platform == "rpi" {
@@ -90,15 +81,8 @@ func (g *GPIO) Commands(location, name string) *Commands {
 	return nil
 }
 
-func (g *GPIO) Config() ConfigHelper {
-	return ConfigHelper{
-		PinType: "gpio",
-		Pins:    Pins["gpio"],
-	}
-}
-
 func (g *GPIO) Init() error {
-	if !utils.FileExists(g.directionPath) {
+	if !FileExists(g.directionPath) {
 		if err := g.writeValue(g.exportPath, g.export); err != nil {
 			return err
 		}
@@ -144,27 +128,30 @@ func (g *GPIO) writeValue(path, value string) error {
 	return ioutil.WriteFile(path, []byte(value), GPIO_DEV_MODE)
 }
 
-func (g *GPIO) Wait() (bool, error) {
-	if g.fd == 0 {
-		fd, err := syscall.Open(g.valuePath, syscall.O_RDONLY, 0666)
-		if err != nil {
-			return false, err
-		}
-		g.fd = fd
-		g.fdSet = new(syscall.FdSet)
-		FD_SET(g.fd, g.fdSet)
-		g.buf = make([]byte, 64)
-		syscall.Read(g.fd, g.buf)
-	}
-	syscall.Select(g.fd+1, nil, nil, g.fdSet, nil)
-	syscall.Seek(g.fd, 0, 0)
-	_, err := syscall.Read(g.fd, g.buf)
+func (g *GPIO) Wait() error {
+	fd, err := syscall.Open(g.valuePath, syscall.O_RDONLY, 0666)
 	if err != nil {
-		return false, err
+		return err
 	}
-	return strings.TrimSpace(string(g.buf[:2])) == "1", nil
+	fdSet := new(syscall.FdSet)
+	g.fdZero(fdSet)
+	g.fdSet(fd, fdSet)
+	buf := make([]byte, 32)
+	syscall.Read(fd, buf)
+	syscall.Select(fd+1, nil, nil, fdSet, nil)
+	return syscall.Close(fd)
 }
 
-func FD_SET(fd int, p *syscall.FdSet) {
+func (g *GPIO) fdIsSet(fd int, p *syscall.FdSet) bool {
+	return (p.Bits[fd/32] & (1 << uint(fd) % 32)) != 0
+}
+
+func (g *GPIO) fdZero(p *syscall.FdSet) {
+	for i := range p.Bits {
+		p.Bits[i] = 0
+	}
+}
+
+func (g *GPIO) fdSet(fd int, p *syscall.FdSet) {
 	p.Bits[fd/32] |= 1 << (uint(fd) % 32)
 }

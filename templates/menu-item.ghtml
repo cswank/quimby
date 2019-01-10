@@ -1,0 +1,5 @@
+{{define "menu-item"}}
+    <p>
+      <a href="{{.Link}}" id="{{.Name}}" class="pure-menu-link">{{.Name}}</a>
+    </p>
+{{end}}

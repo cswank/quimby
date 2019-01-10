@@ -200,33 +200,5 @@ var _ = Describe("gadgets", func() {
 			update = <-output
 			Expect(update.Value.Value).To(BeFalse())
 		})
-		It("starts a switch", func() {
-			location := "lab"
-			name := "switch"
-			poller := &FakePoller{}
-			s := &gogadgets.Switch{
-				GPIO:       poller,
-				Value:      0.0,
-				TrueValue:  5.0,
-				FalseValue: 0.0,
-				Units:      "liters",
-			}
-			g := gogadgets.Gadget{
-				Location: location,
-				Name:     name,
-				Input:    s,
-				UID:      fmt.Sprintf("%s %s", location, name),
-			}
-			input := make(chan gogadgets.Message)
-			output := make(chan gogadgets.Message)
-			go g.Start(input, output)
-			<-output
-			val := <-output
-			Expect(val.Value.Value.(float64)).To(Equal(0.0))
-			val = <-output
-			Expect(val.Value.Value.(float64)).To(Equal(5.0))
-			val = <-output
-			Expect(val.Value.Value.(float64)).To(Equal(0.0))
-		})
 	})
 })

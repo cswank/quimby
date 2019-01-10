@@ -9,12 +9,12 @@ driver carrier.
    |					 |
    | O O O O O O O O O O |
    --|--------------------
-   	 |					 
-	 |			
-   	 | 	   	   	
+   	 |
+	 |
+   	 |
    	 |
    	===
- 
+
 
 */
 type Motor struct {
@@ -26,12 +26,12 @@ type Motor struct {
 
 func NewMotor(pin *Pin) (OutputDevice, error) {
 	p := pin.Pins["gpio_a"]
-	gpioA, err := NewGPIO(&p)
+	gpioA, err := newGPIO(&p)
 	if err != nil {
 		return nil, err
 	}
 	p = pin.Pins["gpio_b"]
-	gpioB, err := NewGPIO(&p)
+	gpioB, err := newGPIO(&p)
 	if err != nil {
 		return nil, err
 	}
@@ -49,14 +49,6 @@ func NewMotor(pin *Pin) (OutputDevice, error) {
 
 func (m *Motor) Commands(location, name string) *Commands {
 	return nil
-}
-
-func (m *Motor) Config() ConfigHelper {
-	// g := GPIO{}
-	// gpio := g.Config()
-	// p := PWM{}
-	// pwm := p.Config()
-	return ConfigHelper{}
 }
 
 func (m *Motor) Update(msg *Message) bool {

@@ -12,7 +12,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/cswank/rex"
+	"github.com/gorilla/mux"
 )
 
 type Server struct {
@@ -21,7 +21,6 @@ type Server struct {
 	isMaster    bool
 	port        int
 	prefix      string
-	lg          Logger
 	external    chan Message
 	internal    chan Message
 	id          string
@@ -37,7 +36,7 @@ func init() {
 	http.DefaultClient.Timeout = 15 * time.Second
 }
 
-func NewServer(host, master string, port int, lg Logger) *Server {
+func NewServer(host, master string, port int) *Server {
 	var isMaster bool
 	clients := map[string]string{}
 	if master == "" {
@@ -52,7 +51,6 @@ func NewServer(host, master string, port int, lg Logger) *Server {
 		host:     host,
 		isMaster: isMaster,
 		port:     port,
-		lg:       lg,
 		updates:  map[string]Message{},
 		id:       "server",
 		external: make(chan Message),
@@ -163,19 +161,19 @@ func (s *Server) GetDirection() string {
 }
 
 func (s *Server) startServer() {
-	r := rex.New("main")
-	r.Get("/gadgets", http.HandlerFunc(s.status))
-	r.Put("/gadgets", http.HandlerFunc(s.update))
-	r.Post("/gadgets", http.HandlerFunc(s.update))
-	r.Get("/gadgets/values", http.HandlerFunc(s.values))
-	r.Get("/gadgets/locations/{location}/devices/{device}/status", http.HandlerFunc(s.deviceValue))
+	r := mux.NewRouter()
+	r.HandleFunc("/gadgets", http.HandlerFunc(s.status)).Methods("GET")
+	r.HandleFunc("/gadgets", http.HandlerFunc(s.update)).Methods("PUT")
+	r.HandleFunc("/gadgets", http.HandlerFunc(s.update)).Methods("POST")
+	r.HandleFunc("/gadgets/values", http.HandlerFunc(s.values)).Methods("GET")
+	r.HandleFunc("/gadgets/locations/{location}/devices/{device}/status", http.HandlerFunc(s.deviceValue)).Methods("GET")
 	if s.isMaster {
-		r.Post("/clients", http.HandlerFunc(s.setClient))
-		r.Get("/clients", http.HandlerFunc(s.getClients))
-		r.Delete("/clients", http.HandlerFunc(s.removeClient))
+		r.HandleFunc("/clients", http.HandlerFunc(s.setClient)).Methods("POST")
+		r.HandleFunc("/clients", http.HandlerFunc(s.getClients)).Methods("GET")
+		r.HandleFunc("/clients", http.HandlerFunc(s.removeClient)).Methods("DELETE")
 	}
 
-	s.lg.Printf("listening on 0.0.0.0:%d\n", s.port)
+	log.Printf("listening on 0.0.0.0:%d\n", s.port)
 
 	srv := &http.Server{
 		Addr:         fmt.Sprintf(":%d", s.port),
@@ -186,7 +184,7 @@ func (s *Server) startServer() {
 
 	err := srv.ListenAndServe()
 	if err != nil {
-		s.lg.Fatal(err)
+		log.Fatal(err)
 	}
 }
 
@@ -223,13 +221,13 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 	s.statusLock.Lock()
 	if err := enc.Encode(s.updates); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		lg.Println(err)
+		log.Println(err)
 	}
 	s.statusLock.Unlock()
 }
 
 func (s *Server) deviceValue(w http.ResponseWriter, r *http.Request) {
-	vars := rex.Vars(r, "main")
+	vars := mux.Vars(r)
 	k := fmt.Sprintf("%s %s", vars["location"], vars["device"])
 	s.statusLock.Lock()
 	m, ok := s.updates[k]
@@ -260,7 +258,7 @@ func (s *Server) values(w http.ResponseWriter, r *http.Request) {
 	s.statusLock.Unlock()
 	if err := enc.Encode(v); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
-		lg.Println(err)
+		log.Println(err)
 	}
 }
 
@@ -268,7 +266,7 @@ func (s *Server) update(w http.ResponseWriter, r *http.Request) {
 	var msg Message
 	dec := json.NewDecoder(r.Body)
 	if err := dec.Decode(&msg); err != nil {
-		lg.Println(err)
+		log.Println(err)
 		return
 	}
 	if msg.UUID == "" {

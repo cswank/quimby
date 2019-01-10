@@ -1,0 +1,16 @@
+{{define "content"}}
+<div id="content">
+  <form method="POST" action="/login">
+    <fieldset>
+      <label for="username">Username</label>
+      <input type="text" name="username">
+      <label for="password">Password</label>
+      <input type="password" name="password">
+      <label for="token">Token</label>
+      <input type="text" name="token">
+      <input class="button-primary" type="submit" value="Login">
+    </fieldset>
+  </form>
+</div>
+{{end}}
+
