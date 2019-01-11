@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/cswank/quimby/internal/errors"
 	"github.com/cswank/quimby/internal/templates"
 )
 
@@ -13,8 +14,13 @@ type RenderFunc func(http.ResponseWriter, *http.Request) (Renderer, error)
 func Handle(h Handler) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, req *http.Request) {
 		err := h(w, req)
-		if err != nil {
-			log.Println(err)
+		if err == nil {
+			return
+		}
+
+		log.Println(err)
+		if errors.IsUnauthorized(err) {
+			http.Redirect(w, req, `/login?error="invalid login"`, http.StatusSeeOther)
 		}
 	}
 }

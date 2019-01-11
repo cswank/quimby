@@ -8,7 +8,6 @@ body {
   height: 60px;
   border-bottom: .1rem solid #d1d1d1;
   padding: 0px;
-  
 }
 
 .vertical-center {
@@ -39,20 +38,25 @@ svg#menu-icon path {
 }
 
 .complete {
-    text-decoration: line-through;
-    color: red;
+  text-decoration: line-through;
+  color: red;
 }
 
 .step {
-    margin-top: 2px;
+  margin-top: 2px;
 }
 
 .confirm {
-    margin-left: 5px;
-    color: green;
+  margin-left: 5px;
+  color: green;
 }
 
 ul#steps {
   list-style: none;
   line-height:75%;
-{
+}
+
+.error {
+  color: #D8000C;
+  background-color: #FFD2D2;
+}
