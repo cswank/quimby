@@ -38,6 +38,10 @@
   transition: .4s;
 }
 
+.slider.io-on:before {
+  background-color: black;
+}
+
 input:checked + .slider {
   background-color: #2196F3;
 }

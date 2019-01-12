@@ -19,6 +19,13 @@ function updateIO(msg) {
         document.getElementById(id).textContent = getValue(msg.value.value);
     } else if (msg.info.direction == "output") {
         document.getElementById(id).checked = msg.value.value;
+        console.log("msg", msg.value.io.gpio);
+        if (msg.value.io.gpio) {
+            document.getElementById(id + "-slider").classList.add("io-on");
+        } else {
+            document.getElementById(id + "-slider").classList.remove("io-on");
+        }
+        document.getElementById(id).checked = msg.value.value;
     }
 }
 

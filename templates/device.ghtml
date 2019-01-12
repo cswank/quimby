@@ -5,12 +5,12 @@
       {{if eq .Value.Value true}}
         <label class="device switch">
           <input id="{{.Location}}-{{.Name}}" onchange="sendCommand('{{.Location}}-{{.Name}}')" type="checkbox" checked="checked">
-          <span class="slider round"></span>
+          <span id="{{.Location}}-{{.Name}}-slider" class="slider round"></span>
         </label>
       {{else}}
         <label class="device switch">
           <input id="{{.Location}}-{{.Name}}" onchange="sendCommand('{{.Location}}-{{.Name}}')" type="checkbox">
-          <span class="slider round"></span>
+          <span id="{{.Location}}-{{.Name}}-slider" class="slider round"></span>
         </label>
       {{end}}
     {{else}}
