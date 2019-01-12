@@ -7,9 +7,14 @@ var holdTime = 1000;
 var commands = {{ command .Gadget.Status }};
 
 window.onbeforeunload = function() {
-    ws.onclose = function () {};
-    ws.close();
+    ws.onclose = function () {
+        ws.close();
+    };
 };
+
+function showNotReady(id) {
+    console.log(id, " not ready");
+}
 
 ws.onerror = function(data) {console.log("error", data);};
 

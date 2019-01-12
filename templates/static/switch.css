@@ -39,7 +39,11 @@
 }
 
 .slider.io-on:before {
-  background-color: black;
+  -webkit-animation: color_change 1s infinite alternate;
+  -moz-animation: color_change 1s infinite alternate;
+  -ms-animation: color_change 1s infinite alternate;
+  -o-animation: color_change 1s infinite alternate;
+  animation: color_change 1s infinite alternate;
 }
 
 input:checked + .slider {
@@ -63,4 +67,27 @@ input:checked + .slider:before {
 
 .slider.round:before {
   border-radius: 50%;
+}
+
+
+
+@-webkit-keyframes color_change {
+	from { background-color: white; }
+	to { background-color: black; }
+}
+@-moz-keyframes color_change {
+	from { background-color: white; }
+	to { background-color: black; }
+}
+@-ms-keyframes color_change {
+	from { background-color: white; }
+	to { background-color: black; }
+}
+@-o-keyframes color_change {
+	from { background-color: white; }
+	to { background-color: black; }
+}
+@keyframes color_change {
+	from { background-color: white; }
+	to { background-color: black; }
 }
