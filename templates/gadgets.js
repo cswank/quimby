@@ -6,12 +6,6 @@ var ws = new WebSocket("{{.Websocket}}");
 var holdTime = 1000;
 var commands = {{ command .Gadget.Status }};
 
-window.onbeforeunload = function() {
-    ws.onclose = function () {
-        ws.close();
-    };
-};
-
 function showNotReady(id) {
     console.log(id, " not ready");
 }
@@ -46,12 +40,16 @@ function isNumeric(n) {
 }
 
 function doSendCommand(cmd) {
-    var msg = JSON.stringify({
-        sender: "quimby",
-        type: "command",
-        body: cmd,
-    });
-    ws.send(msg);
+    if (ready) {
+        var msg = JSON.stringify({
+            sender: "quimby",
+            type: "command",
+            body: cmd,
+        });
+        ws.send(msg);
+    } else {
+        
+    }
 }
 
 function waitForSocketConnection(ws, callback) {

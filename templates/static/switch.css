@@ -71,21 +71,21 @@ input:checked + .slider:before {
 
 @-webkit-keyframes color_change {
 	from { background-color: white; }
-	to { background-color: black; }
+	to { background-color: #A9A9A9; }
 }
 @-moz-keyframes color_change {
 	from { background-color: white; }
-	to { background-color: black; }
+	to { background-color: #A9A9A9; }
 }
 @-ms-keyframes color_change {
 	from { background-color: white; }
-	to { background-color: black; }
+	to { background-color: #A9A9A9; }
 }
 @-o-keyframes color_change {
 	from { background-color: white; }
-	to { background-color: black; }
+	to { background-color: #A9A9A9; }
 }
 @keyframes color_change {
 	from { background-color: white; }
-	to { background-color: black; }
+	to { background-color: #A9A9A9; }
 }
