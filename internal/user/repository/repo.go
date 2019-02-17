@@ -31,3 +31,11 @@ func (r Repo) Create(name string, pw, tfa []byte) (*schema.User, error) {
 	u := &schema.User{Name: name, Password: pw, TFA: tfa}
 	return u, r.db.Save(u)
 }
+
+func (r Repo) Delete(name string) error {
+	u, err := r.Get(name)
+	if err != nil {
+		return err
+	}
+	return r.db.DeleteStruct(&u)
+}

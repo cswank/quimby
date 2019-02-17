@@ -7,6 +7,7 @@ type Repository interface {
 	GetAll() ([]schema.User, error)
 	Get(username string) (schema.User, error)
 	Create(name string, pw, tfa []byte) (*schema.User, error)
+	Delete(name string) error
 }
 
 // Usecase stores users
@@ -14,5 +15,6 @@ type Usecase interface {
 	GetAll() ([]schema.User, error)
 	Get(username string) (schema.User, error)
 	Create(name, pw string) (*schema.User, []byte, error)
+	Delete(name string) error
 	Check(username, pw, token string) error
 }

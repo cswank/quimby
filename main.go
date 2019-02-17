@@ -38,6 +38,9 @@ var (
 	usr        = kingpin.Command("user", "user crud")
 	createUser = usr.Command("create", "create a user")
 	username   = createUser.Arg("username", "username").Required().String()
+
+	delUser     = usr.Command("delete", "delete a user")
+	delUsername = delUser.Arg("username", "username").Required().String()
 )
 
 func main() {
@@ -54,6 +57,8 @@ func main() {
 		err = doDeleteGadget(*id)
 	case "user create":
 		err = doCreateUser(*username)
+	case "user delete":
+		err = doDeleteUser(*delUsername)
 	default:
 		err = fmt.Errorf("unknown command '%s'", cmd)
 	}
@@ -105,6 +110,11 @@ func doCreateUser(name string) error {
 
 	fmt.Printf("created user\n: %+v, scan qa code at %s (and then delete it)\n", u, f.Name())
 	return nil
+}
+
+func doDeleteUser(name string) error {
+	uc := userusecase.New()
+	return uc.Delete(name)
 }
 
 func doServe() error {

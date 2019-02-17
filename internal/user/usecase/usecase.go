@@ -40,6 +40,10 @@ func (u Usecase) Create(name, pws string) (*schema.User, []byte, error) {
 	return user, qr, err
 }
 
+func (u Usecase) Delete(name string) error {
+	return u.repo.Delete(name)
+}
+
 func (u Usecase) Check(username, pw, token string) error {
 	usr, err := u.repo.Get(username)
 	if err != nil {
