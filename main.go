@@ -123,8 +123,8 @@ func doServe() error {
 
 	pub := chi.NewRouter()
 	priv := chi.NewRouter()
-	gadgethttp.Init(pub, priv, box)
-	userhttp.Init(pub, box)
+	gadgethttp.Handle(pub, priv, box)
+	userhttp.Handle(pub, box)
 
 	go func(r chi.Router) {
 		if err := http.ListenAndServe(":3334", r); err != nil {

@@ -24,7 +24,7 @@ import (
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-func Init(pub, priv chi.Router, box *rice.Box) {
+func Handle(pub, priv chi.Router, box *rice.Box) {
 	cfg := config.Get()
 
 	g := &GadgetHTTP{

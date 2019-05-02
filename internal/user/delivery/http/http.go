@@ -19,7 +19,7 @@ type userHTTP struct {
 	auth    *middleware.Auth
 }
 
-func Init(r chi.Router, box *rice.Box) {
+func Handle(r chi.Router, box *rice.Box) {
 	u := &userHTTP{
 		usecase: usecase.New(),
 		box:     box,
