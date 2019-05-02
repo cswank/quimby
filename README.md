@@ -22,3 +22,7 @@ Bundle it:
     openssl pkcs12 -export -clcerts -in craig_dev_cert.pem -inkey craig_dev_key.pem -out craig_dev.p12
 
 Add the p12 file to your certificates in Keychain Access on macos (double click on the p12 file).
+
+On iOS you need to email the p12 file to yourself, double-click to install it.  You then need to go to
+Settings/General/About/Certificate Trust Settings and enable full trust for root certificates for the one
+you just installed.
