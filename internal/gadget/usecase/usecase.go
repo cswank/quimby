@@ -11,9 +11,23 @@ type Usecase struct {
 	repo gadget.Repository
 }
 
-func New() *Usecase {
-	return &Usecase{
-		repo: repository.New(),
+func New(opts ...func(*Usecase)) *Usecase {
+	u := &Usecase{}
+
+	for _, opt := range opts {
+		opt(u)
+	}
+
+	if u.repo == nil {
+		u.repo = repository.New()
+	}
+
+	return u
+}
+
+func Repo(r gadget.Repository) func(*Usecase) {
+	return func(u *Usecase) {
+		u.repo = r
 	}
 }
 
