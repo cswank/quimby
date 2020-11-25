@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	rice "github.com/GeertJohan/go.rice"
@@ -15,6 +16,7 @@ import (
 	"github.com/cswank/quimby/internal/config"
 	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/gadget/usecase"
+	"github.com/cswank/quimby/internal/homekit"
 	"github.com/cswank/quimby/internal/middleware"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/cswank/quimby/internal/templates"
@@ -24,7 +26,7 @@ import (
 
 var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
 
-func Handle(pub, priv chi.Router, box *rice.Box) {
+func Handle(pub, priv chi.Router, box *rice.Box, hc *homekit.Homekit) {
 	cfg := config.Get()
 
 	g := &GadgetHTTP{
@@ -34,6 +36,7 @@ func Handle(pub, priv chi.Router, box *rice.Box) {
 		clients:     clients.New(),
 		internalURL: cfg.InternalAddress,
 		auth:        middleware.NewAuth(),
+		hc:          hc,
 	}
 
 	pub.Get("/", g.redirect)
@@ -58,6 +61,7 @@ type GadgetHTTP struct {
 	clients     *clients.Clients
 	internalURL string
 	auth        *middleware.Auth
+	hc          *homekit.Homekit
 }
 
 // getAll shows all the gadgets
@@ -231,6 +235,9 @@ func (g *GadgetHTTP) Static() middleware.Handler {
 	s := http.FileServer(g.box.HTTPBox())
 	return func(w http.ResponseWriter, req *http.Request) error {
 		s.ServeHTTP(w, req)
+		if strings.Contains(req.URL.Path, ".css.map") {
+			w.Header()["content-type"] = []string{"text/css"}
+		}
 		return nil
 	}
 }
@@ -242,6 +249,7 @@ func (g GadgetHTTP) update(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
+	g.hc.Update(msg)
 	g.clients.Update(msg)
 	return nil
 }

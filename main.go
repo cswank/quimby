@@ -12,9 +12,9 @@ import (
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 
 	rice "github.com/GeertJohan/go.rice"
-	"github.com/cswank/quimby/internal/config"
 	gadgethttp "github.com/cswank/quimby/internal/gadget/delivery/http"
 	"github.com/cswank/quimby/internal/gadget/repository"
+	"github.com/cswank/quimby/internal/homekit"
 	"github.com/cswank/quimby/internal/storage"
 	"github.com/cswank/quimby/internal/templates"
 	userhttp "github.com/cswank/quimby/internal/user/delivery/http"
@@ -118,12 +118,18 @@ func doDeleteUser(name string) error {
 }
 
 func doServe() error {
+	hc, err := homekit.New()
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	box := rice.MustFindBox("templates")
 	templates.Box(box)
 
 	pub := chi.NewRouter()
 	priv := chi.NewRouter()
-	gadgethttp.Handle(pub, priv, box)
+
+	gadgethttp.Handle(pub, priv, box, hc)
 	userhttp.Handle(pub, box)
 
 	go func(r chi.Router) {
@@ -132,6 +138,5 @@ func doServe() error {
 		}
 	}(priv)
 
-	cfg := config.Get()
-	return http.ListenAndServeTLS(":3333", cfg.TLSCert, cfg.TLSKey, pub)
+	return http.ListenAndServe(":3333", pub)
 }
