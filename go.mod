@@ -7,6 +7,7 @@ require (
 	github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc
 	github.com/alecthomas/units v0.0.0-20151022065526-2efee857e7cf
 	github.com/asdine/storm v2.1.2+incompatible
+	github.com/brutella/hc v1.2.3
 	github.com/creack/goselect v0.0.0-20180501195510-58854f77ee8d
 	github.com/cswank/gogadgets v0.0.0-20181227174548-fc61de179100
 	github.com/cswank/xbee v0.0.0-20181227174256-01fa50b7be9b
@@ -27,6 +28,6 @@ require (
 	go.bug.st/serial.v1 v0.0.0-20180827123349-5f7892a7bb45
 	go.etcd.io/bbolt v1.3.0
 	golang.org/x/crypto v0.0.0-20181203042331-505ab145d0a9
-	golang.org/x/sys v0.0.0-20181221143128-b4a75ba826a6
+	golang.org/x/sys v0.0.0-20190222072716-a9d3bda3a223
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )

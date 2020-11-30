@@ -11,12 +11,51 @@ import (
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
 	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/internal/config"
 	"github.com/kelseyhightower/envconfig"
 )
 
-type homekitState uint8
+const (
+	thermostatOff thermostatState = 0
+	heat          thermostatState = 1
+	cool          thermostatState = 2
+	auto          thermostatState = 3
 
-func (h homekitState) String() string {
+	on  state = true
+	off state = false
+)
+
+type (
+	state           bool
+	thermostatState uint8
+
+	cfg struct {
+		Pin            string   `envconfig:"PIN" required:"true"`
+		Port           string   `envconfig:"PORT" required:"true"`
+		FurnaceHost    string   `envconfig:"FURNACE_HOST"`
+		Thermostat     string   `envconfig:"THERMOSTAT" default:"home furnace"`
+		Thermometer    string   `envconfig:"THERMOMETER" default:"home temperature"`
+		SprinklerHost  string   `envconfig:"SPRINKLER_HOST"`
+		SprinklerZones []string `envconfig:"SPRINKLER_ZONES"`
+	}
+
+	update func(gogadgets.Message)
+
+	Homekit struct {
+		cfg     cfg
+		updates map[string]update
+	}
+)
+
+func (h state) String() string {
+	if h {
+		return "turn on"
+	}
+
+	return "turn off"
+}
+
+func (h thermostatState) String() string {
 	switch h {
 	case 1:
 		return "heat home"
@@ -27,75 +66,58 @@ func (h homekitState) String() string {
 	}
 }
 
-const (
-	off  homekitState = 0
-	heat homekitState = 1
-	cool homekitState = 2
-)
-
-type (
-	config struct {
-		Pin         string `envconfig:"PIN" required:"true"`
-		Port        string `envconfig:"PORT" required:"true"`
-		FurnaceHost string `envconfig:"FURNACE_HOST" required:"true"`
-	}
-
-	Homekit struct {
-		pin  string
-		port string
-		//the thermostat host
-		furnaceHost string
-		//the location + name id of the temperature sensor (must be in the same location)
-		updateFurnace func(*gogadgets.Message) bool
-		furnaceOn     func(*gogadgets.Value) error
-		furnaceOff    func() error
-	}
-)
-
 func New() (*Homekit, error) {
-	var cfg config
-	err := envconfig.Process("HOMEKIT", &cfg)
+	var c cfg
+	err := envconfig.Process("HOMEKIT", &c)
 	if err != nil {
 		return nil, err
 	}
 
+	f := func(msg gogadgets.Message) {
+		log.Println("not implemented")
+	}
+
+	ss := make(map[string]update, len(c.SprinklerZones))
+	for _, z := range c.SprinklerZones {
+		ss[z] = f
+	}
+
 	h := &Homekit{
-		pin:         cfg.Pin,
-		port:        cfg.Port,
-		furnaceHost: cfg.FurnaceHost,
-		updateFurnace: func(*gogadgets.Message) bool {
-			log.Println("not implemented")
-			return false
-		},
-		furnaceOn: func(*gogadgets.Value) error {
-			log.Println("not implemented")
-			return nil
-		},
-		furnaceOff: func() error {
-			log.Println("not implemented")
-			return nil
-		},
+		cfg:     c,
+		updates: map[string]update{},
+	}
+
+	err = h.init()
+	if err != nil {
+		return nil, err
 	}
 
 	go h.start()
 
-	return h, h.init()
+	return h, nil
 }
 
 func (h *Homekit) Update(msg gogadgets.Message) {
-	log.Printf("%+v", msg)
+	f, ok := h.updates[msg.Sender]
+	if ok {
+		f(msg)
+	}
 }
 
 func (h *Homekit) start() {
 	bridge := accessory.NewBridge(accessory.Info{Name: "Quimby"})
 
 	var ac []*accessory.Accessory
-	if h.furnaceHost != "" {
+	if h.cfg.FurnaceHost != "" {
 		ac = append(ac, h.furnace())
 	}
 
+	if h.cfg.SprinklerHost != "" {
+		ac = append(ac, h.sprinklers()...)
+	}
+
 	tr, err := hc.NewIPTransport(
-		hc.Config{Pin: h.pin, Port: h.port},
+		hc.Config{Pin: h.cfg.Pin, Port: h.cfg.Port},
 		bridge.Accessory,
 		ac...,
 	)
@@ -107,130 +129,154 @@ func (h *Homekit) start() {
 	tr.Start()
 }
 
+func (h *Homekit) sprinklers() []*accessory.Accessory {
+	out := make([]*accessory.Accessory, len(h.cfg.SprinklerZones))
+	m := make(map[string]accessory.Switch)
+
+	for i, z := range h.cfg.SprinklerZones {
+		s := accessory.NewSwitch(accessory.Info{Name: z})
+		m[z] = *s
+
+		s.Switch.On.OnValueRemoteUpdate(func(b bool) {
+			h.sendOnOffCommand(s.Accessory.Info.Name.String.GetValue(), state(b))
+		})
+
+		h.updates[z] = func(msg gogadgets.Message) {
+			sw, ok := m[msg.Sender]
+			b, ok := msg.Value.Value.(bool)
+			if ok {
+				sw.Switch.On.SetValue(b)
+			}
+		}
+
+		out[i] = s.Accessory
+	}
+
+	return out
+}
+
+func (h *Homekit) sendOnOffCommand(name string, val state) {
+	msg := gogadgets.Message{Type: gogadgets.COMMAND, Sender: "homekit", Body: fmt.Sprintf("%s %s", val, name)}
+	h.sendCommand(msg, h.cfg.SprinklerHost)
+}
+
 func (h *Homekit) furnace() *accessory.Accessory {
 	furnace := accessory.NewThermostat(accessory.Info{Name: "Thermostat"}, 20, 16, 26, 1)
+	state := thermostatOff
 
-	state := off
 	furnace.Thermostat.TargetHeatingCoolingState.OnValueRemoteUpdate(func(i int) {
-		state = homekitState(i)
-		log.Printf("setting state: %s", state)
+		state = thermostatState(i) //TODO: figure out how to handle 'auto' state
+		c := furnace.Thermostat.TargetTemperature.GetValue()
+		h.updateFurnace(c, state)
 	})
 
 	furnace.Thermostat.TargetTemperature.OnValueRemoteUpdate(func(c float64) {
-		f := float64(c*1.8 + 32.0)
-		log.Printf("setting temperature to %f, state: %s", f, state)
-		msg := gogadgets.Message{Type: gogadgets.COMMAND, Sender: "homekit"}
-
-		switch state {
-		case 1, 2:
-			msg.Body = fmt.Sprintf("%s to %f F", state, f)
-		case 0:
-			msg.Body = "turn off home furnace"
-		}
-
-		log.Println("update message body", msg.Body)
-
-		var buf bytes.Buffer
-		json.NewEncoder(&buf).Encode(msg)
-		resp, err := http.Post(fmt.Sprintf("%s/gadgets", h.furnaceHost), "application/json", &buf)
-		if err != nil {
-			return
-		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			log.Println("unable to update furnace", resp.StatusCode)
-		}
+		h.updateFurnace(c, state)
 	})
 
 	var i int
-	h.updateFurnace = func(msg *gogadgets.Message) bool {
-		if msg.Sender == "home temperature" {
-			f, ok := msg.Value.Value.(float64)
-			if ok {
-				if i == 0 {
-					c := (f - 32.0) / 1.8
-					furnace.Thermostat.CurrentTemperature.UpdateValue(c)
-				}
-				i++
-				if i == 10 {
-					i = 0
-				}
+	h.updates[h.cfg.Thermometer] = func(msg gogadgets.Message) {
+		f, ok := msg.Value.Value.(float64)
+		if ok {
+			if i == 0 {
+				c := (f - 32.0) / 1.8
+				furnace.Thermostat.CurrentTemperature.UpdateValue(c)
+			}
+			i++
+			if i == 10 {
+				i = 0
 			}
 		}
-		return false
 	}
 
-	h.furnaceOn = func(val *gogadgets.Value) error {
-		if val == nil {
-			return nil
-		}
-
-		if strings.Index(val.Cmd, "heat home") == 0 {
+	h.updates[h.cfg.Thermostat] = func(msg gogadgets.Message) {
+		if strings.Index(msg.Value.Cmd, "heat home") == 0 {
 			state = heat
-		} else if strings.Index(val.Cmd, "cool home") == 0 {
+		} else if strings.Index(msg.Value.Cmd, "cool home") == 0 {
 			state = cool
+		} else {
+			state = thermostatOff
 		}
 
 		furnace.Thermostat.TargetHeatingCoolingState.UpdateValue(int(state))
 		furnace.Thermostat.CurrentHeatingCoolingState.UpdateValue(int(state))
-		f, ok := val.Value.(float64)
-		log.Printf("home kit ON!: %s state: %s, ok: %v", val.Cmd, state, ok)
-		if ok {
-			c := (f - 32.0) / 1.8
-			furnace.Thermostat.TargetTemperature.UpdateValue(c)
+		if state != thermostatOff && msg.TargetValue != nil {
+			val := *msg.TargetValue
+			f, ok := val.Value.(float64)
+			if ok {
+				c := (f - 32.0) / 1.8
+				furnace.Thermostat.TargetTemperature.UpdateValue(c)
+			}
 		}
-		return nil
-	}
-
-	h.furnaceOff = func() error {
-		state = off
-		furnace.Thermostat.TargetHeatingCoolingState.UpdateValue(int(state))
-		furnace.Thermostat.CurrentHeatingCoolingState.UpdateValue(int(state))
-		return nil
 	}
 
 	return furnace.Accessory
 }
 
-func (h *Homekit) init() error {
-	if h.furnaceHost != "" {
-		state, temperature := h.getFurnace()
-		if state != off {
-			h.furnaceOn(&gogadgets.Value{Cmd: string(state)})
-		}
+func (h *Homekit) updateFurnace(c float64, state thermostatState) {
+	f := float64(c*1.8 + 32.0)
+	msg := gogadgets.Message{Type: gogadgets.COMMAND, Sender: "homekit"}
 
-		h.updateFurnace(&gogadgets.Message{Sender: "home temperature", Value: gogadgets.Value{Value: temperature}})
+	switch state {
+	case heat, cool:
+		msg.Body = fmt.Sprintf("%s to %f F", state, f)
+	case thermostatOff:
+		msg.Body = "turn off furnace"
+	}
+
+	h.sendCommand(msg, h.cfg.FurnaceHost)
+}
+
+func (h *Homekit) sendCommand(msg gogadgets.Message, host string) {
+	var buf bytes.Buffer
+	json.NewEncoder(&buf).Encode(msg)
+	resp, err := http.Post(fmt.Sprintf("%s/gadgets", host), "application/json", &buf)
+	if err != nil {
+		return
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		log.Printf("unable to update %s: %d", host, resp.StatusCode)
+	}
+}
+
+func (h *Homekit) init() error {
+	if h.cfg.FurnaceHost != "" {
+		err := h.register(h.cfg.FurnaceHost)
+		if err != nil {
+			return err
+		}
+	}
+
+	if h.cfg.SprinklerHost != "" {
+		err := h.register(h.cfg.SprinklerHost)
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
 
-func (h *Homekit) getFurnace() (homekitState, float64) {
-	resp, err := http.Get(fmt.Sprintf("%s/gadgets", h.furnaceHost))
+func (h *Homekit) register(addr string) error {
+	cfg := config.Get()
+
+	m := map[string]string{"address": cfg.InternalAddress, "token": "n/a"}
+
+	buf := &bytes.Buffer{}
+	err := json.NewEncoder(buf).Encode(&m)
 	if err != nil {
-		return off, 0.0
-	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		log.Println("unable to update furnace", resp.StatusCode)
-		return off, 0.0
+		return err
 	}
 
-	var state homekitState
-
-	var status map[string]gogadgets.Message
-	json.NewDecoder(resp.Body).Decode(&status)
-	val := status["home furnace"].Value
-	if val.Value == true && strings.Index(val.Cmd, "heat") == 0 {
-		state = heat
-	} else if val.Value == true && strings.Index(val.Cmd, "cool") == 0 {
-		state = cool
+	r, err := http.Post(fmt.Sprintf("%s/clients", addr), "application/json", buf)
+	if err != nil {
+		return err
 	}
 
-	var c float64
-	f, ok := status["home temperature"].Value.Value.(float64)
-	if ok {
-		c = (f - 32.0) / 1.8
+	r.Body.Close()
+	if r.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected response from %s: %d", addr, r.StatusCode)
 	}
 
-	return state, c
+	return nil
 }
