@@ -190,9 +190,14 @@ func (h *Homekit) furnace() *accessory.Accessory {
 	}
 
 	h.updates[h.cfg.Thermostat] = func(msg gogadgets.Message) {
-		if strings.Index(msg.Value.Cmd, "heat home") == 0 {
+		if msg.TargetValue == nil {
+			return
+		}
+
+		val := *msg.TargetValue
+		if strings.Index(val.Cmd, "heat home") == 0 {
 			state = heat
-		} else if strings.Index(msg.Value.Cmd, "cool home") == 0 {
+		} else if strings.Index(val.Cmd, "cool home") == 0 {
 			state = cool
 		} else {
 			state = thermostatOff
@@ -200,8 +205,7 @@ func (h *Homekit) furnace() *accessory.Accessory {
 
 		furnace.Thermostat.TargetHeatingCoolingState.UpdateValue(int(state))
 		furnace.Thermostat.CurrentHeatingCoolingState.UpdateValue(int(state))
-		if state != thermostatOff && msg.TargetValue != nil {
-			val := *msg.TargetValue
+		if state != thermostatOff {
 			f, ok := val.Value.(float64)
 			if ok {
 				c := (f - 32.0) / 1.8
