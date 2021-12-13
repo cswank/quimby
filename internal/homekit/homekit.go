@@ -116,6 +116,8 @@ func (h *Homekit) start() {
 		ac = append(ac, h.sprinklers()...)
 	}
 
+	ac = append(ac, h.stereo())
+
 	tr, err := hc.NewIPTransport(
 		hc.Config{Pin: h.cfg.Pin, Port: h.cfg.Port},
 		bridge.Accessory,
@@ -127,6 +129,23 @@ func (h *Homekit) start() {
 	}
 
 	tr.Start()
+}
+
+func (h *Homekit) stereo() *accessory.Accessory {
+	s := accessory.NewSwitch(accessory.Info{Name: "stereo"})
+
+	s.Switch.On.OnValueRemoteUpdate(func(b bool) {
+		h.sendOnOffCommand(s.Accessory.Info.Name.String.GetValue(), state(b))
+	})
+
+	h.updates["stereo"] = func(msg gogadgets.Message) {
+		b, ok := msg.Value.Value.(bool)
+		if ok {
+			s.Switch.On.SetValue(b)
+		}
+	}
+
+	return s.Accessory
 }
 
 func (h *Homekit) sprinklers() []*accessory.Accessory {
