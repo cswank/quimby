@@ -37,14 +37,6 @@ func (r Repo) Delete(id int) error {
 	return r.db.DeleteStruct(g)
 }
 
-func (r Repo) Edit(id int) error {
-	// g := &schema.Gadget{ID: id}
-	// return r.db.DeleteStruct(g)
-	return nil
-}
-
-func (r Repo) List() ([]schema.Gadget, error) {
-	//g := &schema.Gadget{ID: id}
-	//return r.db.DeleteStruct(g)
-	return nil, nil
+func (r Repo) Edit(g schema.Gadget) error {
+	return r.db.Update(g)
 }

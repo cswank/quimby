@@ -15,6 +15,7 @@ import (
 	gadgethttp "github.com/cswank/quimby/internal/gadget/delivery/http"
 	"github.com/cswank/quimby/internal/gadget/repository"
 	"github.com/cswank/quimby/internal/homekit"
+	"github.com/cswank/quimby/internal/schema"
 	"github.com/cswank/quimby/internal/storage"
 	"github.com/cswank/quimby/internal/templates"
 	userhttp "github.com/cswank/quimby/internal/user/delivery/http"
@@ -36,7 +37,9 @@ var (
 	id     = del.Arg("id", "id of the gadget").Required().Int()
 	ed     = gdt.Command("edit", "edit a gadget")
 	edID   = ed.Arg("id", "id of the gadget").Required().Int()
-	ls     = gdt.Command("ls", "list gadgets")
+	edName = ed.Flag("name", "name of the gadget").Short('n').Required().String()
+	edUrl  = ed.Flag("url", "url of the gadget").Short('u').Required().String()
+	ls     = gdt.Command("list", "list gadgets")
 
 	usr        = kingpin.Command("user", "user crud")
 	createUser = usr.Command("create", "create a user")
@@ -61,7 +64,7 @@ func main() {
 	case "gadget list":
 		err = doListGadgets()
 	case "gadget edit":
-		err = doEditGadget(*lsID)
+		err = doEditGadget(*edID, *edName, *edUrl)
 	case "user create":
 		err = doCreateUser(*username)
 	case "user delete":
@@ -94,15 +97,20 @@ func doDeleteGadget(id int) error {
 
 func doListGadgets() error {
 	repo := repository.New()
-	gds, err := repo.List()
+	gds, err := repo.GetAll()
 	if err != nil {
 		return err
 	}
+	for _, g := range gds {
+		fmt.Printf("%+v\n", g)
+	}
+
+	return nil
 }
 
 func doEditGadget(id int, name, url string) error {
 	repo := repository.New()
-	return repo.Edit(id, name, url)
+	return repo.Edit(schema.Gadget{ID: id, Name: name, URL: url})
 }
 
 func doCreateUser(name string) error {
