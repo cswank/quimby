@@ -4,8 +4,8 @@ import (
 	"testing"
 
 	"github.com/cswank/quimby/internal/gadget/repository"
+	"github.com/cswank/quimby/internal/gadget/usecase"
 	"github.com/cswank/quimby/internal/schema"
-	"github.com/cswank/quimby/internal/usecase"
 	"github.com/stretchr/testify/assert"
 )
 

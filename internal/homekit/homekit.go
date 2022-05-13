@@ -10,6 +10,7 @@ import (
 
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
+	"github.com/cswank/amp"
 	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/internal/config"
 	"github.com/kelseyhightower/envconfig"
@@ -132,18 +133,22 @@ func (h *Homekit) start() {
 }
 
 func (h *Homekit) stereo() *accessory.Accessory {
-	s := accessory.NewSwitch(accessory.Info{Name: "stereo"})
+	a, err := amp.New()
+	if err != nil {
+		log.Panic(err)
+	}
 
+	s := accessory.NewSwitch(accessory.Info{Name: "attic stereo"})
 	s.Switch.On.OnValueRemoteUpdate(func(b bool) {
-		h.sendOnOffCommand(s.Accessory.Info.Name.String.GetValue(), state(b))
+		if b {
+			a.On()
+		} else {
+			a.Off()
+		}
 	})
 
-	h.updates["stereo"] = func(msg gogadgets.Message) {
-		b, ok := msg.Value.Value.(bool)
-		if ok {
-			s.Switch.On.SetValue(b)
-		}
-	}
+	// TODO:  subscribe to amp events (udp updates from the amp)
+	//s.Switch.On.SetValue(b)
 
 	return s.Accessory
 }

@@ -1,6 +1,7 @@
 package gadgethttp
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -124,6 +125,30 @@ func (g *GadgetHTTP) runMethod(w http.ResponseWriter, req *http.Request) error {
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
 		return err
+	}
+
+	if len(m.Steps) == 1 && strings.HasPrefix(m.Steps[0], "https://") {
+		resp, err := http.DefaultClient.Get(m.Steps[0])
+		if err != nil {
+			return err
+		}
+
+		defer resp.Body.Close()
+
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("unexpected status code %d", resp.StatusCode)
+		}
+
+		scanner := bufio.NewScanner(resp.Body)
+
+		m.Steps = []string{}
+		for scanner.Scan() {
+			m.Steps = append(m.Steps, scanner.Text())
+		}
+
+		if err := scanner.Err(); err != nil {
+			return err
+		}
 	}
 
 	msg := gogadgets.Message{
