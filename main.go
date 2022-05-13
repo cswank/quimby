@@ -34,6 +34,9 @@ var (
 	url    = create.Flag("url", "url of the gadget").Short('u').Required().String()
 	del    = gdt.Command("delete", "delete a gadget")
 	id     = del.Arg("id", "id of the gadget").Required().Int()
+	ed     = gdt.Command("edit", "edit a gadget")
+	edID   = ed.Arg("id", "id of the gadget").Required().Int()
+	ls     = gdt.Command("ls", "list gadgets")
 
 	usr        = kingpin.Command("user", "user crud")
 	createUser = usr.Command("create", "create a user")
@@ -55,6 +58,10 @@ func main() {
 		err = doCreateGadget(*name, *url)
 	case "gadget delete":
 		err = doDeleteGadget(*id)
+	case "gadget list":
+		err = doListGadgets()
+	case "gadget edit":
+		err = doEditGadget(*lsID)
 	case "user create":
 		err = doCreateUser(*username)
 	case "user delete":
@@ -64,7 +71,7 @@ func main() {
 	}
 
 	if err != nil {
-		log.Println("oops, something went wrong: %s", err)
+		log.Printf("oops, something went wrong: %s", err)
 	}
 
 }
@@ -83,6 +90,19 @@ func doCreateGadget(name, url string) error {
 func doDeleteGadget(id int) error {
 	repo := repository.New()
 	return repo.Delete(id)
+}
+
+func doListGadgets() error {
+	repo := repository.New()
+	gds, err := repo.List()
+	if err != nil {
+		return err
+	}
+}
+
+func doEditGadget(id int, name, url string) error {
+	repo := repository.New()
+	return repo.Edit(id, name, url)
 }
 
 func doCreateUser(name string) error {
