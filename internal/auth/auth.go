@@ -1,4 +1,4 @@
-package middleware
+package auth
 
 import (
 	"errors"
@@ -6,9 +6,8 @@ import (
 	"time"
 
 	"github.com/cswank/quimby/internal/config"
+	repo "github.com/cswank/quimby/internal/repository"
 	"github.com/cswank/quimby/internal/schema"
-	"github.com/cswank/quimby/internal/user"
-	"github.com/cswank/quimby/internal/user/repository"
 	"github.com/gorilla/securecookie"
 )
 
@@ -17,14 +16,14 @@ const (
 )
 
 type Auth struct {
-	repo user.Repository
+	repo *repo.User
 	sc   *securecookie.SecureCookie
 }
 
-func NewAuth() *Auth {
+func New(r *repo.User) *Auth {
 	cfg := config.Get()
 	return &Auth{
-		repo: repository.New(),
+		repo: r,
 		sc:   securecookie.New([]byte(cfg.HashKey), []byte(cfg.BlockKey)),
 	}
 }

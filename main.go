@@ -1,28 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
-	"io/ioutil"
 	"log"
-	"net/http"
-	"syscall"
 
-	kingpin "gopkg.in/alecthomas/kingpin.v2"
-
-	rice "github.com/GeertJohan/go.rice"
-	gadgethttp "github.com/cswank/quimby/internal/gadget/delivery/http"
-	"github.com/cswank/quimby/internal/gadget/repository"
+	"github.com/cswank/quimby/internal/auth"
+	"github.com/cswank/quimby/internal/config"
 	"github.com/cswank/quimby/internal/homekit"
-	"github.com/cswank/quimby/internal/storage"
-	"github.com/cswank/quimby/internal/templates"
-	userhttp "github.com/cswank/quimby/internal/user/delivery/http"
-	userusecase "github.com/cswank/quimby/internal/user/usecase"
-
-	"golang.org/x/crypto/ssh/terminal"
-
-	"github.com/go-chi/chi"
+	"github.com/cswank/quimby/internal/repository"
+	"github.com/cswank/quimby/internal/router"
+	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
 var (
@@ -34,109 +21,104 @@ var (
 	url    = create.Flag("url", "url of the gadget").Short('u').Required().String()
 	del    = gdt.Command("delete", "delete a gadget")
 	id     = del.Arg("id", "id of the gadget").Required().Int()
+	ed     = gdt.Command("edit", "edit a gadget")
+	edID   = ed.Arg("id", "id of the gadget").Required().Int()
+	ls     = gdt.Command("ls", "list gadgets")
 
-	usr        = kingpin.Command("user", "user crud")
-	createUser = usr.Command("create", "create a user")
-	username   = createUser.Arg("username", "username").Required().String()
+	usr       = kingpin.Command("user", "user crud")
+	createUsr = usr.Command("create", "create a user")
+	username  = createUsr.Arg("username", "username").Required().String()
 
-	delUser     = usr.Command("delete", "delete a user")
-	delUsername = delUser.Arg("username", "username").Required().String()
+	delUsr      = usr.Command("delete", "delete a user")
+	delUsername = delUsr.Arg("username", "username").Required().String()
 )
 
 func main() {
-	defer storage.Close()
+	cfg := config.Get()
+	g, u, err := repository.New(cfg.DB)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	var err error
 	cmd := kingpin.Parse()
 	switch cmd {
 	case "serve":
-		err = doServe()
-	case "gadget create":
-		err = doCreateGadget(*name, *url)
-	case "gadget delete":
-		err = doDeleteGadget(*id)
-	case "user create":
-		err = doCreateUser(*username)
-	case "user delete":
-		err = doDeleteUser(*delUsername)
-	default:
-		err = fmt.Errorf("unknown command '%s'", cmd)
+		serve(g, u)
 	}
-
-	if err != nil {
-		log.Println("oops, something went wrong: %s", err)
-	}
-
 }
 
-func doCreateGadget(name, url string) error {
-	repo := repository.New()
-	g, err := repo.Create(name, url)
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("created gadget\n: %+v\n", g)
-	return nil
-}
-
-func doDeleteGadget(id int) error {
-	repo := repository.New()
-	return repo.Delete(id)
-}
-
-func doCreateUser(name string) error {
-	fmt.Print("Enter Password: ")
-	pw, err := terminal.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		return err
-	}
-
-	uc := userusecase.New()
-	u, qa, err := uc.Create(name, string(pw))
-	if err != nil {
-		return err
-	}
-
-	f, err := ioutil.TempFile("", "")
-	if err != nil {
-		return err
-	}
-
-	_, err = io.Copy(f, bytes.NewBuffer(qa))
-	if err != nil {
-		return err
-	}
-
-	fmt.Printf("created user\n: %+v, scan qa code at %s (and then delete it)\n", u, f.Name())
-	return nil
-}
-
-func doDeleteUser(name string) error {
-	uc := userusecase.New()
-	return uc.Delete(name)
-}
-
-func doServe() error {
+func serve(g *repository.Gadget, u *repository.User) {
+	a := auth.New(u)
 	hc, err := homekit.New()
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	box := rice.MustFindBox("templates")
-	templates.Box(box)
+	if err := router.Serve(g, u, a, hc); err != nil {
+		log.Fatal(err)
+	}
+}
 
-	pub := chi.NewRouter()
-	priv := chi.NewRouter()
+func createGadget(r *repository.Gadget) {
+	g, err := r.Create(*name, *url)
+	if err != nil {
+		log.Fatal(err)
+	}
 
-	gadgethttp.Handle(pub, priv, box, hc)
-	userhttp.Handle(pub, box)
+	fmt.Printf("created gadget\n: %+v\n", g)
+}
 
-	go func(r chi.Router) {
-		if err := http.ListenAndServe(":3334", r); err != nil {
-			log.Fatalf("unable to start private server: %s", err)
-		}
-	}(priv)
+func deleteGadget(r *repository.Gadget) {
+	if err := r.Delete(*id); err != nil {
+		log.Fatal(err)
+	}
+}
 
-	return http.ListenAndServe(":3333", pub)
+func listGadgets(r *repository.Gadget) {
+	gds, err := r.List()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, g := range gds {
+		fmt.Printf("%+v\n", g)
+	}
+}
+
+func editGadget(r *repository.Gadget) {
+	// if err := r.Edit(*id, *username, *url); err != nil {
+	// 	log.Fatal(err)
+	// }
+}
+
+func createUser(r *repository.User) {
+	// fmt.Print("Enter Password: ")
+	// pw, err := terminal.ReadPassword(int(syscall.Stdin))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// uc := userusecase.New()
+	// u, qa, err := uc.Create(name, string(pw))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// f, err := ioutil.TempFile("", "")
+	// if err != nil {
+	// 	return err
+	// }
+
+	// _, err = io.Copy(f, bytes.NewBuffer(qa))
+	// if err != nil {
+	// 	return err
+	// }
+
+	// fmt.Printf("created user\n: %+v, scan qa code at %s (and then delete it)\n", u, f.Name())
+	// return nil
+}
+
+func deleteUser(r *repository.User) {
+	// uc := userusecase.New()
+	// return uc.Delete(name)
 }

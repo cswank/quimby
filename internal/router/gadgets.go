@@ -1,4 +1,4 @@
-package gadgethttp
+package router
 
 import (
 	"encoding/json"
@@ -6,68 +6,21 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 
-	rice "github.com/GeertJohan/go.rice"
-	"github.com/cswank/gogadgets"
-	"github.com/cswank/quimby/internal/clients"
-	"github.com/cswank/quimby/internal/config"
-	"github.com/cswank/quimby/internal/gadget"
-	"github.com/cswank/quimby/internal/gadget/usecase"
-	"github.com/cswank/quimby/internal/homekit"
-	"github.com/cswank/quimby/internal/middleware"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/cswank/quimby/internal/templates"
 	"github.com/go-chi/chi"
 	"github.com/gorilla/websocket"
 )
 
-var letters = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
-
-func Handle(pub, priv chi.Router, box *rice.Box, hc *homekit.Homekit) {
-	cfg := config.Get()
-
-	g := &GadgetHTTP{
-		box:         box,
-		host:        cfg.Host,
-		usecase:     usecase.New(),
-		clients:     clients.New(),
-		internalURL: cfg.InternalAddress,
-		auth:        middleware.NewAuth(),
-		hc:          hc,
-	}
-
-	pub.Get("/", g.redirect)
-	pub.Get("/static/*", middleware.Handle(g.Static()))
-
-	pub.With(g.auth.Auth).Route("/gadgets", func(r chi.Router) {
-		r.Get("/", middleware.Handle(middleware.Render(g.getAll)))
-		r.Get("/{id}", middleware.Handle(middleware.Render(g.get)))
-		r.Get("/{id}/websocket", middleware.Handle(g.connect))
-		r.Get("/{id}/method", middleware.Handle(middleware.Render(g.method)))
-		r.Post("/{id}/method", middleware.Handle(g.runMethod))
-	})
-
-	priv.Post("/status", middleware.Handle(g.update))
-}
-
-// GadgetHTTP renders html
-type GadgetHTTP struct {
-	host        string
-	usecase     gadget.Usecase
-	box         *rice.Box
-	clients     *clients.Clients
-	internalURL string
-	auth        *middleware.Auth
-	hc          *homekit.Homekit
-}
-
 // getAll shows all the gadgets
-func (g *GadgetHTTP) getAll(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+func (g *server) getAll(w http.ResponseWriter, req *http.Request) (renderer, error) {
 	rand.Seed(time.Now().UnixNano())
-	gadgets, err := g.usecase.GetAll()
+	gadgets, err := g.gadgets.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -79,7 +32,7 @@ func (g *GadgetHTTP) getAll(w http.ResponseWriter, req *http.Request) (middlewar
 }
 
 // get shows a single gadget
-func (g *GadgetHTTP) get(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+func (g *server) get(w http.ResponseWriter, req *http.Request) (renderer, error) {
 	gadget, err := g.gadget(req)
 	if err != nil {
 		return nil, err
@@ -87,7 +40,7 @@ func (g *GadgetHTTP) get(w http.ResponseWriter, req *http.Request) (middleware.R
 
 	return &gadgetPage{
 		Gadget:    gadget,
-		Websocket: fmt.Sprintf("wss://%s/gadgets/%d/websocket", g.host, gadget.ID),
+		Websocket: fmt.Sprintf("wss://%s/gadgets/%d/websocket", g.cfg.Host, gadget.ID),
 		Page: templates.NewPage(
 			gadget.Name,
 			"gadget.ghtml",
@@ -98,7 +51,7 @@ func (g *GadgetHTTP) get(w http.ResponseWriter, req *http.Request) (middleware.R
 }
 
 // method shows the method editor for a gadget
-func (g *GadgetHTTP) method(w http.ResponseWriter, req *http.Request) (middleware.Renderer, error) {
+func (g *server) method(w http.ResponseWriter, req *http.Request) (renderer, error) {
 	gadget, err := g.gadget(req)
 	if err != nil {
 		return nil, err
@@ -114,20 +67,20 @@ func (g *GadgetHTTP) method(w http.ResponseWriter, req *http.Request) (middlewar
 	}, nil
 }
 
-func (g *GadgetHTTP) runMethod(w http.ResponseWriter, req *http.Request) error {
+func (g *server) runMethod(w http.ResponseWriter, req *http.Request) error {
 	gadget, err := g.gadget(req)
 	if err != nil {
 		return err
 	}
 
-	var m gogadgets.Method
+	var m schema.Method
 	dec := json.NewDecoder(req.Body)
 	if err := dec.Decode(&m); err != nil {
 		return err
 	}
 
-	msg := gogadgets.Message{
-		Type:   gogadgets.METHOD,
+	msg := schema.Message{
+		Type:   "method",
 		Method: m,
 	}
 	return gadget.Send(msg)
@@ -136,7 +89,7 @@ func (g *GadgetHTTP) runMethod(w http.ResponseWriter, req *http.Request) error {
 // connect registers with a gogadget instance and starts up
 // a websocket.  It pushes new messages from the
 // instance to the websocket and vice versa.
-func (g *GadgetHTTP) connect(w http.ResponseWriter, req *http.Request) error {
+func (g *server) connect(w http.ResponseWriter, req *http.Request) error {
 	gadget, err := g.gadget(req)
 	if err != nil {
 		return err
@@ -146,11 +99,11 @@ func (g *GadgetHTTP) connect(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	ws := make(chan gogadgets.Message)
+	ws := make(chan schema.Message)
 	q := make(chan bool)
 
-	ch := make(chan gogadgets.Message)
-	uuid := gogadgets.GetUUID()
+	ch := make(chan schema.Message)
+	uuid := schema.UUID()
 	g.clients.Add(gadget.URL, uuid, ch)
 
 	upgrader := websocket.Upgrader{
@@ -181,12 +134,12 @@ func (g *GadgetHTTP) connect(w http.ResponseWriter, req *http.Request) error {
 	}
 }
 
-func (g *GadgetHTTP) register(gadget schema.Gadget) error {
-	_, err := gadget.Register(g.internalURL, g.randString())
+func (g *server) register(gadget schema.Gadget) error {
+	_, err := gadget.Register(g.cfg.InternalAddress, g.randString())
 	return err
 }
 
-func (g *GadgetHTTP) randString() string {
+func (g *server) randString() string {
 	b := make([]rune, 32)
 	for i := range b {
 		b[i] = letters[rand.Intn(len(letters))]
@@ -195,14 +148,14 @@ func (g *GadgetHTTP) randString() string {
 }
 
 // Send a message via the web socket.
-func sendSocketMessage(conn *websocket.Conn, m gogadgets.Message) {
+func sendSocketMessage(conn *websocket.Conn, m schema.Message) {
 	d, _ := json.Marshal(m)
 	if err := conn.WriteMessage(websocket.TextMessage, d); err != nil {
 		log.Println("unable to write to websocket", err)
 	}
 }
 
-func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
+func listen(conn *websocket.Conn, ch chan<- schema.Message, q chan<- bool) {
 	for {
 		t, p, err := conn.ReadMessage()
 		if err != nil {
@@ -210,7 +163,7 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
 			return
 		}
 		if t == websocket.TextMessage {
-			var m gogadgets.Message
+			var m schema.Message
 			if err := json.Unmarshal(p, &m); err != nil {
 				return
 			}
@@ -222,17 +175,17 @@ func listen(conn *websocket.Conn, ch chan<- gogadgets.Message, q chan<- bool) {
 	}
 }
 
-func (g *GadgetHTTP) gadget(req *http.Request) (schema.Gadget, error) {
+func (g *server) gadget(req *http.Request) (schema.Gadget, error) {
 	id, err := strconv.ParseInt(chi.URLParam(req, "id"), 10, 64)
 	if err != nil {
 		return schema.Gadget{}, err
 	}
 
-	return g.usecase.Get(int(id))
+	return g.gadgets.Get(int(id))
 }
 
-func (g *GadgetHTTP) Static() middleware.Handler {
-	s := http.FileServer(g.box.HTTPBox())
+func (g *server) Static() handler {
+	s := http.FileServer(http.FS(templates.Static))
 	return func(w http.ResponseWriter, req *http.Request) error {
 		s.ServeHTTP(w, req)
 		if strings.Contains(req.URL.Path, ".css.map") {
@@ -243,8 +196,8 @@ func (g *GadgetHTTP) Static() middleware.Handler {
 }
 
 // update is where the gadgets post their updates to the UI.
-func (g GadgetHTTP) update(w http.ResponseWriter, req *http.Request) error {
-	var msg gogadgets.Message
+func (g server) update(w http.ResponseWriter, req *http.Request) error {
+	var msg schema.Message
 	if err := json.NewDecoder(req.Body).Decode(&msg); err != nil {
 		return err
 	}
@@ -255,7 +208,7 @@ func (g GadgetHTTP) update(w http.ResponseWriter, req *http.Request) error {
 }
 
 // redirect -> /gadgets
-func (g GadgetHTTP) redirect(w http.ResponseWriter, req *http.Request) {
+func (g server) redirect(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/gadgets", http.StatusSeeOther)
 }
 
@@ -268,4 +221,11 @@ type gadgetPage struct {
 	templates.Page
 	Gadget    schema.Gadget
 	Websocket string
+}
+
+func noQueries(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		req.URL = &url.URL{Path: req.URL.Path}
+		h.ServeHTTP(w, req)
+	})
 }

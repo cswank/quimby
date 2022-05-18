@@ -2,17 +2,21 @@ package templates
 
 import (
 	"database/sql/driver"
+	"embed"
 	"fmt"
 	"html/template"
 	"log"
-	"os"
-	"strings"
 
-	rice "github.com/GeertJohan/go.rice"
-	"github.com/cswank/gogadgets"
+	"github.com/cswank/quimby/internal/schema"
 )
 
 var (
+	//go:embed static/*
+	Static embed.FS
+
+	//go:embed templates/*
+	tpls embed.FS
+
 	templates map[string]tmpl
 
 	deviceFuncs = template.FuncMap{
@@ -23,8 +27,8 @@ var (
 			t := fmt.Sprintf("%%.%df", decimals)
 			return fmt.Sprintf(t, v.(float64))
 		},
-		"command": func(devices map[string]map[string]gogadgets.Message) map[string]gogadgets.Message {
-			out := map[string]gogadgets.Message{}
+		"command": func(devices map[string]map[string]schema.Message) map[string]schema.Message {
+			out := map[string]schema.Message{}
 			for location, statuses := range devices {
 				for dev, status := range statuses {
 					out[fmt.Sprintf("%s-%s", location, dev)] = status
@@ -44,20 +48,19 @@ type tmpl struct {
 	bare        bool
 }
 
-func Box(box *rice.Box) {
+func Box() {
 	data := map[string]string{}
-	html, err := getHTML(box)
-
+	files, err := tpls.ReadDir("templates")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	for _, pth := range html {
-		s, err := box.String(pth)
+	for _, f := range files {
+		d, err := tpls.ReadFile(fmt.Sprintf("templates/%s", f.Name()))
 		if err != nil {
-			log.Fatal(pth, err)
+			log.Fatal(err)
 		}
-		data[pth] = s
+		data[f.Name()] = string(d)
 	}
 
 	templates = map[string]tmpl{
@@ -87,22 +90,6 @@ func Box(box *rice.Box) {
 		val.template = t
 		templates[key] = val
 	}
-}
-
-func getHTML(box *rice.Box) ([]string, error) {
-	var html []string
-	return html, box.Walk("/", func(pth string, info os.FileInfo, err error) error {
-		if info.IsDir() {
-			return nil
-		}
-		if strings.HasSuffix(pth, ".ghtml") || strings.HasSuffix(pth, ".js") {
-			if box.IsEmbedded() {
-				pth = pth[1:] //workaround until https://github.com/GeertJohan/go.rice/issues/71 is fixed (which is probably never)
-			}
-			html = append(html, pth)
-		}
-		return nil
-	})
 }
 
 func Get(k string) (*template.Template, []string, []string) {

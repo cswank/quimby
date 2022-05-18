@@ -18,6 +18,7 @@ type Config struct {
 	HashKey         string `required:"true"`
 	TLSCert         string `required:"true"`
 	TLSKey          string `required:"true"`
+	DB              string `required:"true"`
 }
 
 func Get() Config {

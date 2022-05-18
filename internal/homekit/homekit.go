@@ -10,8 +10,8 @@ import (
 
 	"github.com/brutella/hc"
 	"github.com/brutella/hc/accessory"
-	"github.com/cswank/gogadgets"
 	"github.com/cswank/quimby/internal/config"
+	"github.com/cswank/quimby/internal/schema"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -39,7 +39,7 @@ type (
 		SprinklerZones []string `envconfig:"SPRINKLER_ZONES"`
 	}
 
-	update func(gogadgets.Message)
+	update func(schema.Message)
 
 	Homekit struct {
 		cfg     cfg
@@ -73,7 +73,7 @@ func New() (*Homekit, error) {
 		return nil, err
 	}
 
-	f := func(msg gogadgets.Message) {
+	f := func(msg schema.Message) {
 		log.Println("not implemented")
 	}
 
@@ -97,7 +97,7 @@ func New() (*Homekit, error) {
 	return h, nil
 }
 
-func (h *Homekit) Update(msg gogadgets.Message) {
+func (h *Homekit) Update(msg schema.Message) {
 	f, ok := h.updates[msg.Sender]
 	if ok {
 		f(msg)
@@ -138,7 +138,7 @@ func (h *Homekit) stereo() *accessory.Accessory {
 		h.sendOnOffCommand(s.Accessory.Info.Name.String.GetValue(), state(b))
 	})
 
-	h.updates["stereo"] = func(msg gogadgets.Message) {
+	h.updates["stereo"] = func(msg schema.Message) {
 		b, ok := msg.Value.Value.(bool)
 		if ok {
 			s.Switch.On.SetValue(b)
@@ -160,7 +160,7 @@ func (h *Homekit) sprinklers() []*accessory.Accessory {
 			h.sendOnOffCommand(s.Accessory.Info.Name.String.GetValue(), state(b))
 		})
 
-		h.updates[z] = func(msg gogadgets.Message) {
+		h.updates[z] = func(msg schema.Message) {
 			sw, ok := m[msg.Sender]
 			b, ok := msg.Value.Value.(bool)
 			if ok {
@@ -175,7 +175,7 @@ func (h *Homekit) sprinklers() []*accessory.Accessory {
 }
 
 func (h *Homekit) sendOnOffCommand(name string, val state) {
-	msg := gogadgets.Message{Type: gogadgets.COMMAND, Sender: "homekit", Body: fmt.Sprintf("%s %s", val, name)}
+	msg := schema.Message{Type: "command", Sender: "homekit", Body: fmt.Sprintf("%s %s", val, name)}
 	h.sendCommand(msg, h.cfg.SprinklerHost)
 }
 
@@ -194,7 +194,7 @@ func (h *Homekit) furnace() *accessory.Accessory {
 	})
 
 	var i int
-	h.updates[h.cfg.Thermometer] = func(msg gogadgets.Message) {
+	h.updates[h.cfg.Thermometer] = func(msg schema.Message) {
 		f, ok := msg.Value.Value.(float64)
 		if ok {
 			if i == 0 {
@@ -208,7 +208,7 @@ func (h *Homekit) furnace() *accessory.Accessory {
 		}
 	}
 
-	h.updates[h.cfg.Thermostat] = func(msg gogadgets.Message) {
+	h.updates[h.cfg.Thermostat] = func(msg schema.Message) {
 		if msg.TargetValue == nil {
 			return
 		}
@@ -238,7 +238,7 @@ func (h *Homekit) furnace() *accessory.Accessory {
 
 func (h *Homekit) updateFurnace(c float64, state thermostatState) {
 	f := float64(c*1.8 + 32.0)
-	msg := gogadgets.Message{Type: gogadgets.COMMAND, Sender: "homekit"}
+	msg := schema.Message{Type: "command", Sender: "homekit"}
 
 	switch state {
 	case heat, cool:
@@ -250,7 +250,7 @@ func (h *Homekit) updateFurnace(c float64, state thermostatState) {
 	h.sendCommand(msg, h.cfg.FurnaceHost)
 }
 
-func (h *Homekit) sendCommand(msg gogadgets.Message, host string) {
+func (h *Homekit) sendCommand(msg schema.Message, host string) {
 	var buf bytes.Buffer
 	json.NewEncoder(&buf).Encode(msg)
 	resp, err := http.Post(fmt.Sprintf("%s/gadgets", host), "application/json", &buf)

@@ -2,11 +2,12 @@ package schema
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
-
-	"github.com/cswank/gogadgets"
+	"time"
 )
 
 // Gadget represents a gadget
@@ -14,10 +15,10 @@ type Gadget struct {
 	ID     int    `storm:"id,increment"`
 	Name   string `json:"name"`
 	URL    string `json:"url"`
-	status map[string]map[string]gogadgets.Message
+	status map[string]map[string]Message
 }
 
-func (g *Gadget) Status() map[string]map[string]gogadgets.Message {
+func (g *Gadget) Status() map[string]map[string]Message {
 	return g.status
 }
 
@@ -43,7 +44,7 @@ func (g *Gadget) Register(addr, token string) (string, error) {
 	return g.URL, nil
 }
 
-func (g *Gadget) Send(m gogadgets.Message) error {
+func (g *Gadget) Send(m Message) error {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	if err := enc.Encode(m); err != nil {
@@ -61,10 +62,10 @@ func (g *Gadget) Send(m gogadgets.Message) error {
 }
 
 func (g *Gadget) Command(cmd string) error {
-	return g.Send(gogadgets.Message{
-		UUID:   gogadgets.GetUUID(),
+	return g.Send(Message{
+		UUID:   UUID(),
 		Sender: "quimby",
-		Type:   gogadgets.COMMAND,
+		Type:   "command",
 		Body:   cmd,
 	})
 }
@@ -77,12 +78,12 @@ func (g *Gadget) Fetch() error {
 	}
 
 	defer resp.Body.Close()
-	var m map[string]gogadgets.Message
+	var m map[string]Message
 	if err := json.NewDecoder(resp.Body).Decode(&m); err != nil {
 		return err
 	}
 
-	status := map[string]map[string]gogadgets.Message{}
+	status := map[string]map[string]Message{}
 
 	for _, v := range m {
 		if v.Name == "" || v.Location == "" {
@@ -91,7 +92,7 @@ func (g *Gadget) Fetch() error {
 
 		l, ok := status[v.Location]
 		if !ok {
-			l = map[string]gogadgets.Message{}
+			l = map[string]Message{}
 		}
 
 		l[v.Name] = v
@@ -100,4 +101,70 @@ func (g *Gadget) Fetch() error {
 
 	g.status = status
 	return nil
+}
+
+// UUID generates a random UUID according to RFC 4122
+func UUID() string {
+	uuid := make([]byte, 16)
+	n, err := io.ReadFull(rand.Reader, uuid)
+	if n != len(uuid) || err != nil {
+		return ""
+	}
+	// variant bits; see section 4.1.1
+	uuid[8] = uuid[8]&^0xc0 | 0x80
+	// version 4 (pseudo-random); see section 4.1.3
+	uuid[6] = uuid[6]&^0xf0 | 0x40
+	return fmt.Sprintf("%x-%x-%x-%x-%x", uuid[0:4], uuid[4:6], uuid[6:8], uuid[8:10], uuid[10:])
+}
+
+type Message struct {
+	UUID        string    `json:"uuid"`
+	From        string    `json:"from,omitempty"`
+	Name        string    `json:"name,omitempty"`
+	Location    string    `json:"location,omitempty"`
+	Type        string    `json:"type,omitempty"`
+	Sender      string    `json:"sender,omitempty"`
+	Target      string    `json:"target,omitempty"`
+	Body        string    `json:"body,omitempty"`
+	Host        string    `json:"host,omitempty"`
+	Method      Method    `json:"method,omitempty"`
+	Timestamp   time.Time `json:"timestamp,omitempty"`
+	Value       Value     `json:"value,omitempty"`
+	TargetValue *Value    `json:"target_value,omitempty"`
+}
+
+type Method struct {
+	Step  int      `json:"step,omitempty"`
+	Steps []string `json:"steps,omitempty"`
+	Time  int      `json:"time,omitempty"`
+}
+
+type Value struct {
+	Value    interface{}     `json:"value,omitempty"`
+	Units    string          `json:"units,omitempty"`
+	Output   map[string]bool `json:"io,omitempty"`
+	ID       string          `json:"id,omitempty"`
+	Cmd      string          `json:"command,omitempty"`
+	location string
+	name     string
+}
+
+func (v *Value) GetName() string {
+	return v.name
+}
+
+func (v *Value) ToFloat() (f float64, ok bool) {
+	switch V := v.Value.(type) {
+	case bool:
+		if V {
+			f = 1.0
+		} else {
+			f = 0.0
+		}
+		ok = true
+	case float64:
+		f = V
+		ok = true
+	}
+	return f, ok
 }
