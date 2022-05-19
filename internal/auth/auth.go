@@ -1,6 +1,7 @@
 package auth
 
 import (
+	"crypto"
 	"errors"
 	"net/http"
 	"time"
@@ -9,6 +10,8 @@ import (
 	repo "github.com/cswank/quimby/internal/repository"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/gorilla/securecookie"
+	"github.com/sec51/twofactor"
+	"golang.org/x/crypto/bcrypt"
 )
 
 const (
@@ -74,4 +77,29 @@ func (a *Auth) getUserFromCookie(r *http.Request) (*schema.User, error) {
 	return &schema.User{
 		Name: un,
 	}, nil
+}
+
+func Credentials(name, pws string) ([]byte, []byte, []byte, error) {
+	pw, err := bcrypt.GenerateFromPassword([]byte(pws), 10)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	t, qr, err := tfa(name)
+	return pw, t, qr, err
+}
+
+func tfa(username string) ([]byte, []byte, error) {
+	otp, err := twofactor.NewTOTP(username, "quimby", crypto.SHA1, 6)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	data, err := otp.ToBytes()
+	if err != nil {
+		return nil, nil, err
+	}
+
+	qr, err := otp.QR()
+	return data, qr, err
 }
