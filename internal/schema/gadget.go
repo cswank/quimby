@@ -18,6 +18,10 @@ type Gadget struct {
 	status map[string]map[string]Message
 }
 
+func (g *Gadget) String() string {
+	return fmt.Sprintf("%d: %s %s", g.ID, g.Name, g.URL)
+}
+
 func (g *Gadget) Status() map[string]map[string]Message {
 	return g.status
 }

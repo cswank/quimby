@@ -2,6 +2,7 @@ package user
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"syscall"
@@ -45,4 +46,21 @@ func Create(r *repository.User, username string) error {
 	ts.Close()
 
 	return nil
+}
+
+func Delete(r *repository.User, username string) {
+	if err := r.Delete(username); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func List(r *repository.User) {
+	users, err := r.GetAll()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	for _, u := range users {
+		fmt.Printf("%d: %s\n", u.ID, u.Name)
+	}
 }

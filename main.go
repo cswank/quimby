@@ -1,11 +1,11 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
 	"github.com/cswank/quimby/internal/auth"
 	"github.com/cswank/quimby/internal/config"
+	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/homekit"
 	"github.com/cswank/quimby/internal/repository"
 	"github.com/cswank/quimby/internal/router"
@@ -16,6 +16,7 @@ import (
 var (
 	srv = kingpin.Command("serve", "start server")
 
+	// gadget commands
 	gdt    = kingpin.Command("gadget", "gadget crud")
 	create = gdt.Command("create", "create a gadget")
 	name   = create.Flag("name", "name of the gadget").Short('n').Required().String()
@@ -28,14 +29,13 @@ var (
 	uid    = up.Arg("id", "id of the gadget").Required().Int()
 	_      = gdt.Command("list", "list gadgets")
 
-	usr      = kingpin.Command("user", "user crud")
-	mkUser   = usr.Command("create", "create a user")
-	username = mkUser.Arg("username", "username").Required().String()
-
+	// user commands
+	usr         = kingpin.Command("user", "user crud")
+	mkUser      = usr.Command("create", "create a user")
+	username    = mkUser.Arg("username", "username").Required().String()
 	delUser     = usr.Command("delete", "delete a user")
 	delUsername = delUser.Arg("username", "username").Required().String()
-
-	_ = usr.Command("list", "list users")
+	_           = usr.Command("list", "list users")
 )
 
 func main() {
@@ -50,19 +50,19 @@ func main() {
 	case "serve":
 		serve(cfg, g, u)
 	case "user create":
-		createUser(u)
+		user.Create(u, *username)
 	case "user delete":
-		deleteUser(u)
+		user.Delete(u, *delUsername)
 	case "user list":
-		listUsers(u)
+		user.List(u)
 	case "gadget create":
-		createGadget(g)
+		gadget.Create(g, *name, *url)
 	case "gadget delete":
-		deleteGadget(g)
+		gadget.Delete(g, *id)
 	case "gadget update":
-		updateGadget(g)
+		gadget.Update(g, *uid, *uname, *uurl)
 	case "gadget list":
-		listGadgets(g)
+		gadget.List(g)
 	}
 }
 
@@ -75,60 +75,5 @@ func serve(cfg config.Config, g *repository.Gadget, u *repository.User) {
 
 	if err := router.Serve(cfg, g, u, a, hc); err != nil {
 		log.Fatal(err)
-	}
-}
-
-func createGadget(r *repository.Gadget) {
-	g, err := r.Create(*name, *url)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	fmt.Printf("created gadget\n: %+v\n", g)
-}
-
-func deleteGadget(r *repository.Gadget) {
-	if err := r.Delete(*id); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func updateGadget(r *repository.Gadget) {
-	if err := r.Update(*uid, *uname, *uurl); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func listGadgets(r *repository.Gadget) {
-	gds, err := r.List()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, g := range gds {
-		fmt.Printf("%d: %s %s\n", g.ID, g.Name, g.URL)
-	}
-}
-
-func createUser(r *repository.User) {
-	if err := user.Create(r, *username); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func deleteUser(r *repository.User) {
-	if err := r.Delete(*delUsername); err != nil {
-		log.Fatal(err)
-	}
-}
-
-func listUsers(r *repository.User) {
-	users, err := r.GetAll()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	for _, u := range users {
-		fmt.Printf("%d: %s\n", u.ID, u.Name)
 	}
 }
