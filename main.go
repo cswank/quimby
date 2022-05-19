@@ -4,12 +4,12 @@ import (
 	"log"
 
 	"github.com/cswank/quimby/internal/auth"
+	"github.com/cswank/quimby/internal/commandline/gadget"
+	"github.com/cswank/quimby/internal/commandline/user"
 	"github.com/cswank/quimby/internal/config"
-	"github.com/cswank/quimby/internal/gadget"
 	"github.com/cswank/quimby/internal/homekit"
 	"github.com/cswank/quimby/internal/repository"
 	"github.com/cswank/quimby/internal/router"
-	"github.com/cswank/quimby/internal/user"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -22,7 +22,7 @@ var (
 	name   = create.Flag("name", "name of the gadget").Short('n').Required().String()
 	url    = create.Flag("url", "url of the gadget").Short('u').Required().String()
 	del    = gdt.Command("delete", "delete a gadget")
-	id     = del.Arg("id", "id of the gadget").Required().Int()
+	did    = del.Arg("id", "id of the gadget").Required().Int()
 	up     = gdt.Command("update", "update a gadget")
 	uname  = up.Flag("name", "name of the gadget").Short('n').Required().String()
 	uurl   = up.Flag("url", "url of the gadget").Short('u').Required().String()
@@ -30,12 +30,12 @@ var (
 	_      = gdt.Command("list", "list gadgets")
 
 	// user commands
-	usr         = kingpin.Command("user", "user crud")
-	mkUser      = usr.Command("create", "create a user")
-	username    = mkUser.Arg("username", "username").Required().String()
-	delUser     = usr.Command("delete", "delete a user")
-	delUsername = delUser.Arg("username", "username").Required().String()
-	_           = usr.Command("list", "list users")
+	usr       = kingpin.Command("user", "user crud")
+	mkUser    = usr.Command("create", "create a user")
+	username  = mkUser.Arg("username", "username").Required().String()
+	duser     = usr.Command("delete", "delete a user")
+	dusername = duser.Arg("username", "username").Required().String()
+	_         = usr.Command("list", "list users")
 )
 
 func main() {
@@ -52,13 +52,13 @@ func main() {
 	case "user create":
 		user.Create(u, *username)
 	case "user delete":
-		user.Delete(u, *delUsername)
+		user.Delete(u, *dusername)
 	case "user list":
 		user.List(u)
 	case "gadget create":
 		gadget.Create(g, *name, *url)
 	case "gadget delete":
-		gadget.Delete(g, *id)
+		gadget.Delete(g, *did)
 	case "gadget update":
 		gadget.Update(g, *uid, *uname, *uurl)
 	case "gadget list":
