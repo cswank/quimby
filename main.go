@@ -22,6 +22,11 @@ var (
 	url    = create.Flag("url", "url of the gadget").Short('u').Required().String()
 	del    = gdt.Command("delete", "delete a gadget")
 	id     = del.Arg("id", "id of the gadget").Required().Int()
+	up     = gdt.Command("update", "update a gadget")
+	uname  = up.Flag("name", "name of the gadget").Short('n').Required().String()
+	uurl   = up.Flag("url", "url of the gadget").Short('u').Required().String()
+	uid    = up.Arg("id", "id of the gadget").Required().Int()
+	_      = gdt.Command("list", "list gadgets")
 
 	usr      = kingpin.Command("user", "user crud")
 	mkUser   = usr.Command("create", "create a user")
@@ -56,6 +61,8 @@ func main() {
 		deleteGadget(g)
 	case "gadget update":
 		updateGadget(g)
+	case "gadget list":
+		listGadgets(g)
 	}
 }
 
@@ -87,9 +94,9 @@ func deleteGadget(r *repository.Gadget) {
 }
 
 func updateGadget(r *repository.Gadget) {
-	// if err := r.Update(*id); err != nil {
-	// 	log.Fatal(err)
-	// }
+	if err := r.Update(*uid, *uname, *uurl); err != nil {
+		log.Fatal(err)
+	}
 }
 
 func listGadgets(r *repository.Gadget) {
@@ -101,12 +108,6 @@ func listGadgets(r *repository.Gadget) {
 	for _, g := range gds {
 		fmt.Printf("%d: %s %s\n", g.ID, g.Name, g.URL)
 	}
-}
-
-func editGadget(r *repository.Gadget) {
-	// if err := r.Edit(*id, *username, *url); err != nil {
-	// 	log.Fatal(err)
-	// }
 }
 
 func createUser(r *repository.User) {

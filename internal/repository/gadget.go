@@ -36,14 +36,11 @@ func (g Gadget) Delete(id int) error {
 	return g.db.DeleteStruct(out)
 }
 
-func (r Gadget) Edit(id int) error {
-	// g := &schema.Gadget{ID: id}
-	// return r.db.DeleteStruct(g)
-	return nil
+func (g Gadget) Update(id int, name, url string) error {
+	return g.db.Update(&schema.Gadget{ID: id, Name: name, URL: url})
 }
 
-func (r Gadget) List() ([]schema.Gadget, error) {
-	//g := &schema.Gadget{ID: id}
-	//return r.db.DeleteStruct(g)
-	return nil, nil
+func (g Gadget) List() ([]schema.Gadget, error) {
+	var gs []schema.Gadget
+	return gs, g.db.All(&gs)
 }
