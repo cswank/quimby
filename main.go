@@ -3,13 +3,11 @@ package main
 import (
 	"log"
 
-	"github.com/cswank/quimby/internal/auth"
 	"github.com/cswank/quimby/internal/commandline/gadget"
+	"github.com/cswank/quimby/internal/commandline/server"
 	"github.com/cswank/quimby/internal/commandline/user"
 	"github.com/cswank/quimby/internal/config"
-	"github.com/cswank/quimby/internal/homekit"
 	"github.com/cswank/quimby/internal/repository"
-	"github.com/cswank/quimby/internal/router"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
 )
 
@@ -48,7 +46,7 @@ func main() {
 	cmd := kingpin.Parse()
 	switch cmd {
 	case "serve":
-		serve(cfg, g, u)
+		server.Start(cfg, g, u)
 	case "user create":
 		user.Create(u, *username)
 	case "user delete":
@@ -63,17 +61,5 @@ func main() {
 		gadget.Update(g, *uid, *uname, *uurl)
 	case "gadget list":
 		gadget.List(g)
-	}
-}
-
-func serve(cfg config.Config, g *repository.Gadget, u *repository.User) {
-	a := auth.New(u)
-	hc, err := homekit.New()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	if err := router.Serve(cfg, g, u, a, hc); err != nil {
-		log.Fatal(err)
 	}
 }
