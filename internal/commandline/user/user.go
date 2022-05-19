@@ -1,6 +1,7 @@
 package user
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"net/http"
@@ -12,30 +13,38 @@ import (
 	"golang.org/x/crypto/ssh/terminal"
 )
 
-func Create(r *repository.User, username string) error {
-	fmt.Print("Enter Password: ")
+func Create(r *repository.User, username string) {
+	fmt.Print("Enter password: ")
 	pw, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	pw, tfa, qa, err := auth.Credentials(username, string(pw))
+	fmt.Print("Confirm password: ")
+	pw2, err := terminal.ReadPassword(int(syscall.Stdin))
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	u, err := r.Create(username, pw, tfa)
+	if !bytes.Equal(pw, pw2) {
+		log.Fatal(fmt.Errorf("passwords don't match"))
+	}
+
+	hashed, tfa, qr, err := auth.Credentials(username, string(pw))
 	if err != nil {
-		return err
+		log.Fatal(err)
 	}
 
-	h := func(w http.ResponseWriter, r *http.Request) {
+	u, err := r.Create(username, hashed, tfa)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Header().Set("Content-Type", "application/octet-stream")
-		w.Write(qa)
-	}
-
-	ts := httptest.NewServer(http.HandlerFunc(h))
+		w.Write(qr)
+	}))
 
 	fmt.Printf("\ncreated user: %d %s\n, open %s to scan code\n", u.ID, u.Name, ts.URL)
 	fmt.Println("hit enter when done")
@@ -44,8 +53,6 @@ func Create(r *repository.User, username string) error {
 	fmt.Scanln(&i)
 
 	ts.Close()
-
-	return nil
 }
 
 func Delete(r *repository.User, username string) {
