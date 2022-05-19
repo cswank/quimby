@@ -2,14 +2,15 @@ package homekit
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"strings"
 
-	"github.com/brutella/hc"
-	"github.com/brutella/hc/accessory"
+	"github.com/brutella/hap"
+	"github.com/brutella/hap/accessory"
 	"github.com/cswank/quimby/internal/config"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/kelseyhightower/envconfig"
@@ -30,6 +31,7 @@ type (
 	thermostatState uint8
 
 	cfg struct {
+		Store          string   `envconfig:"STORE" required:"true"`
 		Pin            string   `envconfig:"PIN" required:"true"`
 		Port           string   `envconfig:"PORT" required:"true"`
 		FurnaceHost    string   `envconfig:"FURNACE_HOST"`
@@ -107,7 +109,7 @@ func (h *Homekit) Update(msg schema.Message) {
 func (h *Homekit) start() {
 	bridge := accessory.NewBridge(accessory.Info{Name: "Quimby"})
 
-	var ac []*accessory.Accessory
+	var ac []*accessory.A
 	if h.cfg.FurnaceHost != "" {
 		ac = append(ac, h.furnace())
 	}
@@ -118,9 +120,10 @@ func (h *Homekit) start() {
 
 	ac = append(ac, h.stereo())
 
-	tr, err := hc.NewIPTransport(
-		hc.Config{Pin: h.cfg.Pin, Port: h.cfg.Port},
-		bridge.Accessory,
+	st := hap.NewFsStore(h.cfg.Store)
+	tr, err := hap.NewServer(
+		st,
+		bridge.A,
 		ac...,
 	)
 
@@ -128,14 +131,14 @@ func (h *Homekit) start() {
 		log.Panic(err)
 	}
 
-	tr.Start()
+	tr.ListenAndServe(context.Background())
 }
 
-func (h *Homekit) stereo() *accessory.Accessory {
+func (h *Homekit) stereo() *accessory.A {
 	s := accessory.NewSwitch(accessory.Info{Name: "stereo"})
 
 	s.Switch.On.OnValueRemoteUpdate(func(b bool) {
-		h.sendOnOffCommand(s.Accessory.Info.Name.String.GetValue(), state(b))
+		h.sendOnOffCommand(s.A.Info.Name.String.Value(), state(b))
 	})
 
 	h.updates["stereo"] = func(msg schema.Message) {
@@ -145,11 +148,11 @@ func (h *Homekit) stereo() *accessory.Accessory {
 		}
 	}
 
-	return s.Accessory
+	return s.A
 }
 
-func (h *Homekit) sprinklers() []*accessory.Accessory {
-	out := make([]*accessory.Accessory, len(h.cfg.SprinklerZones))
+func (h *Homekit) sprinklers() []*accessory.A {
+	out := make([]*accessory.A, len(h.cfg.SprinklerZones))
 	m := make(map[string]accessory.Switch)
 
 	for i, z := range h.cfg.SprinklerZones {
@@ -157,7 +160,7 @@ func (h *Homekit) sprinklers() []*accessory.Accessory {
 		m[z] = *s
 
 		s.Switch.On.OnValueRemoteUpdate(func(b bool) {
-			h.sendOnOffCommand(s.Accessory.Info.Name.String.GetValue(), state(b))
+			h.sendOnOffCommand(s.A.Info.Name.String.Value(), state(b))
 		})
 
 		h.updates[z] = func(msg schema.Message) {
@@ -168,7 +171,7 @@ func (h *Homekit) sprinklers() []*accessory.Accessory {
 			}
 		}
 
-		out[i] = s.Accessory
+		out[i] = s.A
 	}
 
 	return out
@@ -179,13 +182,13 @@ func (h *Homekit) sendOnOffCommand(name string, val state) {
 	h.sendCommand(msg, h.cfg.SprinklerHost)
 }
 
-func (h *Homekit) furnace() *accessory.Accessory {
-	furnace := accessory.NewThermostat(accessory.Info{Name: "Thermostat"}, 20, 16, 26, 1)
+func (h *Homekit) furnace() *accessory.A {
+	furnace := accessory.NewThermostat(accessory.Info{Name: "Thermostat", SerialNumber: "06", Manufacturer: "16", Model: "26", Firmware: "1"})
 	state := thermostatOff
 
 	furnace.Thermostat.TargetHeatingCoolingState.OnValueRemoteUpdate(func(i int) {
 		state = thermostatState(i) //TODO: figure out how to handle 'auto' state
-		c := furnace.Thermostat.TargetTemperature.GetValue()
+		c := furnace.Thermostat.TargetTemperature.Float.Value()
 		h.updateFurnace(c, state)
 	})
 
@@ -199,7 +202,7 @@ func (h *Homekit) furnace() *accessory.Accessory {
 		if ok {
 			if i == 0 {
 				c := (f - 32.0) / 1.8
-				furnace.Thermostat.CurrentTemperature.UpdateValue(c)
+				furnace.Thermostat.CurrentTemperature.SetValue(c)
 			}
 			i++
 			if i == 10 {
@@ -222,18 +225,18 @@ func (h *Homekit) furnace() *accessory.Accessory {
 			state = thermostatOff
 		}
 
-		furnace.Thermostat.TargetHeatingCoolingState.UpdateValue(int(state))
-		furnace.Thermostat.CurrentHeatingCoolingState.UpdateValue(int(state))
+		furnace.Thermostat.TargetHeatingCoolingState.SetValue(int(state))
+		furnace.Thermostat.CurrentHeatingCoolingState.SetValue(int(state))
 		if state != thermostatOff {
 			f, ok := val.Value.(float64)
 			if ok {
 				c := (f - 32.0) / 1.8
-				furnace.Thermostat.TargetTemperature.UpdateValue(c)
+				furnace.Thermostat.TargetTemperature.SetValue(c)
 			}
 		}
 	}
 
-	return furnace.Accessory
+	return furnace.A
 }
 
 func (h *Homekit) updateFurnace(c float64, state thermostatState) {
