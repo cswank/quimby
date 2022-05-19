@@ -14,8 +14,6 @@ require (
 	gopkg.in/alecthomas/kingpin.v2 v2.2.6
 )
 
-replace github.com/cswank/kingpin => /Users/craig/Projects/kingpin
-
 require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/Sereal/Sereal v0.0.0-20220220040404-e0d1e550e879 // indirect
