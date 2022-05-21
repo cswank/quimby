@@ -1,11 +1,16 @@
 package templates
 
+import "github.com/cswank/quimby/internal/schema"
+
 type Page struct {
 	name        string
 	Links       []Link
 	Scripts     []string
 	Stylesheets []string
 	template    string
+	Gadgets     []schema.Gadget
+	Gadget      schema.Gadget
+	Websocket   string
 }
 
 type Link struct {
@@ -29,6 +34,24 @@ func NewPage(name, template string, opts ...func(*Page)) Page {
 func WithScripts(s []string) func(*Page) {
 	return func(p *Page) {
 		p.Scripts = s
+	}
+}
+
+func WithGadgets(g ...schema.Gadget) func(*Page) {
+	return func(p *Page) {
+		p.Gadgets = g
+	}
+}
+
+func WithWebsocket(s string) func(*Page) {
+	return func(p *Page) {
+		p.Websocket = s
+	}
+}
+
+func WithGadget(g schema.Gadget) func(*Page) {
+	return func(p *Page) {
+		p.Gadget = g
 	}
 }
 

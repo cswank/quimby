@@ -36,7 +36,7 @@ type (
 		user    user
 		auth    auth
 		hc      homekit
-		clients clients.Clients
+		clients *clients.Clients
 		cfg     config.Config
 
 		pages map[string]templates.Page
@@ -72,6 +72,7 @@ func Serve(cfg config.Config, g gadget, u user, a auth, hc homekit) error {
 		user:    u,
 		auth:    a,
 		hc:      hc,
+		clients: clients.New(),
 		pages: map[string]templates.Page{
 			"login":  templates.NewPage("Quimby", "login.ghtml"),
 			"logout": templates.NewPage("Quimby", "logout.ghtml"),
@@ -90,6 +91,19 @@ func Serve(cfg config.Config, g gadget, u user, a auth, hc homekit) error {
 		r.Get("/", handle(s.logout))
 		r.Post("/", handle(s.doLogout))
 	})
+
+	pub.Get("/", s.redirect)
+	pub.Get("/static/*", handle(s.static()))
+
+	pub.With(s.auth.Auth).Route("/gadgets", func(r chi.Router) {
+		r.Get("/", handle(s.getAll))
+		r.Get("/{id}", handle(s.get))
+		r.Get("/{id}/websocket", handle(s.connect))
+		r.Get("/{id}/method", handle(s.method))
+		r.Post("/{id}/method", handle(s.runMethod))
+	})
+
+	priv.Post("/status", handle(s.update))
 
 	go func(r chi.Router) {
 		if err := http.ListenAndServe(":3334", r); err != nil {

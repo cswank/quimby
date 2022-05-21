@@ -18,53 +18,46 @@ import (
 )
 
 // getAll shows all the gadgets
-func (g *server) getAll(w http.ResponseWriter, req *http.Request) (renderer, error) {
+func (g *server) getAll(w http.ResponseWriter, req *http.Request) error {
 	rand.Seed(time.Now().UnixNano())
 	gadgets, err := g.gadgets.GetAll()
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &gadgetsPage{
-		Gadgets: gadgets,
-		Page:    templates.NewPage("Quimby", "gadgets.ghtml"),
-	}, nil
+	return render(templates.NewPage("Quimby", "gadgets.ghtml", templates.WithGadgets(gadgets...)), w, req)
 }
 
 // get shows a single gadget
-func (g *server) get(w http.ResponseWriter, req *http.Request) (renderer, error) {
+func (g *server) get(w http.ResponseWriter, req *http.Request) error {
 	gadget, err := g.gadget(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &gadgetPage{
-		Gadget:    gadget,
-		Websocket: fmt.Sprintf("wss://%s/gadgets/%d/websocket", g.cfg.Host, gadget.ID),
-		Page: templates.NewPage(
-			gadget.Name,
-			"gadget.ghtml",
-			templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
-			templates.WithLinks([]templates.Link{{Name: "method", Link: fmt.Sprintf("/gadgets/%d/method", gadget.ID)}}),
-		),
-	}, nil
+	return render(templates.NewPage(
+		gadget.Name,
+		"gadget.ghtml",
+		templates.WithWebsocket(fmt.Sprintf("wss://%s/gadgets/%d/websocket", g.cfg.Host, gadget.ID)),
+		templates.WithGadget(gadget),
+		templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
+		templates.WithLinks([]templates.Link{{Name: "method", Link: fmt.Sprintf("/gadgets/%d/method", gadget.ID)}}),
+	), w, req)
 }
 
 // method shows the method editor for a gadget
-func (g *server) method(w http.ResponseWriter, req *http.Request) (renderer, error) {
+func (g *server) method(w http.ResponseWriter, req *http.Request) error {
 	gadget, err := g.gadget(req)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	return &gadgetPage{
-		Page: templates.NewPage(
-			"Quimby",
-			"edit-method.ghtml",
-			templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
-		),
-		Gadget: gadget,
-	}, nil
+	return render(templates.NewPage(
+		"Quimby",
+		"edit-method.ghtml",
+		templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
+		templates.WithGadget(gadget),
+	), w, req)
 }
 
 func (g *server) runMethod(w http.ResponseWriter, req *http.Request) error {
@@ -184,7 +177,7 @@ func (g *server) gadget(req *http.Request) (schema.Gadget, error) {
 	return g.gadgets.Get(int(id))
 }
 
-func (g *server) Static() handler {
+func (g *server) static() handler {
 	s := http.FileServer(http.FS(templates.Static))
 	return func(w http.ResponseWriter, req *http.Request) error {
 		s.ServeHTTP(w, req)
@@ -210,17 +203,6 @@ func (g server) update(w http.ResponseWriter, req *http.Request) error {
 // redirect -> /gadgets
 func (g server) redirect(w http.ResponseWriter, req *http.Request) {
 	http.Redirect(w, req, "/gadgets", http.StatusSeeOther)
-}
-
-type gadgetsPage struct {
-	templates.Page
-	Gadgets []schema.Gadget
-}
-
-type gadgetPage struct {
-	templates.Page
-	Gadget    schema.Gadget
-	Websocket string
 }
 
 func noQueries(h http.Handler) http.Handler {
