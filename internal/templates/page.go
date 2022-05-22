@@ -3,7 +3,7 @@ package templates
 import "github.com/cswank/quimby/internal/schema"
 
 type Page struct {
-	name        string
+	Name        string
 	Links       []Link
 	Scripts     []string
 	Stylesheets []string
@@ -20,7 +20,7 @@ type Link struct {
 
 func NewPage(name, template string, opts ...func(*Page)) Page {
 	p := Page{
-		name:     name,
+		Name:     name,
 		template: template,
 	}
 
@@ -37,7 +37,7 @@ func WithScripts(s []string) func(*Page) {
 	}
 }
 
-func WithGadgets(g ...schema.Gadget) func(*Page) {
+func WithGadgets(g []schema.Gadget) func(*Page) {
 	return func(p *Page) {
 		p.Gadgets = g
 	}
@@ -59,10 +59,6 @@ func WithLinks(l []Link) func(*Page) {
 	return func(p *Page) {
 		p.Links = l
 	}
-}
-
-func (p *Page) Name() string {
-	return p.name
 }
 
 func (p *Page) AddScripts(s []string) {

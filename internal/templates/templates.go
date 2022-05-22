@@ -5,7 +5,6 @@ import (
 	"embed"
 	"fmt"
 	"html/template"
-	"log"
 
 	"github.com/cswank/quimby/internal/schema"
 )
@@ -48,17 +47,17 @@ type tmpl struct {
 	bare        bool
 }
 
-func Box() {
+func Init() error {
 	data := map[string]string{}
 	files, err := tpls.ReadDir("templates")
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	for _, f := range files {
 		d, err := tpls.ReadFile(fmt.Sprintf("templates/%s", f.Name()))
 		if err != nil {
-			log.Fatal(err)
+			return err
 		}
 		data[f.Name()] = string(d)
 	}
@@ -84,12 +83,14 @@ func Box() {
 		for _, f := range files {
 			t, err = t.Parse(data[f])
 			if err != nil {
-				log.Fatal(err)
+				return err
 			}
 		}
 		val.template = t
 		templates[key] = val
 	}
+
+	return nil
 }
 
 func Get(k string) (*template.Template, []string, []string) {

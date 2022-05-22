@@ -106,11 +106,13 @@ func Serve(cfg config.Config, g gadget, u user, a auth, hc homekit) error {
 	priv.Post("/status", handle(s.update))
 
 	go func(r chi.Router) {
+		log.Println("listening on port 3334")
 		if err := http.ListenAndServe(":3334", r); err != nil {
 			log.Fatalf("unable to start private server: %s", err)
 		}
 	}(priv)
 
+	log.Println("listening on port 3333")
 	return http.ListenAndServe(":3333", pub)
 }
 

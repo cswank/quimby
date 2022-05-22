@@ -25,7 +25,11 @@ func (g *server) getAll(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
-	return render(templates.NewPage("Quimby", "gadgets.ghtml", templates.WithGadgets(gadgets...)), w, req)
+	return render(templates.NewPage(
+		"Quimby",
+		"gadgets.ghtml",
+		templates.WithGadgets(gadgets),
+	), w, req)
 }
 
 // get shows a single gadget
