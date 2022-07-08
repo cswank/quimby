@@ -118,10 +118,10 @@ func (h *Homekit) start() {
 		ac = append(ac, h.sprinklers()...)
 	}
 
-	ac = append(ac, h.stereo())
+	//ac = append(ac, h.stereo())
 
 	st := hap.NewFsStore(h.cfg.Store)
-	tr, err := hap.NewServer(
+	srv, err := hap.NewServer(
 		st,
 		bridge.A,
 		ac...,
@@ -131,7 +131,9 @@ func (h *Homekit) start() {
 		log.Panic(err)
 	}
 
-	tr.ListenAndServe(context.Background())
+	srv.Pin = h.cfg.Pin
+	srv.Addr = fmt.Sprintf("0.0.0.0:%s", h.cfg.Port)
+	srv.ListenAndServe(context.Background())
 }
 
 func (h *Homekit) stereo() *accessory.A {
