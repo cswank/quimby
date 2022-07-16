@@ -209,14 +209,10 @@ func (h *Homekit) furnace() *accessory.A {
 	}
 
 	h.updates[h.cfg.Thermostat] = func(msg schema.Message) {
-		if msg.TargetValue == nil {
-			return
-		}
-
-		val := *msg.TargetValue
-		if strings.Index(val.Cmd, "heat home") == 0 {
+		cmd := msg.Value.Cmd
+		if strings.Index(cmd, "heat home") == 0 {
 			state = heat
-		} else if strings.Index(val.Cmd, "cool home") == 0 {
+		} else if strings.Index(cmd, "cool home") == 0 {
 			state = cool
 		} else {
 			state = thermostatOff
@@ -225,6 +221,7 @@ func (h *Homekit) furnace() *accessory.A {
 		furnace.Thermostat.TargetHeatingCoolingState.SetValue(int(state))
 		furnace.Thermostat.CurrentHeatingCoolingState.SetValue(int(state))
 		if state != thermostatOff {
+			val := msg.TargetValue
 			f, ok := val.Value.(float64)
 			if ok {
 				c := (f - 32.0) / 1.8
