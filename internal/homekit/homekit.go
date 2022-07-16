@@ -216,8 +216,13 @@ func (h *Homekit) furnace() *accessory.A {
 			state = cool
 		}
 
-		furnace.Thermostat.TargetHeatingCoolingState.SetValue(int(state))
-		furnace.Thermostat.CurrentHeatingCoolingState.SetValue(int(state))
+		if err := furnace.Thermostat.TargetHeatingCoolingState.SetValue(int(state)); err != nil {
+			log.Printf("unable to set furnace.Thermostat.TargetHeatingCoolingState: %s", err)
+		}
+		if err := furnace.Thermostat.CurrentHeatingCoolingState.SetValue(int(state)); err != nil {
+			log.Printf("unable to set furnace.Thermostat.CurrentHeatingCoolingState: %s", err)
+		}
+
 		if state != thermostatOff && msg.TargetValue != nil {
 			f, ok := msg.TargetValue.Value.(float64)
 			if ok {
