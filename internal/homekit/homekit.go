@@ -235,7 +235,6 @@ func (h *Homekit) furnace() *accessory.A {
 
 func (h *Homekit) updateFurnace(c float64, state thermostatState) {
 	msg := schema.Message{Type: "command", Sender: "homekit"}
-
 	switch state {
 	case heat, cool:
 		msg.Body = fmt.Sprintf("%s to %f F", state, h.f(c))
