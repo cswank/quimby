@@ -198,8 +198,7 @@ func (h *Homekit) furnace() *accessory.A {
 		f, ok := msg.Value.Value.(float64)
 		if ok {
 			if i == 0 {
-				c := (f - 32.0) / 1.8
-				furnace.Thermostat.CurrentTemperature.SetValue(c)
+				furnace.Thermostat.CurrentTemperature.SetValue(h.c(f))
 			}
 			i++
 			if i == 10 {
@@ -226,7 +225,7 @@ func (h *Homekit) furnace() *accessory.A {
 		if state != thermostatOff && msg.TargetValue != nil {
 			f, ok := msg.TargetValue.Value.(float64)
 			if ok {
-				furnace.Thermostat.TargetTemperature.SetValue((f - 32.0) / 1.8)
+				furnace.Thermostat.TargetTemperature.SetValue(h.c(f))
 			}
 		}
 	}
@@ -235,12 +234,11 @@ func (h *Homekit) furnace() *accessory.A {
 }
 
 func (h *Homekit) updateFurnace(c float64, state thermostatState) {
-	f := float64(c*1.8 + 32.0)
 	msg := schema.Message{Type: "command", Sender: "homekit"}
 
 	switch state {
 	case heat, cool:
-		msg.Body = fmt.Sprintf("%s to %f F", state, f)
+		msg.Body = fmt.Sprintf("%s to %f F", state, h.f(c))
 	case thermostatOff:
 		msg.Body = "turn off furnace"
 	}
@@ -300,4 +298,12 @@ func (h *Homekit) register(addr string) error {
 	}
 
 	return nil
+}
+
+func (h Homekit) c(f float64) float64 {
+	return (f - 32.0) / 1.8
+}
+
+func (h Homekit) f(c float64) float64 {
+	return c*1.8 + 32.0
 }
