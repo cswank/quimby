@@ -1,10 +1,10 @@
 module github.com/cswank/quimby
 
-go 1.17
+go 1.19
 
 require (
 	github.com/asdine/storm v2.1.2+incompatible
-	github.com/brutella/hap v0.0.14
+	github.com/brutella/hap v0.0.20
 	github.com/go-chi/chi v1.5.4
 	github.com/gorilla/securecookie v1.1.1
 	github.com/gorilla/websocket v1.5.0
@@ -19,11 +19,11 @@ require (
 	github.com/Sereal/Sereal v0.0.0-20220220040404-e0d1e550e879 // indirect
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
-	github.com/brutella/dnssd v1.2.2 // indirect
+	github.com/brutella/dnssd v1.2.3 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/golang/snappy v0.0.4 // indirect
-	github.com/miekg/dns v1.1.46 // indirect
+	github.com/miekg/dns v1.1.50 // indirect
 	github.com/sec51/convert v1.0.2 // indirect
 	github.com/sec51/cryptoengine v0.0.0-20180911112225-2306d105a49e // indirect
 	github.com/sec51/gf256 v0.0.0-20160126143050-2454accbeb9e // indirect

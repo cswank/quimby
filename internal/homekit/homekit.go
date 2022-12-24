@@ -241,7 +241,7 @@ func (h *Homekit) updateFurnace(c float64, state thermostatState) {
 	case thermostatOff:
 		msg.Body = "turn off furnace"
 	}
-
+	log.Printf("update furnace: '%s'", msg.Body)
 	h.sendCommand(msg, h.cfg.FurnaceHost)
 }
 
