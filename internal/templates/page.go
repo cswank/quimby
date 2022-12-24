@@ -11,6 +11,7 @@ type Page struct {
 	Gadgets     []schema.Gadget
 	Gadget      schema.Gadget
 	Websocket   string
+	Error       string
 }
 
 type Link struct {

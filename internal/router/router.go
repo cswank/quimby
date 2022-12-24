@@ -117,7 +117,6 @@ func Serve(cfg config.Config, g gadget, u user, a auth, hc homekit) error {
 }
 
 func (s *server) login(w http.ResponseWriter, req *http.Request) error {
-	//	Error: req.URL.Query().Get("error"),
 	return render(s.pages["login"], w, req)
 }
 
@@ -193,5 +192,6 @@ func render(pg templates.Page, w http.ResponseWriter, req *http.Request) error {
 	pg.AddScripts(scripts)
 	pg.AddStylesheets(stylesheets)
 	pg.AddLinks([]templates.Link{{Name: "logout", Link: "/logout"}})
+	pg.Error = req.URL.Query().Get("error")
 	return t.ExecuteTemplate(w, "base", pg)
 }

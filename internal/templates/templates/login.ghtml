@@ -1,9 +1,9 @@
 {{define "content"}}
 <div id="content">
-  <div class="error">
+  {{if .Error}}<div class="error">
     <i class="fa fa-info-circle"></i>
     {{.Error}}
-  </div>
+  </div>{{end}}
   <form method="POST" action="/login">
     <fieldset>
       <label for="username">Username</label>
