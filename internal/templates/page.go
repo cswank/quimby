@@ -1,6 +1,8 @@
 package templates
 
-import "github.com/cswank/quimby/internal/schema"
+import (
+	"github.com/cswank/quimby/internal/schema"
+)
 
 type Page struct {
 	Name        string

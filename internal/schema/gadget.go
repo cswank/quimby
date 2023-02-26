@@ -15,15 +15,11 @@ type Gadget struct {
 	ID     int    `storm:"id,increment"`
 	Name   string `json:"name"`
 	URL    string `json:"url"`
-	status map[string]map[string]Message
+	Status map[string]map[string]Message
 }
 
-func (g *Gadget) String() string {
+func (g Gadget) String() string {
 	return fmt.Sprintf("%d: %s %s", g.ID, g.Name, g.URL)
-}
-
-func (g *Gadget) Status() map[string]map[string]Message {
-	return g.status
 }
 
 func (g *Gadget) Register(addr, token string) (string, error) {
@@ -48,7 +44,7 @@ func (g *Gadget) Register(addr, token string) (string, error) {
 	return g.URL, nil
 }
 
-func (g *Gadget) Send(m Message) error {
+func (g Gadget) Send(m Message) error {
 	buf := bytes.Buffer{}
 	enc := json.NewEncoder(&buf)
 	if err := enc.Encode(m); err != nil {
@@ -103,7 +99,7 @@ func (g *Gadget) Fetch() error {
 		status[v.Location] = l
 	}
 
-	g.status = status
+	g.Status = status
 	return nil
 }
 
@@ -135,6 +131,12 @@ type Message struct {
 	Timestamp   time.Time `json:"timestamp,omitempty"`
 	Value       Value     `json:"value,omitempty"`
 	TargetValue *Value    `json:"target_value,omitempty"`
+	Info        struct {
+		Direction string   `json:"direction"`
+		Type      string   `json:"type"`
+		On        []string `json:"on"`
+		Off       []string `json:"off"`
+	} `json:"info"`
 }
 
 type Method struct {

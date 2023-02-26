@@ -39,6 +39,8 @@ func (g *server) get(w http.ResponseWriter, req *http.Request) error {
 		return err
 	}
 
+	gadget.Fetch()
+
 	return render(templates.NewPage(
 		gadget.Name,
 		"gadget.ghtml",
