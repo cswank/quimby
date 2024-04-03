@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/brutella/hap"
 	"github.com/brutella/hap/accessory"
@@ -236,6 +237,14 @@ func (h *Homekit) furnace() *accessory.A {
 func (h *Homekit) updateFurnace(c float64, state thermostatState) {
 	msg := schema.Message{Type: "command", Sender: "homekit"}
 	switch state {
+	case auto:
+		n := time.Now()
+		switch n.Month() {
+		case 10, 11, 12, 1, 2, 3, 4:
+			msg.Body = fmt.Sprintf("heat to %f F", h.f(c))
+		case 5, 6, 7, 8, 9:
+			msg.Body = fmt.Sprintf("cool to %f F", h.f(c))
+		}
 	case heat, cool:
 		msg.Body = fmt.Sprintf("%s to %f F", state, h.f(c))
 	case thermostatOff:
