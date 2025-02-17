@@ -44,7 +44,7 @@ func (g *server) get(w http.ResponseWriter, req *http.Request) error {
 	return render(templates.NewPage(
 		gadget.Name,
 		"gadget.ghtml",
-		templates.WithWebsocket(fmt.Sprintf("ws://%s/gadgets/%d/websocket", g.cfg.Host, gadget.ID)),
+		templates.WithWebsocket(fmt.Sprintf("ws://%s:3333/gadgets/%d/websocket", g.cfg.Host, gadget.ID)),
 		templates.WithGadget(gadget),
 		templates.WithScripts([]string{"https://cdnjs.cloudflare.com/ajax/libs/underscore.js/1.9.1/underscore-min.js"}),
 		templates.WithLinks([]templates.Link{{Name: "method", Link: fmt.Sprintf("/gadgets/%d/method", gadget.ID)}}),
