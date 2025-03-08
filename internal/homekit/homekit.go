@@ -242,12 +242,12 @@ func (h *Homekit) updateFurnace(c float64, state thermostatState) {
 		n := time.Now()
 		switch n.Month() {
 		case 10, 11, 12, 1, 2, 3, 4:
-			msg.Body = fmt.Sprintf("heat to %f F", h.f(c))
+			msg.Body = fmt.Sprintf("heat to %.0f F", h.f(c))
 		case 5, 6, 7, 8, 9:
-			msg.Body = fmt.Sprintf("cool to %f F", h.f(c))
+			msg.Body = fmt.Sprintf("cool to %.0f F", h.f(c))
 		}
 	case heat, cool:
-		msg.Body = fmt.Sprintf("%s to %f F", state, h.f(c))
+		msg.Body = fmt.Sprintf("%s to %.0f F", state, h.f(c))
 	case thermostatOff:
 		msg.Body = "turn off furnace"
 	}
