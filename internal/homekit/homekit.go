@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strings"
 	"time"
@@ -309,9 +310,9 @@ func (h *Homekit) register(addr string) error {
 }
 
 func (h Homekit) c(f float64) float64 {
-	return (f - 32.0) / 1.8
+	return math.Round((f - 32.0) / 1.8)
 }
 
 func (h Homekit) f(c float64) float64 {
-	return c*1.8 + 32.0
+	return math.Round(c*1.8 + 32.0)
 }
