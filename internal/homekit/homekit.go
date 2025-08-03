@@ -310,7 +310,7 @@ func (h *Homekit) register(addr string) error {
 }
 
 func (h Homekit) c(f float64) float64 {
-	return math.Round((f - 32.0) / 1.8)
+	return (f - 32.0) / 1.8
 }
 
 func (h Homekit) f(c float64) float64 {
