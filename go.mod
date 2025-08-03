@@ -1,6 +1,6 @@
 module github.com/cswank/quimby
 
-go 1.19
+go 1.23
 
 require (
 	github.com/asdine/storm v2.1.2+incompatible
