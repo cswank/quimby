@@ -8,11 +8,13 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/brutella/hap"
 	"github.com/brutella/hap/accessory"
+	"github.com/brutella/hap/service"
 	"github.com/cswank/quimby/internal/config"
 	"github.com/cswank/quimby/internal/schema"
 	"github.com/kelseyhightower/envconfig"
@@ -32,15 +34,21 @@ type (
 	state           bool
 	thermostatState uint8
 
+	// moistureProbes maps a gogadgets device key ("{location} {name}") to the
+	// host URL that owns the probe. Custom Decode so URL colons don't clash
+	// with envconfig's default key:value map separator.
+	moistureProbes map[string]string
+
 	cfg struct {
-		Store          string   `envconfig:"STORE" required:"true"`
-		Pin            string   `envconfig:"PIN" required:"true"`
-		Port           string   `envconfig:"PORT" required:"true"`
-		FurnaceHost    string   `envconfig:"FURNACE_HOST"`
-		Thermostat     string   `envconfig:"THERMOSTAT" default:"home furnace"`
-		Thermometer    string   `envconfig:"THERMOMETER" default:"home temperature"`
-		SprinklerHost  string   `envconfig:"SPRINKLER_HOST"`
-		SprinklerZones []string `envconfig:"SPRINKLER_ZONES"`
+		Store          string         `envconfig:"STORE" required:"true"`
+		Pin            string         `envconfig:"PIN" required:"true"`
+		Port           string         `envconfig:"PORT" required:"true"`
+		FurnaceHost    string         `envconfig:"FURNACE_HOST"`
+		Thermostat     string         `envconfig:"THERMOSTAT" default:"home furnace"`
+		Thermometer    string         `envconfig:"THERMOMETER" default:"home temperature"`
+		SprinklerHost  string         `envconfig:"SPRINKLER_HOST"`
+		SprinklerZones []string       `envconfig:"SPRINKLER_ZONES"`
+		MoistureProbes moistureProbes `envconfig:"MOISTURE_PROBES"`
 	}
 
 	update func(schema.Message)
@@ -102,7 +110,10 @@ func New() (*Homekit, error) {
 }
 
 func (h *Homekit) Update(msg schema.Message) {
-	f, ok := h.updates[msg.Sender]
+	// Dispatch on the gogadgets device key "{location} {name}" rather than
+	// msg.Sender, since Sender is just the device name and isn't unique
+	// across devices that share a name (e.g. multiple "soil moisture" probes).
+	f, ok := h.updates[msg.Location+" "+msg.Name]
 	if ok {
 		f(msg)
 	}
@@ -118,6 +129,10 @@ func (h *Homekit) start() {
 
 	if h.cfg.SprinklerHost != "" {
 		ac = append(ac, h.sprinklers()...)
+	}
+
+	if len(h.cfg.MoistureProbes) > 0 {
+		ac = append(ac, h.moistureSensors()...)
 	}
 
 	st := hap.NewFsStore(h.cfg.Store)
@@ -152,21 +167,17 @@ func (h *Homekit) stereo() *accessory.A {
 
 func (h *Homekit) sprinklers() []*accessory.A {
 	out := make([]*accessory.A, len(h.cfg.SprinklerZones))
-	m := make(map[string]accessory.Switch)
 
 	for i, z := range h.cfg.SprinklerZones {
 		s := accessory.NewSwitch(accessory.Info{Name: z})
-		m[z] = *s
 
 		s.Switch.On.OnValueRemoteUpdate(func(b bool) {
 			h.sendOnOffCommand(s.A.Info.Name.String.Value(), state(b))
 		})
 
 		h.updates[z] = func(msg schema.Message) {
-			sw, ok := m[msg.Sender]
-			b, ok := msg.Value.Value.(bool)
-			if ok {
-				sw.Switch.On.SetValue(b)
+			if b, ok := msg.Value.Value.(bool); ok {
+				s.Switch.On.SetValue(b)
 			}
 		}
 
@@ -276,6 +287,15 @@ func (h *Homekit) init() error {
 	if h.cfg.SprinklerHost != "" {
 		h.registerWithRetry(h.cfg.SprinklerHost)
 	}
+
+	seen := map[string]bool{}
+	for _, host := range h.cfg.MoistureProbes {
+		if seen[host] {
+			continue
+		}
+		seen[host] = true
+		h.registerWithRetry(host)
+	}
 	return nil
 }
 
@@ -319,6 +339,53 @@ func (h *Homekit) register(addr string) error {
 	}
 
 	return nil
+}
+
+// Decode parses entries of the form "key=url,key=url" into the map.
+// Whitespace around keys and URLs is trimmed. Keys are gogadgets device
+// keys ("{location} {name}") and may contain spaces.
+func (m *moistureProbes) Decode(value string) error {
+	if *m == nil {
+		*m = moistureProbes{}
+	}
+	for _, pair := range strings.Split(value, ",") {
+		pair = strings.TrimSpace(pair)
+		if pair == "" {
+			continue
+		}
+		idx := strings.Index(pair, "=")
+		if idx < 0 {
+			return fmt.Errorf("invalid moisture probe %q: expected 'key=url'", pair)
+		}
+		(*m)[strings.TrimSpace(pair[:idx])] = strings.TrimSpace(pair[idx+1:])
+	}
+	return nil
+}
+
+func (h *Homekit) moistureSensors() []*accessory.A {
+	keys := make([]string, 0, len(h.cfg.MoistureProbes))
+	for k := range h.cfg.MoistureProbes {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	out := make([]*accessory.A, 0, len(keys))
+	for _, key := range keys {
+		a := accessory.New(accessory.Info{Name: key}, accessory.TypeSensor)
+		svc := service.NewHumiditySensor()
+		a.AddS(svc.S)
+
+		h.updates[key] = func(msg schema.Message) {
+			v, ok := msg.Value.Value.(float64)
+			if !ok {
+				return
+			}
+			svc.CurrentRelativeHumidity.SetValue(v)
+		}
+
+		out = append(out, a)
+	}
+	return out
 }
 
 func (h Homekit) c(f float64) float64 {
