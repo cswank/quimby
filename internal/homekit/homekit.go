@@ -270,19 +270,31 @@ func (h *Homekit) sendCommand(msg schema.Message, host string) {
 
 func (h *Homekit) init() error {
 	if h.cfg.FurnaceHost != "" {
-		err := h.register(h.cfg.FurnaceHost)
-		if err != nil {
-			return err
-		}
+		h.registerWithRetry(h.cfg.FurnaceHost)
 	}
 
 	if h.cfg.SprinklerHost != "" {
-		err := h.register(h.cfg.SprinklerHost)
-		if err != nil {
-			return err
-		}
+		h.registerWithRetry(h.cfg.SprinklerHost)
 	}
 	return nil
+}
+
+func (h *Homekit) registerWithRetry(addr string) {
+	if err := h.register(addr); err == nil {
+		return
+	}
+	log.Printf("unable to register with %s, will keep retrying in background", addr)
+	go func() {
+		for {
+			time.Sleep(30 * time.Second)
+			if err := h.register(addr); err != nil {
+				log.Printf("unable to register with %s: %s", addr, err)
+				continue
+			}
+			log.Printf("registered with %s", addr)
+			return
+		}
+	}()
 }
 
 func (h *Homekit) register(addr string) error {
