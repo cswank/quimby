@@ -299,20 +299,26 @@ func (h *Homekit) init() error {
 	return nil
 }
 
+// registerWithRetry repeatedly POSTs Quimby's address to {addr}/clients so
+// the probe (e.g. a pico) re-learns about us after it reboots. addPeer on
+// the probe side dedupes by address, so re-registering an already-known
+// peer is a cheap no-op. Logs only on transitions to avoid steady-state spam.
 func (h *Homekit) registerWithRetry(addr string) {
-	if err := h.register(addr); err == nil {
-		return
-	}
-	log.Printf("unable to register with %s, will keep retrying in background", addr)
 	go func() {
+		ok := false
 		for {
-			time.Sleep(30 * time.Second)
-			if err := h.register(addr); err != nil {
-				log.Printf("unable to register with %s: %s", addr, err)
-				continue
+			err := h.register(addr)
+			switch {
+			case err != nil && ok:
+				log.Printf("register %s: lost (was registered): %s", addr, err)
+				ok = false
+			case err != nil && !ok:
+				// stay quiet on repeated failures
+			case err == nil && !ok:
+				log.Printf("registered with %s", addr)
+				ok = true
 			}
-			log.Printf("registered with %s", addr)
-			return
+			time.Sleep(1 * time.Minute)
 		}
 	}()
 }
